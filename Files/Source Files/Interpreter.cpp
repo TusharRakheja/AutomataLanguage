@@ -16,7 +16,7 @@ unordered_map<string, Elem *> * program_vars::identify = new unordered_map<strin
 using program_vars::identify;
 
 Token current_token;		// The current token we're looking at. 
-istream * program = new ifstream("example6.al"); 
+istream * program;		// The stream of text constituting the program.
 int line_num = 1;		// Line number that we're looking at right now.
 bool read_right_expr = false;	// Notes whether or not you're reading an expression on the right side of an '=' sign.
 bool read_left_expr = false;	// Notes whether or not you're reading an expression on the right side of an '=' sign.
@@ -43,6 +43,8 @@ void print_info();		// Prints the license and other info.
 
 int main(int argc, char **argv) 
 {
+	if (argc == 1) { print_info(); program = &cin; }
+	else program = new std::ifstream(argv[1]);
 	parse_program();
 }
 
@@ -158,6 +160,7 @@ Token get_next_token()						// The lexer.
 
 void parse_program()
 {
+	if (program == &std::cin) cout << (*identify)["__prompt__"]->to_string();
 	current_token = get_next_token();
 	while (current_token.types[0] != END)
 	{	
