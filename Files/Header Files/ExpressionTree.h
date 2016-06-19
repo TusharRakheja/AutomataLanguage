@@ -11,7 +11,7 @@ enum Token_type
 	INT_LIT, LOGICAL_LIT, CHAR_LIT, STRING_LIT, SET_LIT, TUPLE_LIT, LITERAL,
 	INDEX, IDENTIFIER, OP, UNARY, END, ERROR, EXPR, TYPE, MAPPING_SYMBOL,
 	INPUT, PRINT, IF, ELSEIF, ELSE, WHILE, DECLARE, EQUAL_SIGN, L_BRACE, 
-	R_BRACE, QUIT, DELETE, DELETE_ELEMS, MAP_OP, COLON, LET
+	R_BRACE, QUIT, DELETE, DELETE_ELEMS, MAP_OP, COLON, LET, UNDER
 };
 
 class Token
@@ -41,7 +41,7 @@ public:
 	{
 		if (left != nullptr) delete left; 
 		if (right != nullptr) delete right;
-		if (token.types[0] == LITERAL && !at_root) delete value;
+		if (token.types[0] != IDENTIFIER && !at_root) delete value;
 	}
 };
 

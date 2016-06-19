@@ -30,7 +30,7 @@ void parse_initialization();	// Parse an initialization.
 void parse_assignment();	// Parse an assignment.
 void parse_input();		// Parse an input command.
 void parse_print();		// Parse a print command.
-void parse_mapping(string &);	// Parse a single mapping.
+void parse_mapping();		// Parse a single mapping.
 void parse_if();		// Parse an if condition.
 void parse_while();		// Parse a while loop.
 void parse_delete();		// Parse a delete command.
@@ -146,6 +146,7 @@ Token get_next_token()						// The lexer.
 	else if (lexeme == "=")		return{ lexeme, { EQUAL_SIGN } };
 	else if (lexeme == "-->")	return{ lexeme, { MAPPING_SYMBOL } };
 	else if (lexeme == "let")	return{ lexeme, { LET } };
+	else if (lexeme == "under")	return{ lexeme, { UNDER } };
 	else if (lexeme == ":")		return{ lexeme, { COLON } };
 	else if (lexeme == "input")	return{ lexeme, { INPUT } };
 	else if (lexeme == "print")	return{ lexeme, { PRINT } };
@@ -179,8 +180,37 @@ void parse_statement()
 	else if (current_token.types[0] == IF) parse_if();
 	else if (current_token.types[0] == PRINT) parse_print();
 	else if (current_token.types[0] == LET) parse_assignment();
+	else if (current_token.types[0] == UNDER) parse_mapping();
 	if (program == &std::cin) cout << (*identify)["__prompt__"]->to_string();
 	current_token = get_next_token();
+}
+
+void parse_mapping()
+{
+	Token map_name = get_next_token();
+
+	if (map_name.types[0] != IDENTIFIER) raise_error("An identifier for a map expected.");
+
+	if ((*identify)[map_name.lexeme]->type != MAP) raise_error("An identifier for a map expected.");
+
+	Token colon = get_next_token();
+
+	if (colon.types[0] != COLON) raise_error("Missing operator \":\".");
+
+	read_mapdom_expr = true;
+
+	Token pre_image = get_next_token();
+
+	Token mapsymb = get_next_token();
+
+	if (mapsymb.types[0] != MAPPING_SYMBOL) raise_error("Missing operator \"-->\".");
+
+	Token image = get_next_token();
+
+	ExpressionTree pre_im_expr(pre_image.lexeme);	// Not going to mark these two with ROOT ...
+	ExpressionTree im_expr(image.lexeme);		// ... because these values will only be used for lookup.
+
+	((Map *)(*identify)[map_name.lexeme])->add_maping(*pre_im_expr.evaluate(), *im_expr.evaluate());
 }
 
 void parse_assignment()
@@ -253,54 +283,7 @@ void parse_declaration()	// Parse a declaration.
 
 	if (data_type.lexeme == "set") (*identify)[new_identifier.lexeme] = new Set();
 	else if (data_type.lexeme == "tuple")(*identify)[new_identifier.lexeme] = new Tuple();
-	else if (data_type.lexeme == "map")
-	{
-		Token colon = get_next_token();
-		if (colon.types[0] != COLON) raise_error("A map identifier must be followed by a \":\".");
-
-		read_mapdom_expr = true; Token domain = get_next_token();
-
-		Token mapsymb = get_next_token();
-
-		read_right_expr = true;	Token codomain = get_next_token();
-
-		Elem * map_domain = nullptr, *map_codomain = nullptr;	// Actual pointers that will be used in the map's constructor.
-
-		if (mapsymb.types[0] != MAPPING_SYMBOL) raise_error("Missing mapping operator \"-->\".");
-
-		if (domain.types[0] == IDENTIFIER)
-			if ((*identify)[domain.lexeme] == nullptr)
-				raise_error("The domain identifier doesn't refer to any object.");
-			else if ((*identify)[domain.lexeme]->type != SET)
-				raise_error("The domain of a map must be a set.");
-			else
-				map_domain = (*identify)[domain.lexeme];
-
-		else if (domain.types[0] == EXPR)
-		{
-			ExpressionTree domain_expr(domain.lexeme, ROOT);
-			map_domain = domain_expr.evaluate();
-			if (map_domain->type != SET)
-				raise_error("The domain of a map must be a set.");
-		}
-
-		if (codomain.types[0] == IDENTIFIER)
-			if ((*identify)[codomain.lexeme] == nullptr)
-				raise_error("The codomain identifier doesn't refer to any object.");
-			else if ((*identify)[codomain.lexeme]->type != SET)
-				raise_error("The codomain of a map must be a set.");
-			else
-				map_codomain = (*identify)[codomain.lexeme];
-
-		else if (codomain.types[0] == EXPR)
-		{
-			ExpressionTree codomain_expr(codomain.lexeme, ROOT);
-			map_codomain = codomain_expr.evaluate();
-			if (map_codomain->type != SET)
-				raise_error("The codomain of a map must be a set.");
-		}
-		(*identify)[new_identifier.lexeme] = new Map((Set *)map_domain, (Set *)map_codomain);
-	}
+	else if (data_type.lexeme == "map") (*identify)[new_identifier.lexeme] = new Map(nullptr, nullptr);
 	else if (data_type.lexeme == "int") (*identify)[new_identifier.lexeme] = new Int();
 	else if (data_type.lexeme == "char") (*identify)[new_identifier.lexeme] = new Char();
 	else if (data_type.lexeme == "string") (*identify)[new_identifier.lexeme] = new String();
