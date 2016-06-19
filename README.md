@@ -53,9 +53,9 @@ False
 
 ##### 4.
 ```perl
->>> string first = "Tushar"
->>> string last = "Rakheja"
->>> tuple entry = (first, last)         		     # Identifiers can be used as elements.
+>>> string given = "Tushar"
+>>> string family = "Rakheja"
+>>> tuple entry = (given, family)         		     # Identifiers can be used as elements.
 >>> print entry
 ("Tushar", "Rakheja")
 ```
