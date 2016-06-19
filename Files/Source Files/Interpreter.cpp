@@ -241,7 +241,7 @@ void parse_print()
 	read_right_expr = true;
 	Token print = get_next_token();
 
-	ExpressionTree expr(print.lexeme);	 // We do not want to preserve literals if they're only needed for printing. So no ROOT.
+	ExpressionTree expr(print.lexeme, ROOT);	 
 	Elem * to_be_printed = expr.evaluate();
 
 	cout << to_be_printed->to_string();
