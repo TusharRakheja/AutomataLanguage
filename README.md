@@ -33,53 +33,53 @@ Autolang can be used either with a file, or interactively. The filename argument
 The real joy of Autolang is its very math-oriented syntax. Here are some cool examples you can try. 
 
 ##### 1.
-```python
->>> set A = {1, 2, 3} x {'A', 'B'}      		# Cartesian Product
+```perl
+>>> set A = {1, 2, 3} x {'A', 'B'}      		     # Cartesian Product
 >>> print A
 {(1, 'A'), (1, 'B'), (2, 'A'), (2, 'B'), (3, 'A'), (3, 'B')} 
 ```
 
 ##### 2. 
-```python
->>> print {(1, 'B')} c A                		# Is this set a subset of A?
+```perl
+>>> print {(1, 'B')} c A                		     # Is this set a subset of A?
 True
 ```
 
 ##### 3.
-```python
->>> print (2 + 10 * 2) == (2 * 10 + 2)  		# Beware, no operator precedence!
+```perl
+>>> print (2 + 10 * 2) == (2 * 10 + 2)  		     # Beware, no operator precedence!
 False
 ```
 
 ##### 4.
-```python
+```perl
 >>> string first = "Tushar"
 >>> string last = "Rakheja"
->>> tuple entry = (first, last)         		# Identifiers can be used as elements.
+>>> tuple entry = (first, last)         		     # Identifiers can be used as elements.
 >>> print entry
 ("Tushar", "Rakheja")
 ```
 
 ##### 5.
-```python
+```perl
 >>> map f : {"One", "Zero"} --> {True, False}		# Declare a map with a given domain and codomain.
 >>> under f : "One"  --> True					
->>> under f : "Zero" --> False				# `Under f, "Zero" goes to False.`
+>>> under f : "Zero" --> False				             # `Under f, "Zero" goes to False.`
 >>> print f["One"]						
 True
->>> print f["Zero"]					# Maps can be queried this way.
+>>> print f["Zero"]					                       # Maps can be queried this way.
 False
 ```
 
 ##### 6.
-```python
+```perl
 >>> map g : {1, 0} --> {"One", "Zero"}				
 >>> under g : 1 --> "One"
 >>> under g : 0 --> "Zero"
->>> declare map fog					# Declare a map fog and let it equal ...
->>> let fog = f o g					# ...  the composition of maps f and g.
+>>> declare map fog					                      # Declare a map fog and let it equal ...
+>>> let fog = f o g					                      # ...  the composition of maps f and g.
 >>> print fog
-{1 --> True, 0 --> False}				# One can also print a map this way.
+{1 --> True, 0 --> False}				                 # One can also print a map this way.
 ```
 
 To see an example of how the while loop (the only looping construct in the language, right now) and some other things in the language work, check `Examples/example6.al` out. A technical guide is coming soon.
