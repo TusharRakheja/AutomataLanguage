@@ -246,6 +246,8 @@ void parse_print()
 
 	cout << to_be_printed->to_string();
 	if (program == &cin) cout << endl << endl;
+
+	if (expr.node->token.types[0] == LITERAL) delete expr.node->value;
 }
 
 void parse_delete()		// Parse a delete command.
