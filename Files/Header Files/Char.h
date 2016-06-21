@@ -39,7 +39,18 @@ public:
 		Char *_x = (Char *)&x;
 		return this->elem < _x->elem;
 	}
-
+	bool operator<=(Elem &elem)
+	{
+		return (this->type != elem.type) ? false : this->elem <= ((Char *)&elem)->elem;
+	}
+	bool operator>(Elem &elem)
+	{
+		return (this->type != elem.type) ? false : this->elem > ((Char *)&elem)->elem;
+	}
+	bool operator>=(Elem &elem)
+	{
+		return (this->type != elem.type) ? false : this->elem >= ((Char *)&elem)->elem;
+	}
 	Elem* deep_copy() { return new Char(elem); }
 
 	string to_string()

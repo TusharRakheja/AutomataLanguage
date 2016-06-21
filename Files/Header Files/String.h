@@ -27,6 +27,18 @@ public:
 		String *_x = (String *)&x;
 		return this->elem < _x->elem;
 	}
+	bool operator<=(Elem &elem)
+	{
+		return (this->type != elem.type) ? false : this->elem <= ((String *)&elem)->elem;
+	}
+	bool operator>(Elem &elem)
+	{
+		return (this->type != elem.type) ? false : this->elem > ((String *)&elem)->elem;
+	}
+	bool operator>=(Elem &elem)
+	{
+		return (this->type != elem.type) ? false : this->elem >= ((String *)&elem)->elem;
+	}
 	Elem * deep_copy() { return new String(elem); }		// Since String is an atomic data type, a deep copy is very simple.
 
 	string to_string()					// The string representation of a string is the string itself (in quotes).

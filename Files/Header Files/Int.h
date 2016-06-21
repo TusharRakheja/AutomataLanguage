@@ -2,6 +2,9 @@
 #define INT_H
 
 #include "Elem.h"
+#include <iostream>
+using std::cout;
+using std::endl;
 
 class Int : public Elem
 {
@@ -9,7 +12,8 @@ public:
 	int elem;						// Only going to implement the bare-minimum methods.
 	Int() : Elem(INT) { elem = 0; }				// Default constructor.
 	Int(int x) : Elem(INT) { elem = x; }			// Parameterized constructor.
-	Int(string x) : Elem(INT) { elem = std::stoi(x); }	// Construct an int object using a string representation of it.
+	Int(string x) : Elem(INT) { elem = std::stoi(x); } 	// Construct an int object using a string representation of it.
+		
 	Elem* deep_copy() { return new Int(elem); }		// Return the address of a new Int object constructed with the value of this.
 	bool operator==(Elem &x)
 	{
@@ -21,6 +25,18 @@ public:
 	{
 		Int *_x = (Int *)&x;
 		return this->elem < _x->elem;
+	}
+	bool operator<=(Elem &elem)
+	{
+		return (this->type != elem.type) ? false : this->elem <= ((Int *)&elem)->elem;
+	}
+	bool operator>(Elem &elem)
+	{
+		return (this->type != elem.type) ? false : this->elem > ((Int *)&elem)->elem;
+	}
+	bool operator>=(Elem &elem)
+	{
+		return (this->type != elem.type) ? false : this->elem >= ((Int *)&elem)->elem;
 	}
 	string to_string() 					// Return a string constructed using the integer elem cast to a character array.
 	{
