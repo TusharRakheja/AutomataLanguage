@@ -55,7 +55,7 @@ public:
 
 	string to_string()
 	{
-		return string(1, elem);
+		return "'" + string(1, elem) + "'";
 	}
 };
 #endif

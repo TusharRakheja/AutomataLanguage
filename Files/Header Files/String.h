@@ -43,7 +43,7 @@ public:
 
 	string to_string()					// The string representation of a string is the string itself (in quotes).
 	{
-		string rep = "";
+		string rep = "\"";
 		for (int i = 0; i < elem.size(); i++)
 		{
 			if (!(elem[i] == '\\')) rep += elem[i];		 
@@ -57,7 +57,7 @@ public:
 				else if (elem[i + 1] == '}' || elem[i + 1] == ')' || elem[i + 1] == ']') rep += elem[++i];
 			}
 		}
-		return rep;
+		return rep + "\"";
 	}
 
 	~String() {  }						// Destructor - Delete the elem object.
