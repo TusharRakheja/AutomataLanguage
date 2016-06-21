@@ -13,7 +13,7 @@ string token_name[] =
 	"INT_LIT", "LOGICAL_LIT", "CHAR_LIT", "STRING_LIT", "SET_LIT", "TUPLE_LIT", "LITERAL",
 	"INDEX", "IDENTIFIER", "OP", "UNARY", "END", "ERROR", "EXPR","TYPE", "MAPPING_SYMBOL", 
 	"INPUT", "OUTPUT", "IF", "ELSEIF", "ELSE", "WHILE", "DECLARE", "EQUAL_SIGN", "L_BRACE", 
-	"R_BRACE", "QUIT", "DELETE", "DELETE_ELEMS", "MAP_OP", "COLON", "LET", "UNDER"
+	"R_BRACE", "QUIT", "DELETE", "DELETE_ELEMS", "MAP_OP", "COLON", "LET", "UNDER", "ABSTRACT"
 };
 
 string Token::to_string()
@@ -48,9 +48,8 @@ Elem * Node::parse_literal()		// Parses the token.lexeme to get a value, if the 
 		return new String(token.lexeme, 0);		// The 0 means that the string being passed is a representation of the object.
 								// (as opposed to its value).
 	if (this->token.types[1] == SET_LIT)
-	{
 		return new Set(token.lexeme);
-	}
+
 	if (this->token.types[1] == TUPLE_LIT)
 		return new Tuple(token.lexeme);
 
@@ -110,7 +109,14 @@ Elem * ExpressionTree::evaluate()
 		}
 		else
 		{
-			if (node->token.lexeme == "V")
+			if (node->token.lexeme == "?")
+			{
+				Logical * condition = (Logical *)node->left->evaluate();
+				if (condition->elem) node->value = node->center->evaluate();
+				else node->value = node->right->evaluate();
+			}
+
+			else if (node->token.lexeme == "V")
 			{
 				Elem * left = node->left->evaluate();
 				Elem * right = node->right->evaluate();
@@ -176,7 +182,9 @@ Elem * ExpressionTree::evaluate()
 			{
 				Elem * left = node->left->evaluate();
 				Elem * right = node->right->evaluate();
-				if (left->type == SET && right->type == SET)
+				if (left->type == ABSTRACT_SET && right->type == ABSTRACT_SET)
+					node->value = ((AbstractSet *)left)->intersection(*(AbstractSet *)right);
+				else if (left->type == SET && right->type == SET)
 				{
 					Set * l_set = (Set *)left, *r_set = (Set *)right;
 					node->value = l_set->intersection(*r_set);
@@ -244,6 +252,17 @@ Elem * ExpressionTree::evaluate()
 					}
 				}
 			}
+			else if (node->token.lexeme == "in")
+			{
+				Elem * left = node->left->evaluate();
+				Elem * right = node->right->evaluate();
+				if (right->type == SET)
+					node->value = new Logical(((Set *)right)->has(*left));
+				else if (right->type == ABSTRACT_SET)
+					node->value = new Logical(((AbstractSet *)right)->has(*left));
+				else if (right->type == TUPLE)
+					node->value = new Logical(((Tuple *)right)->has(*left));
+			}
 			else if (node->token.lexeme == "==")
 			{
 				Elem * left = node->left->evaluate();
@@ -276,21 +295,30 @@ Elem * ExpressionTree::evaluate()
 			}
 			else if (node->token.lexeme == "o")
 			{
-				Map * f = (Map *) node->left->evaluate();
-				Map * g = (Map *)node->right->evaluate();
-				node->value = f->composed_with(*g);
+				Elem * f = node->left->evaluate();
+				Elem * g = node->right->evaluate();
+				if (f->type == MAP && g->type == MAP)
+					node->value = ((Map *)f)->composed_with(*(Map *)g);
+				else if (f->type == ABSTRACT_MAP && g->type == ABSTRACT_MAP)
+					node->value = ((AbstractMap *)f)->composed_with((AbstractMap *)g);
 			}
 			else if (node->token.lexeme == "c")
 			{
-				Set * left  = (Set *) node->left->evaluate();
-				Set * right = (Set *)node->right->evaluate();
-				node->value = new Logical(left->subset_of(*right));
+				Elem * f = node->left->evaluate();
+				Elem * g = node->right->evaluate();
+				if (f->type == SET && g->type == SET)
+					node->value = new Logical(((Set *)f)->subset_of(*(Set *)g));
+				else if (f->type == SET && g->type == ABSTRACT_SET)
+					node->value = new Logical(((AbstractSet *)g)->superset_of(*(Set *)f));
 			}
 			else if (node->token.lexeme == "x")
 			{
-				Set * left = (Set *)node->left->evaluate();
-				Set * right = (Set *)node->right->evaluate();
-				node->value = left->cartesian_product(*right);
+				Elem * left =  node->left->evaluate();
+				Elem * right = node->right->evaluate();
+				if (left->type == SET && right->type == SET)
+					node->value = ((Set *)left)->cartesian_product(*(Set *)right);
+				else if (left->type == ABSTRACT_SET && right->type == ABSTRACT_SET)
+					node->value = ((AbstractSet *)left)->cartesian_product(*(AbstractSet *)right);
 			}
 			else if (node->token.lexeme == "U")
 			{
@@ -300,6 +328,8 @@ Elem * ExpressionTree::evaluate()
 					node->value = ((Set *)left)->_union(*(Set *)right);
 				else if (left->type == AUTO && right->type == AUTO)
 					node->value = ((Auto*)left)->accepts_union((Auto*)right);
+				else if (left->type == ABSTRACT_SET && right->type == ABSTRACT_SET)
+					node->value = ((AbstractSet *)left)->_union(*(AbstractSet *)right);
 			}
 			else if (node->token.lexeme == "\\")
 			{
@@ -309,6 +339,8 @@ Elem * ExpressionTree::evaluate()
 					node->value = ((Set *)left)->exclusion(*(Set *)right);
 				else if (left->type == AUTO && right->type == AUTO)
 					node->value = ((Auto*)left)->accepts_exclusively((Auto*)right);
+				else if (left->type == ABSTRACT_SET && right->type == ABSTRACT_SET)
+					node->value = ((AbstractSet *)left)->exclusion(*(AbstractSet *)right);
 			}
 			else if (node->token.lexeme == "[]")
 			{
@@ -319,6 +351,11 @@ Elem * ExpressionTree::evaluate()
 					Set * e = (Set *)elem;
 					Int * q = (Int *)query;
 					node->value = (*e)[q->elem];
+				}
+				else if (elem->type == ABSTRACT_MAP)
+				{
+					AbstractMap * map = (AbstractMap *)elem;
+					node->value = (*map)[*query];
 				}
 				else if (elem->type == TUPLE && query->type == INT)
 				{
@@ -744,6 +781,18 @@ Token ExpressionTree::get_next_token()				// The limited lexical analyzer to par
 		return{ "|", {OP, UNARY} };
 	}
 
+	else if (expr[current_index] == ':')
+	{
+		current_index++;
+		return{ ":", {COLON} };
+	}
+
+	else if (expr[current_index] == '?')
+	{
+		current_index++;
+		return{ "?", {OP} };
+	}
+
 	else if (expr[current_index] == '.')
 	{
 		current_index++;
@@ -758,7 +807,8 @@ Token ExpressionTree::get_next_token()				// The limited lexical analyzer to par
 		return{ "!", { OP, UNARY } };
 	}
 
-	else if (expr[current_index] == 'V')
+	else if (expr[current_index] == 'V' && ((current_index + 1) < expr.size()) 
+		&& !isalnum(expr[current_index + 1]) && expr[current_index + 1] != '_')
 	{
 		current_index++;
 		return{ "V", { OP } };
@@ -770,11 +820,19 @@ Token ExpressionTree::get_next_token()				// The limited lexical analyzer to par
 		return{ "==", { OP } };
 	}
 
+	else if (expr[current_index] == 'i' && ((current_index + 1) < expr.size()) && expr[current_index + 1] == 'n' 
+	&& ((current_index + 2) < expr.size()) && !isalnum(expr[current_index + 2]) && expr[current_index + 2] != '_')
+	{
+		current_index += 2;
+		return{ "in", { OP } };
+	}
+
 	//----------------------------------------</LOGICAL OPS>-----------------------------------------------//
 
 	//----------------------------------------------<MAP OP>-----------------------------------------------//
 
-	else if (expr[current_index] == 'o')			// Map compose op.
+	else if (expr[current_index] == 'o' && ((current_index + 1) < expr.size())
+		&& !isalnum(expr[current_index + 1]) && expr[current_index + 1] != '_')			// Map compose op.
 	{
 		current_index++;
 		return{ "o", { OP } };
@@ -784,15 +842,18 @@ Token ExpressionTree::get_next_token()				// The limited lexical analyzer to par
 
 	//----------------------------------------------<SET OP>-----------------------------------------------//
 
-	else if (expr[current_index] == 'c')			// Subset op.
+	else if (expr[current_index] == 'c' && ((current_index + 1) < expr.size())
+		&& !isalnum(expr[current_index + 1]) && expr[current_index + 1] != '_')			// Subset op.
 	{
 		current_index++; return{ "c", { OP } };
 	}
-	else if (expr[current_index] == 'x')			// Cartesian product op.
+	else if (expr[current_index] == 'x' && ((current_index + 1) < expr.size())
+		&& !isalnum(expr[current_index + 1]) && expr[current_index + 1] != '_')			// Cartesian product op.
 	{
 		current_index++; return{ "x", { OP } };
 	}
-	else if (expr[current_index] == 'U')			// Union op.
+	else if (expr[current_index] == 'U' && ((current_index + 1) < expr.size())
+		&& !isalnum(expr[current_index + 1]) && expr[current_index + 1] != '_')			// Union op.
 	{
 		current_index++; return{ "U", { OP } };
 	}
@@ -1085,13 +1146,30 @@ ExpressionTree::ExpressionTree(string &expr)
 
 	if (t2.types[0] == OP)					// If we have <expr> <op> <expr>
 	{
-		string rest = expr.substr(current_index, expr.size() - current_index);
-		node = new Node();
-		node->operator_node = true;
-		node->token = t2;
-		node->left = new ExpressionTree(t1.lexeme);
-		node->right = new ExpressionTree(rest);
-		return;
+		if (t2.lexeme == "?")
+		{
+			node = new Node();
+			node->operator_node = true;
+			node->token = t2;
+			node->left = new ExpressionTree(t1.lexeme);		// The condition.
+			Token t3 = get_next_token();
+			Token t4 = get_next_token();
+			if (t4.types[0] != COLON) program_vars::raise_error("Missing \":\" in the conditional operator.");
+			Token t5 = get_next_token();
+			node->center = new ExpressionTree(t3.lexeme);
+			node->right = new ExpressionTree(t5.lexeme);
+			return;
+		}
+		else
+		{
+			string rest = expr.substr(current_index, expr.size() - current_index);
+			node = new Node();
+			node->operator_node = true;
+			node->token = t2;
+			node->left = new ExpressionTree(t1.lexeme);
+			node->right = new ExpressionTree(rest);
+			return;
+		}
 	}
 
 	if (t2.types[0] == INDEX)

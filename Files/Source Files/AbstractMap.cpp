@@ -12,6 +12,18 @@ AbstractMap::AbstractMap(string &mapping_scheme_full) : Elem(ABSTRACT_MAP)
 	this->mapping_scheme = mapping_scheme_full.substr(start, mapping_scheme_full.size() - start);
 }
 
+void AbstractMap::add_scheme(string &mapping_scheme_full)
+{
+	int start = mapping_scheme_full.find("-->") + 3;
+	this->mapping_scheme = mapping_scheme_full.substr(start, mapping_scheme_full.size() - start);	
+}
+
+AbstractMap::AbstractMap(AbstractSet * domain, AbstractSet * codomain) : Elem(ABSTRACT_MAP)
+{
+	this->domain = domain;
+	this->codomain = codomain;
+}
+
 AbstractMap::AbstractMap(AbstractSet * domain, AbstractSet * codomain, string &mapping_scheme_full) : Elem(ABSTRACT_MAP)
 {	
 	this->domain = domain; 
@@ -46,6 +58,8 @@ AbstractMap * AbstractMap::composed_with(AbstractMap * g)	// Returns an abstract
 	for (auto &part : scheme_parts) scheme_fog += part;
 	
 	AbstractMap * fog = new AbstractMap();
+	fog->domain = g->domain;
+	fog->codomain = this->codomain;
 	fog->mapping_scheme = scheme_fog;
 	return fog;
 }
@@ -58,8 +72,8 @@ Elem * AbstractMap::operator[](Elem & pre_image)
 	{
 		int elem_pos = to_be_evaluated.find("(x)");
 		string part1 = to_be_evaluated.substr(0, elem_pos);
-		string part2 = pre_image.to_string();
-		string part3 = to_be_evaluated.substr(elem_pos + 4, to_be_evaluated.size() - (elem_pos + 4));
+		string part2 = "(" + pre_image.to_string() + ")";
+		string part3 = to_be_evaluated.substr(elem_pos + 3, to_be_evaluated.size() - (elem_pos + 3));
 		to_be_evaluated = part1 + part2 + part3;
 	}
 	ExpressionTree eval(to_be_evaluated, ROOT);
@@ -76,8 +90,8 @@ const Elem * AbstractMap::operator[](Elem & pre_image) const
 	{
 		int elem_pos = to_be_evaluated.find("(x)");
 		string part1 = to_be_evaluated.substr(0, elem_pos);
-		string part2 = pre_image.to_string();
-		string part3 = to_be_evaluated.substr(elem_pos + 4, to_be_evaluated.size() - (elem_pos + 4));
+		string part2 = "(" + pre_image.to_string() + ")";
+		string part3 = to_be_evaluated.substr(elem_pos + 3, to_be_evaluated.size() - (elem_pos + 3));
 		to_be_evaluated = part1 + part2 + part3;
 	}
 	ExpressionTree eval(to_be_evaluated, ROOT);

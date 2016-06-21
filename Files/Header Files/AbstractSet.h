@@ -5,7 +5,7 @@
 
 /* All abstract sets are represented in the set-builder notation, and the placeholder element is the keyword 'elem'. */
 
-class AbstractSet : Elem
+class AbstractSet : public Elem
 {
 public:
 	string criteria;					   // The membership criteria for the abstract set.

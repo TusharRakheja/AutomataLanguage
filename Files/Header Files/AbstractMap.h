@@ -11,11 +11,12 @@ public:
 	
 	AbstractMap() : Elem(ABSTRACT_MAP) { }
 	AbstractMap(AbstractSet *, AbstractSet *, string &);
+	AbstractMap(AbstractSet *, AbstractSet *);
 	AbstractMap(string &);
+	void add_scheme(string &);
 	AbstractMap * composed_with(AbstractMap *);
 	Elem * deep_copy() 
 	{
-		
 		return new AbstractMap(
 			(domain == nullptr) ? nullptr : (AbstractSet *)domain->deep_copy(), 
 			(codomain == nullptr) ? nullptr : (AbstractSet *)codomain->deep_copy(), 

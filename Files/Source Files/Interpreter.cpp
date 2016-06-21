@@ -13,11 +13,20 @@ using std::ifstream;
 unordered_map<string, Elem *> * program_vars::identify = new unordered_map<string, Elem *> { { "__prompt__", new String(">>> ") } };	
 // Identifiers mapped to their objects.
 
+void program_vars::raise_error(const char *message)
+{
+	cout << "ERROR: Line " << line_num-1 << ": " << message << endl;
+	exit(0);
+}
+
+int program_vars::line_num = 1;
+
 using program_vars::identify;
+using program_vars::raise_error;
+using program_vars::line_num;
 
 Token current_token;		// The current token we're looking at. 
 istream * program;		// The stream of text constituting the program.
-int line_num = 1;		// Line number that we're looking at right now.
 bool read_right_expr = false;	// Notes whether or not you're reading an expression on the right side of an '=' sign.
 bool read_left_expr = false;	// Notes whether or not you're reading an expression on the right side of an '=' sign.
 bool read_mapdom_expr = false;	// Notes whether or not you're reading an expression in the domain of the map (left of '-->' sign).
@@ -37,7 +46,6 @@ void parse_delete();		// Parse a delete command.
 void trim(string &);		// Trim a string (*sigh*).
 void remove_comment(string&);   // Removes the comment at the end of the line.
 bool identifier(string &);	// Returns true if a string is an identifier.
-void raise_error(const char *);	// Raises an error and quits the program.
 bool all_spaces(string &);	// Returns true if a string is full of spaces.
 void print_info();		// Prints the license and other info.
 
@@ -149,6 +157,7 @@ Token get_next_token()						// The lexer.
 	else if (lexeme == "under")	return{ lexeme, { UNDER } };
 	else if (lexeme == ":")		return{ lexeme, { COLON } };
 	else if (lexeme == "input")	return{ lexeme, { INPUT } };
+	else if (lexeme == "abstract")  return{ lexeme, { ABSTRACT} };
 	else if (lexeme == "print")	return{ lexeme, { PRINT } };
 	else if (lexeme == "{")		return{ lexeme, { L_BRACE } };
 	else if (lexeme == "}")		return{ lexeme, { R_BRACE } };
@@ -161,7 +170,7 @@ Token get_next_token()						// The lexer.
 
 void parse_program()
 {
-	if (program == &std::cin) cout << (*identify)["__prompt__"]->to_string();
+	if (program == &std::cin) cout << ((String*)(*identify)["__prompt__"])->alternate_rep();
 	current_token = get_next_token();
 	while (current_token.types[0] != END)
 	{	
@@ -175,15 +184,16 @@ void parse_statement()
 	else if (current_token.types[0] == DELETE) parse_delete();
 	else if (current_token.types[0] == DELETE_ELEMS) parse_delete();
 	else if (current_token.types[0] == DECLARE) parse_declaration();
-	else if (current_token.types[0] == TYPE) parse_initialization();
+	else if (current_token.types[0] == TYPE || current_token.types[0] == ABSTRACT) parse_initialization();
 	else if (current_token.types[0] == WHILE) parse_while();
 	else if (current_token.types[0] == IF) parse_if();
 	else if (current_token.types[0] == PRINT) parse_print();
 	else if (current_token.types[0] == LET) parse_assignment();
 	else if (current_token.types[0] == UNDER) parse_mapping();
-	if (program == &std::cin) cout << (*identify)["__prompt__"]->to_string();
+	if (program == &std::cin) cout << ((String*)(*identify)["__prompt__"])->alternate_rep();
 	current_token = get_next_token();
 }
+
 
 void parse_mapping()
 {
@@ -191,26 +201,40 @@ void parse_mapping()
 
 	if (map_name.types[0] != IDENTIFIER) raise_error("An identifier for a map expected.");
 
-	if ((*identify)[map_name.lexeme]->type != MAP) raise_error("An identifier for a map expected.");
+	if ((*identify)[map_name.lexeme]->type != MAP && (*identify)[map_name.lexeme]->type != ABSTRACT_MAP)
+		raise_error("An identifier for a map or an abstract map expected.");
 
 	Token colon = get_next_token();
 
 	if (colon.types[0] != COLON) raise_error("Missing operator \":\".");
 
-	read_mapdom_expr = true;
+	if ((*identify)[map_name.lexeme]->type == MAP)
+	{
+		read_mapdom_expr = true;
 
-	Token pre_image = get_next_token();
+		Token pre_image = get_next_token();
 
-	Token mapsymb = get_next_token();
+		Token mapsymb = get_next_token();
 
-	if (mapsymb.types[0] != MAPPING_SYMBOL) raise_error("Missing operator \"-->\".");
+		if (mapsymb.types[0] != MAPPING_SYMBOL) raise_error("Missing operator \"-->\".");
 
-	Token image = get_next_token();
+		read_right_expr = true;
 
-	ExpressionTree pre_im_expr(pre_image.lexeme);	// Not going to mark these two with ROOT ...
-	ExpressionTree im_expr(image.lexeme);		// ... because these values will only be used for lookup.
+		Token image = get_next_token();
 
-	((Map *)(*identify)[map_name.lexeme])->add_maping(*pre_im_expr.evaluate(), *im_expr.evaluate());
+		ExpressionTree pre_im_expr(pre_image.lexeme);	// Not going to mark these two with ROOT ...
+		ExpressionTree im_expr(image.lexeme);		// ... because these values will only be used for lookup.
+
+		((Map *)(*identify)[map_name.lexeme])->add_maping(*pre_im_expr.evaluate(), *im_expr.evaluate());
+	}
+	else
+	{
+		read_right_expr = true;
+		
+		Token mapping_scheme = get_next_token();
+
+		((AbstractMap *)(*identify)[map_name.lexeme])->add_scheme(mapping_scheme.lexeme);
+	}
 }
 
 void parse_assignment()
@@ -276,206 +300,275 @@ void parse_declaration()	// Parse a declaration.
 {
 	Token data_type = get_next_token();
 
-	if (data_type.types[0] != TYPE) raise_error("Data type not supported.");
+	if (data_type.types[0] != TYPE && data_type.types[0] != ABSTRACT) raise_error("Data type not supported.");
 
-	Token new_identifier = get_next_token();
+	if (data_type.types[0] == TYPE) 
+	{
+		Token new_identifier = get_next_token();
 
-	if (new_identifier.types[0] != IDENTIFIER)	   raise_error("Please use a valid name for the identifier.");
-	if ((*identify)[new_identifier.lexeme] != nullptr) raise_error("Identifier already in use. Cannot re-declare.");
+		if (new_identifier.types[0] != IDENTIFIER)	   raise_error("Please use a valid name for the identifier.");
+		if ((*identify)[new_identifier.lexeme] != nullptr) raise_error("Identifier already in use. Cannot re-declare.");
 
-	if (data_type.lexeme == "set") (*identify)[new_identifier.lexeme] = new Set();
-	else if (data_type.lexeme == "tuple")(*identify)[new_identifier.lexeme] = new Tuple();
-	else if (data_type.lexeme == "map") (*identify)[new_identifier.lexeme] = new Map(nullptr, nullptr);
-	else if (data_type.lexeme == "int") (*identify)[new_identifier.lexeme] = new Int();
-	else if (data_type.lexeme == "char") (*identify)[new_identifier.lexeme] = new Char();
-	else if (data_type.lexeme == "string") (*identify)[new_identifier.lexeme] = new String();
-	else if (data_type.lexeme == "logical") (*identify)[new_identifier.lexeme] = new Logical();
+		if (data_type.lexeme == "set") (*identify)[new_identifier.lexeme] = new Set();
+		else if (data_type.lexeme == "tuple")(*identify)[new_identifier.lexeme] = new Tuple();
+		else if (data_type.lexeme == "map") (*identify)[new_identifier.lexeme] = new Map(nullptr, nullptr);
+		else if (data_type.lexeme == "int") (*identify)[new_identifier.lexeme] = new Int();
+		else if (data_type.lexeme == "char") (*identify)[new_identifier.lexeme] = new Char();
+		else if (data_type.lexeme == "string") (*identify)[new_identifier.lexeme] = new String();
+		else if (data_type.lexeme == "logical") (*identify)[new_identifier.lexeme] = new Logical();
+	}
+	else if (data_type.types[0] == ABSTRACT)
+	{
+		Token type = get_next_token();
+
+		if (type.lexeme != "set" && type.lexeme != "map") raise_error("Only sets and maps can be abstract.");
+
+		Token new_identifier = get_next_token();
+
+		if ((*identify)[new_identifier.lexeme] != nullptr) raise_error("Identifier already in use. Cannot re-declare.");
+
+		if (type.lexeme == "set") (*identify)[new_identifier.lexeme] = new AbstractSet();
+		else                      (*identify)[new_identifier.lexeme] = new AbstractMap();
+	}
 }
-
 void parse_initialization()
 {
 	Token & data_type = current_token;
 
-	if (data_type.types[0] != TYPE) raise_error("Data type not supported.");
+	if (data_type.types[0] != TYPE && data_type.types[0] != ABSTRACT) raise_error("Data type not supported.");
 
-	Token new_identifier = get_next_token();
-
-	if (new_identifier.types[0] != IDENTIFIER)	   raise_error("Please use a valid name for the identifier.");
-	if ((*identify)[new_identifier.lexeme] != nullptr) raise_error("Identifier already in use. Cannot re-declare.");
-
-	if (data_type.lexeme == "set")  
+	if (data_type.types[0] == TYPE) 
 	{
-		Token equal_sign = get_next_token();
+		Token new_identifier = get_next_token();
 
-		if (equal_sign.types[0] != EQUAL_SIGN) raise_error("Missing operator \"=\".");
+		if (new_identifier.types[0] != IDENTIFIER)	   raise_error("Please use a valid name for the identifier.");
+		if ((*identify)[new_identifier.lexeme] != nullptr) raise_error("Identifier already in use. Cannot re-declare.");
 
-		read_right_expr = true;
-
-		Token value = get_next_token();			// The value to be assigned to the identifier.
-
-		ExpressionTree value_expr(value.lexeme, ROOT);
-
-		Elem * val = value_expr.evaluate();
-
-		if (val->type != SET) raise_error("Cannot assign a non-set object to a set identifier.");
-
-		(*identify)[new_identifier.lexeme] = val;
-	}
-	else if (data_type.lexeme == "tuple")
-	{
-		Token equal_sign = get_next_token();
-
-		if (equal_sign.types[0] != EQUAL_SIGN) raise_error("Missing operator \"=\".");
-
-		read_right_expr = true;
-		Token value = get_next_token();			// The value to be assigned to the identifier.
-		
-		ExpressionTree value_expr(value.lexeme, ROOT);
-
-		Elem * val = value_expr.evaluate();
-
-		if (val->type != TUPLE) raise_error("Cannot assign a non-tuple object to a tuple identifier.");
-
-		(*identify)[new_identifier.lexeme] = val;
-	}
-	else if (data_type.lexeme == "map")
-	{
-		Token colon = get_next_token();
-		if (colon.types[0] != COLON) raise_error("A map identifier must be followed by a \":\".");
-
-		read_mapdom_expr = true;
-		Token domain = get_next_token();
-		Token mapsymb = get_next_token();
-		read_right_expr = true;
-		Token codomain = get_next_token();
-
-		Elem * map_domain = nullptr, *map_codomain = nullptr;	// Actual pointers that will be used in the map's constructor.
-
-		if (mapsymb.types[0] != MAPPING_SYMBOL) raise_error("Missing mapping operator \"-->\".");
-
-		if (domain.types[0] == IDENTIFIER)
-			if ((*identify)[domain.lexeme] == nullptr)
-				raise_error("The domain identifier doesn't refer to any object.");
-			else if ((*identify)[domain.lexeme]->type != SET)
-				raise_error("The domain of a map must be a set.");
-			else
-				map_domain = (*identify)[domain.lexeme];
-
-		else if (domain.types[0] == EXPR)
+		if (data_type.lexeme == "set")  
 		{
-			ExpressionTree domain_expr(domain.lexeme, ROOT);
-			map_domain = domain_expr.evaluate();
-			if (map_domain->type != SET)
-				raise_error("The domain of a map must be a set.");
+			Token equal_sign = get_next_token();
+
+			if (equal_sign.types[0] != EQUAL_SIGN) raise_error("Missing operator \"=\".");
+
+			read_right_expr = true;
+
+			Token value = get_next_token();			// The value to be assigned to the identifier.
+
+			ExpressionTree value_expr(value.lexeme, ROOT);
+
+			Elem * val = value_expr.evaluate();
+
+			if (val->type != SET) raise_error("Cannot assign a non-set object to a set identifier.");
+
+			(*identify)[new_identifier.lexeme] = val;
 		}
-
-		if (codomain.types[0] == IDENTIFIER)
-			if ((*identify)[codomain.lexeme] == nullptr)
-				raise_error("The codomain identifier doesn't refer to any object.");
-			else if ((*identify)[codomain.lexeme]->type != SET)
-				raise_error("The codomain of a map must be a set.");
-			else
-				map_codomain = (*identify)[codomain.lexeme];
-
-		else if (codomain.types[0] == EXPR)
+		else if (data_type.lexeme == "tuple")
 		{
-			ExpressionTree codomain_expr(codomain.lexeme, ROOT);
-			map_codomain = codomain_expr.evaluate();
-			if (map_codomain->type != SET)
-				raise_error("The codomain of a map must be a set.");
-		}
-		(*identify)[new_identifier.lexeme] = new Map((Set *)map_domain, (Set *)map_codomain);
-	}
-	else if (data_type.lexeme == "int") 
-	{
-		Token equal_sign = get_next_token();
+			Token equal_sign = get_next_token();
+
+			if (equal_sign.types[0] != EQUAL_SIGN) raise_error("Missing operator \"=\".");
+
+			read_right_expr = true;
+			Token value = get_next_token();			// The value to be assigned to the identifier.
 		
-		if (equal_sign.types[0] != EQUAL_SIGN) raise_error("Missing operator \"=\".");
+			ExpressionTree value_expr(value.lexeme, ROOT);
 
-		read_right_expr = true;
-		Token int_expression = get_next_token();
+			Elem * val = value_expr.evaluate();
 
-		ExpressionTree int_expr(int_expression.lexeme, ROOT);
+			if (val->type != TUPLE) raise_error("Cannot assign a non-tuple object to a tuple identifier.");
 
-		Elem * val = int_expr.evaluate();
+			(*identify)[new_identifier.lexeme] = val;
+		}
+		else if (data_type.lexeme == "map")
+		{
+			Token colon = get_next_token();
+			if (colon.types[0] != COLON) raise_error("A map identifier must be followed by a \":\".");
 
-		if (val->type != INT) raise_error("Cannot assign a non-int value to an int identifier.");
+			read_mapdom_expr = true;
+			Token domain = get_next_token();
+			Token mapsymb = get_next_token();
+			read_right_expr = true;
+			Token codomain = get_next_token();
 
-		(*identify)[new_identifier.lexeme] = val;
+			Elem * map_domain = nullptr, *map_codomain = nullptr;	// Actual pointers that will be used in the map's constructor.
+
+			if (mapsymb.types[0] != MAPPING_SYMBOL) raise_error("Missing mapping operator \"-->\".");
+
+			if (domain.types[0] == IDENTIFIER)
+				if ((*identify)[domain.lexeme] == nullptr)
+					raise_error("The domain identifier doesn't refer to any object.");
+				else if ((*identify)[domain.lexeme]->type != SET)
+					raise_error("The domain of a map must be a set.");
+				else
+					map_domain = (*identify)[domain.lexeme];
+
+			else if (domain.types[0] == EXPR)
+			{
+				ExpressionTree domain_expr(domain.lexeme, ROOT);
+				map_domain = domain_expr.evaluate();
+				if (map_domain->type != SET)
+					raise_error("The domain of a map must be a set.");
+			}
+
+			if (codomain.types[0] == IDENTIFIER)
+				if ((*identify)[codomain.lexeme] == nullptr)
+					raise_error("The codomain identifier doesn't refer to any object.");
+				else if ((*identify)[codomain.lexeme]->type != SET)
+					raise_error("The codomain of a map must be a set.");
+				else
+					map_codomain = (*identify)[codomain.lexeme];
+
+			else if (codomain.types[0] == EXPR)
+			{
+				ExpressionTree codomain_expr(codomain.lexeme, ROOT);
+				map_codomain = codomain_expr.evaluate();
+				if (map_codomain->type != SET)
+					raise_error("The codomain of a map must be a set.");
+			}
+			(*identify)[new_identifier.lexeme] = new Map((Set *)map_domain, (Set *)map_codomain);
+		}
+		else if (data_type.lexeme == "int") 
+		{
+			Token equal_sign = get_next_token();
+		
+			if (equal_sign.types[0] != EQUAL_SIGN) raise_error("Missing operator \"=\".");
+
+			read_right_expr = true;
+			Token int_expression = get_next_token();
+
+			ExpressionTree int_expr(int_expression.lexeme, ROOT);
+
+			Elem * val = int_expr.evaluate();
+
+			if (val->type != INT) raise_error("Cannot assign a non-int value to an int identifier.");
+
+			(*identify)[new_identifier.lexeme] = val;
+		}
+		else if (data_type.lexeme == "char")
+		{
+			Token equal_sign = get_next_token();
+
+			if (equal_sign.types[0] != EQUAL_SIGN) raise_error("Missing operator \"=\".");
+
+			read_right_expr = true;
+			Token char_expression = get_next_token();
+
+			ExpressionTree char_expr(char_expression.lexeme, ROOT);
+
+			Elem * val = char_expr.evaluate();
+
+			if (val->type != CHAR) raise_error("Cannot assign a non-char value to a char identifier.");
+
+			(*identify)[new_identifier.lexeme] = val;
+		}
+		else if (data_type.lexeme == "string") 
+		{
+			Token equal_sign = get_next_token();
+
+			if (equal_sign.types[0] != EQUAL_SIGN) raise_error("Missing operator \"=\".");
+
+			read_right_expr = true;
+			Token str_expression = get_next_token();
+
+			ExpressionTree str_expr(str_expression.lexeme, ROOT);
+
+			Elem * val = str_expr.evaluate();
+
+			if (val->type != STRING) raise_error("Cannot assign a non-string value to a string identifier.");
+
+			(*identify)[new_identifier.lexeme] = val;
+		}
+		else if (data_type.lexeme == "logical")
+		{
+			Token equal_sign = get_next_token();
+
+			if (equal_sign.types[0] != EQUAL_SIGN) raise_error("Missing operator \"=\".");
+
+			Token logic_expression = get_next_token();
+
+			read_right_expr = true;
+			ExpressionTree logic_expr(logic_expression.lexeme, ROOT);
+
+			Elem * val = logic_expr.evaluate();
+
+			if (val->type != LOGICAL) raise_error("Cannot assign a non-logical value to a logical identifier.");
+
+			(*identify)[new_identifier.lexeme] = val;
+		}
+		else if (data_type.lexeme == "auto")
+		{
+			Token equal_sign = get_next_token();
+
+			if (equal_sign.types[0] != EQUAL_SIGN) raise_error("Missing operator \"=\".");
+
+			read_right_expr = true;
+			Token tuple_expression = get_next_token();
+
+			ExpressionTree tuple_expr(tuple_expression.lexeme, ROOT);
+
+			Elem * val = tuple_expr.evaluate();
+
+			if (val->type != TUPLE) raise_error("Initializing an automaton needs a tuple.");
+
+			Tuple * val_ = (Tuple *)val;
+
+			if (val_->size() != 5) raise_error("Initializing an automaton needs a 5-tuple.");
+
+			(*identify)[new_identifier.lexeme] = new Auto(	// Make a new automaton object.
+				(Set *)(*val_)[0], (Set *)(*val_)[1], (*val_)[2], (Map *)(*val_)[3], (Set *)(*val_)[4], DIRECT_ASSIGN
+			);
+		}
 	}
-	else if (data_type.lexeme == "char")
+	else if (data_type.types[0] == ABSTRACT)
 	{
-		Token equal_sign = get_next_token();
+		Token type = get_next_token();
 
-		if (equal_sign.types[0] != EQUAL_SIGN) raise_error("Missing operator \"=\".");
+		if (type.lexeme != "set" && type.lexeme != "map") raise_error("Only sets and maps can be abstract.");
 
-		read_right_expr = true;
-		Token char_expression = get_next_token();
+		Token new_identifier = get_next_token();
 
-		ExpressionTree char_expr(char_expression.lexeme, ROOT);
+		if ((*identify)[new_identifier.lexeme] != nullptr) raise_error("Identifier already in use. Cannot re-declare.");
 
-		Elem * val = char_expr.evaluate();
+		if (type.lexeme == "set")
+		{ 
+			Token eq_sign = get_next_token();
 
-		if (val->type != CHAR) raise_error("Cannot assign a non-char value to a char identifier.");
+			if (eq_sign.types[0] != EQUAL_SIGN) raise_error("Missing operator \"=\".");
 
-		(*identify)[new_identifier.lexeme] = val;
-	}
-	else if (data_type.lexeme == "string") 
-	{
-		Token equal_sign = get_next_token();
+			read_right_expr = true;
 
-		if (equal_sign.types[0] != EQUAL_SIGN) raise_error("Missing operator \"=\".");
+			Token abstract_set = get_next_token();
 
-		read_right_expr = true;
-		Token str_expression = get_next_token();
+			(*identify)[new_identifier.lexeme] = new AbstractSet(abstract_set.lexeme);
+		}
+		else
+		{
+			Token colon = get_next_token();
 
-		ExpressionTree str_expr(str_expression.lexeme, ROOT);
+			if (colon.types[0] != COLON) raise_error("Missing operator \":\".");
 
-		Elem * val = str_expr.evaluate();
+			read_mapdom_expr = true;
 
-		if (val->type != STRING) raise_error("Cannot assign a non-string value to a string identifier.");
+			Token abstract_map_domain = get_next_token();
 
-		(*identify)[new_identifier.lexeme] = val;
-	}
-	else if (data_type.lexeme == "logical")
-	{
-		Token equal_sign = get_next_token();
+			Token mapssymb = get_next_token();
 
-		if (equal_sign.types[0] != EQUAL_SIGN) raise_error("Missing operator \"=\".");
+			if (mapssymb.types[0] == MAPPING_SYMBOL) raise_error("Missing operator \"-->\".");
 
-		Token logic_expression = get_next_token();
+			read_right_expr = true;
 
-		read_right_expr = true;
-		ExpressionTree logic_expr(logic_expression.lexeme, ROOT);
+			Token abstract_map_codomain = get_next_token();
+ 
+			ExpressionTree abstract_mapdom_expr(abstract_map_domain.lexeme, ROOT);
 
-		Elem * val = logic_expr.evaluate();
+			ExpressionTree abstract_mapcodom_expr(abstract_map_codomain.lexeme, ROOT);
 
-		if (val->type != LOGICAL) raise_error("Cannot assign a non-logical value to a logical identifier.");
+			Elem * domain = abstract_mapdom_expr.evaluate(), * codomain = abstract_mapcodom_expr.evaluate();
 
-		(*identify)[new_identifier.lexeme] = val;
-	}
-	else if (data_type.lexeme == "auto")
-	{
-		Token equal_sign = get_next_token();
+			if (domain->type != ABSTRACT_SET || codomain->type != ABSTRACT_SET) raise_error("Abstract sets expected.");
 
-		if (equal_sign.types[0] != EQUAL_SIGN) raise_error("Missing operator \"=\".");
-
-		read_right_expr = true;
-		Token tuple_expression = get_next_token();
-
-		ExpressionTree tuple_expr(tuple_expression.lexeme, ROOT);
-
-		Elem * val = tuple_expr.evaluate();
-
-		if (val->type != TUPLE) raise_error("Initializing an automaton needs a tuple.");
-
-		Tuple * val_ = (Tuple *)val;
-
-		if (val_->size() != 5) raise_error("Initializing an automaton needs a 5-tuple.");
-
-		(*identify)[new_identifier.lexeme] = new Auto(	// Make a new automaton object.
-			(Set *)(*val_)[0], (Set *)(*val_)[1], (*val_)[2], (Map *)(*val_)[3], (Set *)(*val_)[4], DIRECT_ASSIGN
-		);
+			(*identify)[new_identifier.lexeme] = new AbstractMap((AbstractSet*)domain, (AbstractSet*)codomain);
+		}
 	}
 }
 
@@ -527,9 +620,8 @@ void parse_while()
 	{
 		Token token = get_next_token();
 		if (token.types[0] == LET) read_left_expr = true;
-		if (token.types[0] == EQUAL_SIGN || token.types[0] == MAPPING_SYMBOL || token.types[0] == PRINT
+		if (token.types[0] == EQUAL_SIGN || token.types[0] == COLON || token.types[0] == PRINT
 		    || token.types[0] == WHILE || token.types[0] == IF) read_right_expr = true;
-		if (token.types[0] == COLON) read_mapdom_expr = true;
 		if (token.types[0] == L_BRACE) level++;
 		if (token.types[0] == R_BRACE) 
 			if (level == 0)
@@ -583,9 +675,8 @@ void parse_if()		// Parsing if statements.
 		{
 			Token token = get_next_token();
 			if (token.types[0] == LET) read_left_expr = true;
-			if (token.types[0] == EQUAL_SIGN || token.types[0] == MAPPING_SYMBOL || token.types[0] == PRINT
+			if (token.types[0] == EQUAL_SIGN || token.types[0] == COLON || token.types[0] == PRINT
 				|| token.types[0] == WHILE || token.types[0] == IF) read_right_expr = true;
-			if (token.types[0] == COLON) read_mapdom_expr = true;
 			if (token.types[0] == L_BRACE) level++;
 			if (token.types[0] == R_BRACE)
 				if (level == 0)
@@ -606,9 +697,8 @@ void parse_if()		// Parsing if statements.
 			Token token = get_next_token();
 
 			if (token.types[0] == LET) read_left_expr = true;
-			if (token.types[0] == EQUAL_SIGN || token.types[0] == MAPPING_SYMBOL || token.types[0] == PRINT
+			if (token.types[0] == EQUAL_SIGN || token.types[0] == COLON || token.types[0] == PRINT
 				|| token.types[0] == WHILE || token.types[0] == IF) read_right_expr = true;
-			if (token.types[0] == COLON) read_mapdom_expr = true;
 			if (token.types[0] == L_BRACE) level++;
 			if (token.types[0] == R_BRACE)
 				if (level == 0)
@@ -648,12 +738,6 @@ bool identifier(string &str)
 		return true;
 	}
 	else return false;
-}
-
-void raise_error(const char * message)
-{
-	cout << "ERROR: Line " << line_num << ": " << message << endl;
-	exit(0);
 }
 
 bool all_spaces(string& str)
