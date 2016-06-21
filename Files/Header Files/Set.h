@@ -12,7 +12,7 @@ public:
 	Set();                                     // Default constructor.
 	Set(vector<Elem *> *);                     // It is possible to initialize a set with an existing vector (Copy pointers).
 	Set(vector<Elem *> *, int);		   // It is possible to initialize a set with an existing vector (Direct assign).
-	Set(string &x);				   // Construct a set using a string representation of it.
+	Set(string &);				   // Construct a set using a string representation of it.
 	int cardinality();                         // Returns the cardinality of the set.	
 	Set * cartesian_product(Set &);            // Returns the cartesian product of this set and the other set.
 	Elem * deep_copy();			   // Returns a new set which is a deep_copy of this set.
