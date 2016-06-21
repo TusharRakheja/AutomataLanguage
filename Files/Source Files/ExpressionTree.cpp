@@ -75,7 +75,6 @@ Elem * ExpressionTree::evaluate()
 {
 	if (node->value != nullptr) 
 		return node->value;				// Will be triggered in case of literals and identifiers.
-	
 
 	if (node->token.types[0] == OP)				// If the node is an op.
 	{
@@ -261,19 +260,19 @@ Elem * ExpressionTree::evaluate()
 			{
 				Elem * left = node->left->evaluate();
 				Elem * right = node->right->evaluate();
-				node->value = new Logical((*left < *right) || (*left == *right));
+				node->value = new Logical(*left <= *right);
 			}
 			else if (node->token.lexeme == ">")
 			{
 				Elem * left = node->left->evaluate();
 				Elem * right = node->right->evaluate();
-				node->value = new Logical(!(*left < *right) || (*left == *right));
+				node->value = new Logical(*left > *right);
 			}
 			else if (node->token.lexeme == ">=")
 			{
 				Elem * left = node->left->evaluate();
 				Elem * right = node->right->evaluate();
-				node->value = new Logical(!(*left < *right));
+				node->value = new Logical(*left >= *right);
 			}
 			else if (node->token.lexeme == "o")
 			{
@@ -810,7 +809,8 @@ Token ExpressionTree::get_next_token()				// The limited lexical analyzer to par
 
 	//--------------------------------------------<LITERALS>----------------------------------------------//
 	
-	else if (isdigit(expr[current_index]))				// Int literal.
+	else if (isdigit(expr[current_index]) || 
+		(expr[current_index] == '-' && current_index + 1 < expr.size() && isdigit(expr[current_index + 1]))) // Int literal.
 	{                                         
 		int i = current_index + 1;				// Start looking one space ahead of the current_index ...
 		while (i < expr.size() && isdigit(expr[i]))		// ... and while you're finding more digits ...
