@@ -167,7 +167,7 @@ Autolang supports a certain *flavor* of lambda expressions in the form of **abst
 
 We used a *conditional operator* in the `fact` map, which is the only ternary operator in Autolang. Abstract maps can be composed too, but for now, they don't have domains and codomains restricting their input, so any composition between two abstract maps is possible. However, a composition between an abstract and a normal map is not possible (again, for now).
 
-To see an example of how the while loop (the only looping construct in the language, right now) and some other things in the language work, check `Examples/example6.al` out. A technical guide is coming soon.
+To see an example of how the while loop (the only looping construct in the language, right now) and some other things in the language work, check `Examples/example7.al` out. A language specification is coming soon.
 
 ##### 6. Notes
 
