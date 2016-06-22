@@ -69,7 +69,7 @@ bool AbstractSet::has(Elem &elem)				// Returns true if the argument elem fulfil
 	{
 		int elem_pos = to_be_evaluated.find("elem");
 		string part1 = to_be_evaluated.substr(0, elem_pos);
-		string part2 = elem.to_string();
+		string part2 = elem.to_string_raw();
 		string part3 = to_be_evaluated.substr(elem_pos + 4, to_be_evaluated.size() - (elem_pos + 4));
 		to_be_evaluated = part1 + part2 + part3;
 	}

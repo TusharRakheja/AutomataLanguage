@@ -29,6 +29,7 @@ public:
 	bool operator==(Elem &);                   // Checks two sets for equality.
 	bool operator<(Elem &e) { return false; }  // This op is basically useless for sets.
 	string to_string();                        // Returns a string representation of the set.
+	string to_string_raw();		           // Returns a raw_string representation of the set.
 	Set * _union(Set &);                       // Union with a second set.
 	~Set();					   // Destructor.
 };

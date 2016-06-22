@@ -146,6 +146,21 @@ string Tuple::to_string()				// Returns a string representation of the tuple.
 	return representation + ")";
 }
 
+string Tuple::to_string_raw()				// Returns a string representation of the tuple.
+{
+	string representation{ "(" };
+	int i{ 0 };
+	for (auto &elem_p : *elems)
+	{
+		representation += elem_p->to_string_raw();  // Recursive, awesome representations. ;)
+		if (i != elems->size() - 1)
+			representation += ", ";
+		i++;
+	}
+	return representation + ")";
+}
+
+
 Tuple::~Tuple()				  // Destructor.
 {
 	for (auto &elem_p1 : *elems)	  // For every element_pointer in the vector of element_pointers in this tuple ...

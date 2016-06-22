@@ -207,6 +207,20 @@ string Set::to_string()                         // Returns a string representati
 	return representation + "}";
 }
 
+string Set::to_string_raw()                         // Returns a string representation of the set.
+{
+	string representation{ "{" };
+	int i{ 0 };
+	for (auto &elem_p : *elems)
+	{
+		representation += elem_p->to_string_raw();   // Recursive, awesome representations. ;)
+		if (i != elems->size() - 1)
+			representation += ", ";
+		i++;
+	}
+	return representation + "}";
+}
+
 Set * Set::_union(Set &other)			// Union with a second set.
 {
 	Set * unified = new Set(this->elems);

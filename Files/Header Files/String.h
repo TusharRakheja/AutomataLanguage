@@ -41,36 +41,27 @@ public:
 	}
 	Elem * deep_copy() { return new String(elem); }		// Since String is an atomic data type, a deep copy is very simple.
 
-	string to_string()					// The string representation of a string is the string itself (in quotes).
+	string to_string_raw()					// The string representation of a string is the string itself (in quotes).
 	{
 		string rep = "\"";
-		for (int i = 0; i < elem.size(); i++)
-		{
-			if (!(elem[i] == '\\')) rep += elem[i];		 
-			else 
-			{
-				if (elem[i+1] == 't') { rep += '\t'; i++; }
-				else if (elem[i + 1] == 'n') { rep += '\n'; i++; }
-				else if (elem[i + 1] == 'b') { rep += '\b'; i++; }
-				else if (elem[i + 1] == '"') { rep += '"'; i++; }
-				else if (elem[i + 1] == '{' || elem[i + 1] == '(' || elem[i + 1] == '[') rep += elem[++i];
-				else if (elem[i + 1] == '}' || elem[i + 1] == ')' || elem[i + 1] == ']') rep += elem[++i];
-			}
-		}
+		rep += elem;
 		return rep + "\"";
 	}
 
-	string alternate_rep()
+	string to_string()
 	{
 		string rep = "";
 		for (int i = 0; i < elem.size(); i++)
 		{
-			if (!(elem[i] == '\\')) rep += elem[i];
+			if ((elem[i] != '\\')) rep += elem[i];
 			else
 			{
 				if (elem[i + 1] == 't') { rep += '\t'; i++; }
+				else if (elem[i + 1] == 'v') { rep += '\v'; i++; }
 				else if (elem[i + 1] == 'n') { rep += '\n'; i++; }
 				else if (elem[i + 1] == 'b') { rep += '\b'; i++; }
+				else if (elem[i + 1] == 'r') { rep += '\r'; i++; }
+				else if (elem[i + 1] == 'f') { rep += '\f'; i++; }
 				else if (elem[i + 1] == '"') { rep += '"'; i++; }
 				else if (elem[i + 1] == '{' || elem[i + 1] == '(' || elem[i + 1] == '[') rep += elem[++i];
 				else if (elem[i + 1] == '}' || elem[i + 1] == ')' || elem[i + 1] == ']') rep += elem[++i];

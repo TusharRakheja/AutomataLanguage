@@ -39,6 +39,7 @@ void parse_initialization();	// Parse an initialization.
 void parse_assignment();	// Parse an assignment.
 void parse_input();		// Parse an input command.
 void parse_print();		// Parse a print command.
+void parse_printr();		// Parses a print raw command.
 void parse_mapping();		// Parse a single mapping.
 void parse_if();		// Parse an if condition.
 void parse_while();		// Parse a while loop.
@@ -51,8 +52,8 @@ void print_info();		// Prints the license and other info.
 
 int main(int argc, char **argv) 
 {
-	if (argc == 1) { print_info(); program = &cin; }
-	else program = new std::ifstream(argv[1]);
+	/*if (argc == 1) { print_info(); program = &cin; }
+	else*/ program = new std::ifstream(/*argv[1]*/"../Examples/example7.al");
 	parse_program();
 }
 
@@ -159,6 +160,7 @@ Token get_next_token()						// The lexer.
 	else if (lexeme == "input")	return{ lexeme, { INPUT } };
 	else if (lexeme == "abstract")  return{ lexeme, { ABSTRACT} };
 	else if (lexeme == "print")	return{ lexeme, { PRINT } };
+	else if (lexeme == "printr")	return{ lexeme, { PRINTR} }; 
 	else if (lexeme == "{")		return{ lexeme, { L_BRACE } };
 	else if (lexeme == "}")		return{ lexeme, { R_BRACE } };
 	else if (lexeme == "while")	return{ lexeme, { WHILE } };
@@ -170,7 +172,7 @@ Token get_next_token()						// The lexer.
 
 void parse_program()
 {
-	if (program == &std::cin) cout << ((String*)(*identify)["__prompt__"])->alternate_rep();
+	if (program == &std::cin) cout << ((String*)(*identify)["__prompt__"])->to_string();
 	current_token = get_next_token();
 	while (current_token.types[0] != END)
 	{	
@@ -188,9 +190,10 @@ void parse_statement()
 	else if (current_token.types[0] == WHILE) parse_while();
 	else if (current_token.types[0] == IF) parse_if();
 	else if (current_token.types[0] == PRINT) parse_print();
+	else if (current_token.types[0] == PRINTR) parse_printr();
 	else if (current_token.types[0] == LET) parse_assignment();
 	else if (current_token.types[0] == UNDER) parse_mapping();
-	if (program == &std::cin) cout << ((String*)(*identify)["__prompt__"])->alternate_rep();
+	if (program == &std::cin) cout << ((String*)(*identify)["__prompt__"])->to_string();
 	current_token = get_next_token();
 }
 
@@ -269,6 +272,20 @@ void parse_print()
 	Elem * to_be_printed = expr.evaluate();
 
 	cout << to_be_printed->to_string();
+	if (program == &cin) cout << endl << endl;
+
+	if (expr.node->token.types[0] == LITERAL) delete expr.node->value;
+}
+
+void parse_printr()
+{
+	read_right_expr = true;
+	Token print = get_next_token();
+
+	ExpressionTree expr(print.lexeme, ROOT);
+	Elem * to_be_printed = expr.evaluate();
+
+	cout << to_be_printed->to_string_raw();
 	if (program == &cin) cout << endl << endl;
 
 	if (expr.node->token.types[0] == LITERAL) delete expr.node->value;
