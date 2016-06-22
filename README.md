@@ -39,6 +39,8 @@ The real joy of Autolang is its very math-oriented syntax. Here are some cool ex
  * [Abstract Maps (&lambda;)](https://github.com/TusharRakheja/Autolang#5-abstract-maps-λ)
  * [Notes](https://github.com/TusharRakheja/Autolang#6-notes)
 
+
+
 ##### 1. Sets
 
 The key data structure in Autolang is a  **set** - a (possibly heterogeneous) collection of elements. Most set operations are supported. Here are a few examples.
@@ -68,7 +70,7 @@ The key data structure in Autolang is a  **set** - a (possibly heterogeneous) co
 >>> print {(1, 'B')} c A                		     # Is this set a subset of A?
 True
 ```
-In addition to the standard set operations, it is possible to access a member of a set at a specific position, using the **[]** operator (may also be used with *tuples*).
+In addition to the standard set operations, it is possible to access a member of a set at a specific position, using the [] operator (may also be used with *tuples*).
 
 **Access Query**
 ```perl
