@@ -36,7 +36,7 @@ The real joy of Autolang is its very math-oriented syntax. Here are some cool ex
 
 The key data structure in Autolang is a  **set** - a (possibly heterogeneous) collection of elements. Most set operations are supported. Here are a few examples.
 
-###### Basic Operations
+*Basic Operations*
 ```perl
 >>> print {1, 2} U {1, 3}                            # Union of two sets.
 {1, 2, 3}
@@ -46,7 +46,7 @@ The key data structure in Autolang is a  **set** - a (possibly heterogeneous) co
 {2}
 ```
 
-###### Advanced Operations 
+*Advanced Operations* 
 
 ```perl
 >>> set A = {1, 2, 3} x {'A', 'B'}      		     # Cartesian Product
@@ -56,14 +56,14 @@ The key data structure in Autolang is a  **set** - a (possibly heterogeneous) co
 6
 ```
 
-###### Subset Query
+*Subset Query*
 ```perl
 >>> print {(1, 'B')} c A                		     # Is this set a subset of A?
 True
 ```
 In addition to the standard set operations, it is possible to access a member of a set at a specific position, using the **[]** operator (may also be used with *tuples*).
 
-###### Access Query
+*Access Query*
 ```perl
 >>> print A[1]                          		    # Access the element of A at index 1.
 2
@@ -71,7 +71,7 @@ In addition to the standard set operations, it is possible to access a member of
 
 The **in** operator returns a *logical* value if the left argument is present in the right argument. Just like the access query operator, it may also be used with tuples.
 
-###### Membership Query
+*Membership Query*
 ```perl
 >>> print ('2' in {1, {'2'}, 3}[1])                 # The 'in' and '[]' operators in action.
 True
@@ -112,7 +112,7 @@ False
 
 Most set operations will also work with abstract sets, except the [] operator (since an abstract set can be potentially uncountably infinite in size). *However, an operation between an abstract set and a normal set is **not** possible (for now), except a subset operation (which, (un)interestingly, cannot be performed on two abstract sets)*.
 
-###### Abstract Set Operations
+*Abstract Set Operations*
 ```perl
 >>> declare abstract set Inter
 >>> abstract set EvenP = { elem | (((elem[0]) * (elem[1])) % 2) == 0 } 
@@ -149,7 +149,7 @@ Just like regular mathematical functions, maps can be composed with each other, 
 >>> declare map fog					                 # Declare a map fog and let it equal ...
 >>> let fog = f o g					                 # ...  the composition of maps f and g.
 >>> print fog
-{(1, True), (0, False)}				             # One can also print a map this way.
+{(1, True), (0, False)}				                 # One can also print a map this way.
 ```
 Maps can also be used to implement **associative arrays**. See the `Examples/` directory for an example.
 
@@ -157,7 +157,7 @@ Maps can also be used to implement **associative arrays**. See the `Examples/` d
 
 Autolang supports a certain *flavor* of lambda expressions in the form of **abstract maps**.
 
-###### Factorial
+*Factorial*
 ```perl
 >>> declare abstract map fact                       # An abstract map to compute the factorial.
 >>> under fact : x --> ((x) == 0) ? (1) : ((x) * fact[(x) - 1])
