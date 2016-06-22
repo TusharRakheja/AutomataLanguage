@@ -1,6 +1,6 @@
 ﻿# Autolang [![Build Status](https://travis-ci.org/TusharRakheja/Autolang.svg?branch=master)](https://travis-ci.org/TusharRakheja/Autolang)
 
-**Autolang** is a procedural, interpreted programming language.
+**Autolang** is a high-level programming language supporting multiple paradigms, with syntax rooted in mathematical notation.
 
 It supports primitive data types (`int`, `char`, and `logical`), containers (`sets`, `tuples`, and `maps`), and `strings`.
 
