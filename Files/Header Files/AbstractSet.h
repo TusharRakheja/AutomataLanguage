@@ -13,7 +13,7 @@ public:
 	AbstractSet(string &);					   // Construct with a string representing the criteria.
 	AbstractSet * cartesian_product(AbstractSet &);            // Returns the cartesian product of this set and the other set.
 	Elem * deep_copy()
-	{ return new AbstractSet("{ elem | " + criteria + " }"); } // Return a new set with the same criteria.
+	{ return new AbstractSet((string)"{ elem | " + criteria + (string)" }"); } // Return a new set with the same criteria.
 	AbstractSet * exclusion(AbstractSet &);			   // Returns a set containing elements of this, minus those of the argument.
 	bool has(Elem &);					   // Looks for an element in the set.
 	AbstractSet * intersection(AbstractSet &);                 // Intersection with a second set.
