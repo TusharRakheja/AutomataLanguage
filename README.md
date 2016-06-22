@@ -1,4 +1,4 @@
-# Autolang [![Build Status](https://travis-ci.org/TusharRakheja/Autolang.svg?branch=master)](https://travis-ci.org/TusharRakheja/Autolang)
+﻿# Autolang [![Build Status](https://travis-ci.org/TusharRakheja/Autolang.svg?branch=master)](https://travis-ci.org/TusharRakheja/Autolang)
 
 **Autolang** is a procedural, interpreted programming language.
 
@@ -70,7 +70,7 @@ The key data structure in Autolang is a  **set** - a (possibly heterogeneous) co
 >>> print {(1, 'B')} c A                		     # Is this set a subset of A?
 True
 ```
-In addition to the standard set operations, it is possible to access a member of a set at a specific position, using the [] operator (may also be used with *tuples*).
+In addition to the standard set operations, it is possible to access a member of a set at a specific position, using the **`[]`** operator (may also be used with *tuples*).
 
 **Access Query**
 ```perl
@@ -78,7 +78,7 @@ In addition to the standard set operations, it is possible to access a member of
 2
 ```
 
-The **in** operator returns a *logical* value if the left argument is present in the right argument. Just like the access query operator, it may also be used with tuples.
+The **`in`** operator returns a *logical* value if the left argument is present in the right argument. Just like the access query operator, it may also be used with tuples.
 
 **Membership Query**
 ```perl
@@ -107,7 +107,7 @@ Much like sets in that they are containers too, **tuples** are *immutable*, i.e.
 ##### 3. Abstract Sets
 One very powerful concept Autolang supports is that of an **abstract set**. Unlike a normal set, an *abstract* set does not have fixed members, but rather, a membership criteria. 
 
-The criteria is supposed to be a *logical* expression, which is evaluated for every query on the set when needed. One must use the **elem** *keyword* as a placeholder for the incoming query. 
+The criteria is supposed to be a *logical* expression, which is evaluated for every query on the set when needed. One must use the **`elem`** *keyword* as a placeholder for the incoming query. 
 
 If you get creative, there's a lot that suddenly became possible. For instance.
 ```perl
@@ -175,6 +175,8 @@ Autolang supports a certain *flavor* of lambda expressions in the form of **abst
 ```
 
 We used a *conditional operator* in the `fact` map, which is the only ternary operator in Autolang. Abstract maps can be composed too, but for now, they don't have domains and codomains restricting their input, so any composition between two abstract maps is possible. However, a composition between an abstract and a normal map is not possible (again, for now).
+
+Again, like abstract sets, abstract maps work by replacing a certain keyword with the value of the query. This *keyword*, which is more like a key-expression, is in the mapping scheme (the part to the right of the mapping operator `-->`), exclusively represented by **`(x)`**. This combination of these characters, `(x)`, does not occur in Autolang anywhere else.
 
 To see an example of how the while loop (the only looping construct in the language, right now) and some other things in the language work, check `Examples/example7.al` out. A language specification is coming soon.
 
