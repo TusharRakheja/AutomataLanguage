@@ -135,9 +135,29 @@ string Map::to_string()					// The virtual to_string() method for display.
 	int i{ 0 };
 	for (auto &index : *map)
 	{		
+		representation += "(";
 		representation += domain_s->operator[](index.first)->to_string();   // Recursive, awesome representations. ;)
-		representation += " --> ";
+		representation += ", ";
 		representation += codomain_s->operator[](index.second)->to_string();
+		representation += ")";
+		if (i != map->size() - 1)
+			representation += ", ";
+		i++;
+	}
+	return representation + "}";
+}
+
+string Map::to_string_raw()					// The virtual to_string() method for display.
+{
+	string representation = "{";
+	int i{ 0 };
+	for (auto &index : *map)
+	{
+		representation += "(";
+		representation += domain_s->operator[](index.first)->to_string_raw();   // Recursive, awesome representations. ;)
+		representation += ", ";
+		representation += codomain_s->operator[](index.second)->to_string_raw();
+		representation += ")";
 		if (i != map->size() - 1)
 			representation += ", ";
 		i++;

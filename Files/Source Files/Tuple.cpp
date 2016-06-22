@@ -153,8 +153,7 @@ string Tuple::to_string_raw()				// Returns a string representation of the tuple
 	for (auto &elem_p : *elems)
 	{
 		representation += elem_p->to_string_raw();  // Recursive, awesome representations. ;)
-		if (i != elems->size() - 1)
-			representation += ", ";
+		representation += ", ";
 		i++;
 	}
 	return representation + ")";

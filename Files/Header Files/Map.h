@@ -28,6 +28,7 @@ public:
 	bool operator==(Elem &);		// Compares this to another map.
 	Set *range();				// Returns the range of the ordered map.
 	string to_string();			// Returns a string representation of the map. 
+	string to_string_raw();			// Returns a raw_string representation of the map.
 	~Map();					// Destructor.
 };
 
