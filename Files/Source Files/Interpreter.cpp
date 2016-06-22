@@ -52,8 +52,8 @@ void print_info();		// Prints the license and other info.
 
 int main(int argc, char **argv) 
 {
-	/*if (argc == 1) { print_info(); program = &cin; }
-	else*/ program = new std::ifstream(/*argv[1]*/"../Examples/example7.al");
+	if (argc == 1) { print_info(); program = &cin; }
+	else program = new std::ifstream(argv[1]);
 	parse_program();
 }
 
