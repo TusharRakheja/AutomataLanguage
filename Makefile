@@ -6,13 +6,19 @@ CXX = g++
 SOURCE = Files/Source\ Files/
 HEADER = Files/Header\ Files/
 FLAGS = -std=c++14 -w
-OBJS = Interpreter.o Auto.o ExpressionTree.o Logical.o Map.o Set.o Tuple.o
+OBJS = Interpreter.o Auto.o ExpressionTree.o Logical.o Map.o Set.o Tuple.o AbstractMap.o AbstractSet.o
 
 # TARGETS
 
 auto : $(OBJS)
 	$(CXX) -o auto $(OBJS)
+	
+AbstractMap.o : $(SOURCE)AbstractMap.cpp $(HEADER)AbstractMap.h
+	$(CXX) -c $(FLAGS) $(SOURCE)AbstractMap.cpp 
 
+AbstractSet.o : $(SOURCE)AbstractSet.cpp $(HEADER)AbstractSet.h
+	$(CXX) -c $(FLAGS) $(SOURCE)AbstractSet.cpp
+	
 Set.o : $(SOURCE)Set.cpp $(HEADER)Set.h $(HEADER)ExpressionTree.h 
 	$(CXX) -c $(FLAGS) $(SOURCE)Set.cpp
 
