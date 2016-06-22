@@ -32,6 +32,13 @@ Autolang can be used either with a file, or interactively. The filename argument
 
 The real joy of Autolang is its very math-oriented syntax. Here are some cool examples you can try. 
 
+ 1. [Sets](https://github.com/TusharRakheja/Autolang#1-sets)
+ 2. [Tuples](https://github.com/TusharRakheja/Autolang#2-tuples)
+ 3. [Abstract Sets](https://github.com/TusharRakheja/Autolang#3-abstract-sets)
+ 4. [Maps](https://github.com/TusharRakheja/Autolang#4-maps)
+ 5. [Abstract Maps (&lambda;)](https://github.com/TusharRakheja/Autolang#5-abstract-maps-λ)
+ 6. [Notes](https://github.com/TusharRakheja/Autolang#6-notes)
+
 ##### 1. Sets
 
 The key data structure in Autolang is a  **set** - a (possibly heterogeneous) collection of elements. Most set operations are supported. Here are a few examples.
