@@ -153,7 +153,7 @@ Just like regular mathematical functions, maps can be composed with each other, 
 ```
 Maps can also be used to implement **associative arrays**. See the `Examples/` directory for an example.
 
-##### 5. Abstract Maps (?)
+##### 5. Abstract Maps (&lambda;)
 
 Autolang supports a certain *flavor* of lambda expressions in the form of **abstract maps**.
 
@@ -199,7 +199,7 @@ Autolang is imperfect. The parser is brittle, there are memory leaks etc. But pe
  
 ### Completed
 
- * [x] Abstract Maps (?).
+ * [x] Abstract Maps (&lambda;).
 
  * [x] Abstract Sets.
  
