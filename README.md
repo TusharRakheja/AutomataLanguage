@@ -26,7 +26,7 @@ $ make clean
 
 Autolang can be used either with a file, or interactively. The filename argument is optional.
 
-`$ auto filename.al`
+`$ ./auto filename.al`
 
 ### Examples
 
