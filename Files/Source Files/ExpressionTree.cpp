@@ -352,6 +352,13 @@ Elem * ExpressionTree::evaluate()
 					Int * q = (Int *)query;
 					node->value = (*e)[q->elem];
 				}
+				else if (elem->type == SET && query->type == TUPLE)
+				{
+					Set * e = (Set *)elem;
+					Int * start = (Int *)(*((Tuple *)query)->elems)[0];
+					Int * end = (Int *)(*((Tuple *)query)->elems)[1];
+					node->value = e->subset(start->elem, end->elem);				
+				}
 				else if (elem->type == ABSTRACT_MAP)
 				{
 					AbstractMap * map = (AbstractMap *)elem;
