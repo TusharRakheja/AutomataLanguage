@@ -2,26 +2,26 @@
 
 set arrays = {{"Harvey", "Mike", "Jessica", "Donna"}, {"Specter", "Ross", "Pearson", "Paulson"}} 	# Will hold the `arrays` (sets).
 
-set keys = {"First", "Last"}										# They keys with which we want to associate the.
+set keys = {"First", "Last"}				# They keys with which we want to associate the.
 
-map names : keys --> arrays										# Declare the association map.										
+map names : keys --> arrays				# Declare the association map.										
 
-declare int i												# An index to help with the mappings.
+declare int i						# An index to help with the mappings.
 
-while (i < |arrays|) & (i < |keys|)									# As long as we're within limits.
+while (i < |arrays|) & (i < |keys|)			# As long as we're within limits.
 {
-	under names : keys[i] --> arrays[i]								# Map the element of keys at i to arrays at i.
+	under names : keys[i] --> arrays[i]		# Map the element of keys at i to arrays at i.
 
-	let i = i + 1											# Update the index.
+	let i = i + 1					# Update the index.
 }
-delete i												# No need for this again.												
+delete i						# No need for this again.												
 
-printr names["First"]											# Print 'raw', with the quotes in every string element etc.
+printr names["First"]					# Print 'raw', with the quotes in every string element etc.
 
-print  '\\n'												# We need the newline, not quotes, so normal print.
+print  '\\n'						# We need the newline, not quotes, so normal print.
 
-printr names["Last"]											# Print the other array.
+printr names["Last"]					# Print the other array.
 
-print  '\\n'												# Prettify.
+print  '\\n'						# Prettify.
 
-quit													# Booyeah.
+quit							# Booyeah.
