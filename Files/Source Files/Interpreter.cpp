@@ -52,8 +52,8 @@ void print_info();		// Prints the license and other info.
 
 int main(int argc, char **argv) 
 {
-	if (argc == 1) { print_info(); program = &cin; }
-	else program = new std::ifstream(argv[1]);
+	/*if (argc == 1) { print_info(); program = &cin; }
+	else*/ program = new std::ifstream(/*argv[1]*/"../Examples/Sort.al");
 	parse_program();
 }
 
@@ -257,9 +257,7 @@ void parse_assignment()
 	ExpressionTree expr(expression.lexeme, ROOT);
 	
 	Elem * new_value = expr.evaluate();
-	 
-	delete (*identify)[update.lexeme];
-
+	
 	(*identify)[update.lexeme] = new_value;
 }
 
@@ -270,7 +268,7 @@ void parse_print()
 
 	ExpressionTree expr(print.lexeme, ROOT);	 
 	Elem * to_be_printed = expr.evaluate();
-
+	
 	cout << to_be_printed->to_string();
 	if (program == &cin) cout << endl << endl;
 
