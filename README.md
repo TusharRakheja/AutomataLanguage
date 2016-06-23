@@ -47,42 +47,44 @@ The key data structure in Autolang is a  **set** - a (possibly heterogeneous) co
 
 **Basic Operations**
 ```perl
->>> print {1, 2} U {1, 3}                            # Union of two sets.
+>>> print {1, 2} U {1, 3}                                          # Union of two sets.
 {1, 2, 3}
->>> print {1, 2} & {1, 3}                            # Intersection.
+>>> print {1, 2} & {1, 3}                                          # Intersection.
 {1}
->>> print {1, 2} \ {1, 3}                            # Exclusion.
+>>> print {1, 2} \ {1, 3}                                          # Exclusion.
 {2}
 ```
 
 **Advanced Operations** 
 
 ```perl
->>> set A = {1, 2, 3} x {'A', 'B'}      		     # Cartesian Product
+>>> set A = {1, 2, 3} x {'A', 'B'}      		                   # Cartesian Product
 >>> print A
 {(1, 'A'), (1, 'B'), (2, 'A'), (2, 'B'), (3, 'A'), (3, 'B')} 
->>> print |A|                                        # Print the cardinality of set A.
+>>> print |A|                                                      # Print the cardinality of set A.
 6
 ```
 
 **Subset Query**
 ```perl
->>> print {(1, 'B')} c A                		     # Is this set a subset of A?
+>>> print {(1, 'B')} c A                		                   # Is this set a subset of A?
 True
 ```
 In addition to the standard set operations, it is possible to access a member of a set at a specific position, using the **`[]`** operator (may also be used with *tuples*).
 
 **Access Query**
 ```perl
->>> print A[1]                          		    # Access the element of A at index 1.
-2
+>>> print A[1]                          		                   # Access the element of A at index 1.
+{(1, 'B')}
+>>> print A[(1, 3)]                                                # Access the subset of A between [1, 3).
+{(1, 'B'), (2, 'A')}
 ```
 
 The **`in`** operator returns a *logical* value if the left argument is present in the right argument. Just like the access query operator, it may also be used with tuples.
 
 **Membership Query**
 ```perl
->>> print ('2' in {1, {'2'}, 3}[1])                 # The 'in' and '[]' operators in action.
+>>> print ('2' in {1, {'2'}, 3}[1])                  # The 'in' and '[]' operators in action.
 True
 ```
 
