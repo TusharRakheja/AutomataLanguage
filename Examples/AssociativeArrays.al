@@ -1,6 +1,6 @@
 # A program to demonstrate how to implement associative arrays in Autolang.
 
-set arrays = {{"Harvey", "Mike", "Jessica", "Donna"}, {"Specter", "Ross", "Pearson", "Paulson"}}	# Will hold the `arrays` (sets).
+set arrays = {{"Harvey", "Mike", "Jessica", "Donna"}, {"Specter", "Ross", "Pearson", "Paulson"}} 	# Will hold the `arrays` (sets).
 
 set keys = {"First", "Last"}										# They keys with which we want to associate the.
 
