@@ -1,6 +1,6 @@
 ﻿# Autolang [![Build Status](https://travis-ci.org/TusharRakheja/Autolang.svg?branch=master)](https://travis-ci.org/TusharRakheja/Autolang)
 
-**Autolang** is a procedural, interpreted programming language.
+**Autolang** is a high-level programming language supporting multiple paradigms, with syntax rooted in mathematical notation.
 
 It supports primitive data types (`int`, `char`, and `logical`), containers (`sets`, `tuples`, and `maps`), and `strings`.
 
@@ -119,7 +119,7 @@ True
 False
 ```
 
-Most set operations will also work with abstract sets, except the [] operator (since an abstract set can be potentially uncountably infinite in size). *However, an operation between an abstract set and a normal set is **not** possible (for now), except a subset operation (which, (un)interestingly, cannot be performed on two abstract sets)*.
+Most set operations will also work with abstract sets, except the [] operator (since an abstract set can be potentially uncountably infinite in size). However, an operation between an abstract set and a normal set is __not__ possible (for now), except a subset operation (which, (un)interestingly, cannot be performed on two abstract sets).
 
 **Abstract Set Operations**
 ```perl
@@ -190,7 +190,7 @@ More generally, a thing to keep in mind is that though Autolang tries to approxi
 >>> set P = {1, 2} x {'a', 'b'} x {True}    # We have tuples of the form (e, (f, g)), not (e, f, g) as expected.
 >>> print P
 {(1, ('a', True)), (1, ('b', True)), (2, ('a', True)), (2, ('b', True))}
->>> print |(P[0])|                          # |(e, (f, g))| == 2
+>>> print |(P[0])|                                                         # Will not print 3, but 2.
 2
 ```
 
