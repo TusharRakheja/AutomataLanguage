@@ -42,7 +42,6 @@ public:
 	{
 		if (left != nullptr) delete left; 
 		if (right != nullptr) delete right;
-		if (token.types[0] != IDENTIFIER && !at_root && value != nullptr) delete value;
 	}
 };
 
