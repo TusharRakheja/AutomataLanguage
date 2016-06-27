@@ -20,7 +20,7 @@ public:
 		if (c[2] == '\\')							// Construct a char object using a string rep of it.
 		{
 			if (c[3] == 'r') this->elem = '\r';
-			else if (c[3] == '\\') this->elem == '\\';
+			else if (c[3] == '\\') this->elem = '\\';
 			else if (c[3] == '\'') this->elem = '\'';
 			else if (c[3] == 'n') this->elem = '\n';
 			else if (c[3] == 't') this->elem = '\t';
