@@ -17,7 +17,7 @@ AbstractSet::AbstractSet(string &setbuilder) : Elem(ABSTRACT_SET)	// Construct w
 	criteria = setbuilder.substr(cr_start, index - cr_start + 1);	// Phew.
 }
 
-AbstractSet * AbstractSet::cartesian_product(AbstractSet &other)	// Returns the cartesian product of this set and the other set.
+shared_ptr<AbstractSet> AbstractSet::cartesian_product(AbstractSet &other)	// Returns the cartesian product of this set and the other set.
 {
 	string criteria_e1 = this->criteria;			// Will replace all instances of elem in this criteria with (elem[0]).
 	string criteria_e2 = other.criteria;			// Will replace all instances of elem in this criteria with (elem[1]).
@@ -49,15 +49,15 @@ AbstractSet * AbstractSet::cartesian_product(AbstractSet &other)	// Returns the 
 	for (auto part : criteria1) criteria_e1 += part;
 	for (auto part : criteria2) criteria_e2 += part;
 
-	AbstractSet * cartesian = new AbstractSet;
+	shared_ptr<AbstractSet> cartesian = shared_ptr<AbstractSet>{new AbstractSet};
 	cartesian->criteria = "(" + criteria_e1 + ") & (" + criteria_e2 + ")";
 	return cartesian;
 }
 
 
-AbstractSet * AbstractSet::exclusion(AbstractSet &exclude)	// Returns a set containing elements of this, minus those of the argument.
+shared_ptr<AbstractSet> AbstractSet::exclusion(AbstractSet &exclude)	// Returns a set containing elements of this, minus those of the argument.
 {
-	AbstractSet * exclusive = new AbstractSet(); 
+	shared_ptr<AbstractSet> exclusive = shared_ptr<AbstractSet>{new AbstractSet()};
 	exclusive->criteria = "(" + this->criteria + ") & !(" + exclude.criteria + ")";
 	return exclusive;
 }
@@ -74,7 +74,7 @@ bool AbstractSet::has(Elem &elem)				// Returns true if the argument elem fulfil
 		to_be_evaluated = part1 + part2 + part3;
 	}
 	ExpressionTree eval(to_be_evaluated);
-	bool answer = ((Logical *)eval.evaluate())->elem;
+	bool answer = (std::static_pointer_cast<Logical>(eval.evaluate()))->elem;
 	return answer;
 }
 
@@ -86,16 +86,16 @@ bool AbstractSet::superset_of(Set &candidate_subset)
 	return true;
 }
 
-AbstractSet * AbstractSet::intersection(AbstractSet &exclude)	// Returns a set containing elements of this, minus those of the argument.
+shared_ptr<AbstractSet> AbstractSet::intersection(AbstractSet &exclude)	// Returns a set containing elements of this, minus those of the argument.
 {
-	AbstractSet * intersection = new AbstractSet();
+	shared_ptr<AbstractSet> intersection = shared_ptr<AbstractSet>{new AbstractSet()};
 	intersection->criteria = "(" + this->criteria + ") & (" + exclude.criteria + ")";
 	return intersection;
 }
 
-AbstractSet * AbstractSet::_union(AbstractSet &exclude)		// Returns a set containing elements of this, minus those of the argument.
+shared_ptr<AbstractSet> AbstractSet::_union(AbstractSet &exclude)		// Returns a set containing elements of this, minus those of the argument.
 {
-	AbstractSet * _unified = new AbstractSet();
+	shared_ptr<AbstractSet> _unified = shared_ptr<AbstractSet>{new AbstractSet()};
 	_unified->criteria = "(" + this->criteria + ") V (" + exclude.criteria + ")";
 	return _unified;
 }

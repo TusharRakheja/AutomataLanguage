@@ -2,8 +2,10 @@
 #define ELEM_H
 
 #include <string>
+#include <memory>
 
 using std::string;
+using std::shared_ptr;
 
 /* The definition of a generic Elem(ent) in Autolang. */
 
@@ -38,7 +40,7 @@ public:
 	}
 	virtual string to_string() = 0;					// Virtual to_string method for display.
 	virtual string to_string_raw() { return this->to_string(); }	// Only ever makes sense to use this for characters and strings.
-	virtual Elem* deep_copy() = 0;					// Virtual deep_copy method for making a 'deep clone' of the object.
+	virtual shared_ptr<Elem> deep_copy() = 0;			// Virtual deep_copy method for making a 'deep clone' of the object.
 };
 
 #endif

@@ -3,6 +3,8 @@
 #include <iostream>
 using std::cout;
 using std::endl;
+using std::static_pointer_cast;
+
 
 /* Implementations for methods in the classes Token, Node, and ExpressionTree. */
 
@@ -30,28 +32,28 @@ string Token::to_string()
 
 // ------------------------------------------------------<CLASS NODE>-------------------------------------------//
 
-Elem * Node::parse_literal()		// Parses the token.lexeme to get a value, if the lexeme is a literal.
+shared_ptr<Elem> Node::parse_literal()		// Parses the token.lexeme to get a value, if the lexeme is a literal.
 {
 	if (this->token.types[0] != LITERAL) 
-		return nullptr;		// If the token is not a literal, ignore it.
+		return nullptr;			// If the token is not a literal, ignore it.
 	
 	if (this->token.types[1] == INT_LIT)			
-		return new Int(token.lexeme);			
+		return shared_ptr<Elem>{new Int(token.lexeme)};
 
 	if (this->token.types[1] == CHAR_LIT)			
-		return new Char(token.lexeme);
+		return shared_ptr<Elem>{new Char(token.lexeme)};
 
 	if (this->token.types[1] == LOGICAL_LIT)
-		return new Logical(token.lexeme);
+		return shared_ptr<Elem>{new Logical(token.lexeme)};
 		
 	if (this->token.types[1] == STRING_LIT)
-		return new String(token.lexeme, 0);		// The 0 means that the string being passed is a representation of the object.
-								// (as opposed to its value).
+		return shared_ptr<Elem>{new String(token.lexeme, 0)};	// The 0 => the string being passed is a representation of the object.
+									// (as opposed to its value).
 	if (this->token.types[1] == SET_LIT)
-		return new Set(token.lexeme);
+		return shared_ptr<Elem>{new Set(token.lexeme)};
 
 	if (this->token.types[1] == TUPLE_LIT)
-		return new Tuple(token.lexeme);
+		return shared_ptr<Elem>{new Tuple(token.lexeme)};
 
 	return nullptr;
 }
@@ -70,7 +72,7 @@ void ExpressionTree::skip_whitespace()
 	}
 }
 
-Elem * ExpressionTree::evaluate()
+shared_ptr<Elem> ExpressionTree::evaluate()
 {
 	if (node->value != nullptr) 
 		return node->value;				// Will be triggered in case of literals and identifiers.
@@ -89,685 +91,851 @@ Elem * ExpressionTree::evaluate()
 			}
 			else if (node->token.lexeme == "|")
 			{
-				Elem * get_size_of = node->left->evaluate();
+				shared_ptr<Elem> get_size_of = node->left->evaluate();
 				if (get_size_of->type == SET)
 				{
-					Set * get_size_of_set = (Set *)get_size_of;
-					node->value = new Int(get_size_of_set->cardinality());
+					shared_ptr<Set> get_size_of_set = static_pointer_cast<Set>(get_size_of);
+					node->value = shared_ptr<Int>{new Int(get_size_of_set->cardinality())};
 				}
 				else if (get_size_of->type == TUPLE)
 				{
-					Tuple * get_size_of_tuple = (Tuple *)get_size_of;
-					node->value = new Int(get_size_of_tuple->size());
+					shared_ptr<Tuple> get_size_of_tuple = static_pointer_cast<Tuple>(get_size_of);
+					node->value = shared_ptr<Int>{new Int(get_size_of_tuple->size())};
 				}
+				else if (get_size_of->type == STRING)
+				{
+					shared_ptr<String> get_size_of_string = static_pointer_cast<String>(get_size_of);
+					node->value = shared_ptr<Int>{new Int(get_size_of_string->elem.size())};
+				}
+				else if (get_size_of->type == MAP)
+				{
+					shared_ptr<Map> get_num_of_mappings = static_pointer_cast<Map>(get_size_of);
+					node->value = shared_ptr<Int>{new Int(get_num_of_mappings->map->size())};
+				}
+				else program_vars::raise_error("Expected a string or a container for \"| |\" operation.");
 			}
 			else if (node->token.lexeme == "!")
 			{
-				Logical * negate = (Logical *)node->left->evaluate();
-				node->value = new Logical(!negate->elem);
+				shared_ptr<Elem> negate = node->left->evaluate();
+				if (negate->type == LOGICAL)
+				{
+					shared_ptr<Logical> negate_this = static_pointer_cast<Logical>(negate);
+					node->value = shared_ptr<Logical>{new Logical(!negate_this->elem)};
+				}
+				else if (negate->type == CHAR)
+				{
+					shared_ptr<Char> negate_this = static_pointer_cast<Char>(negate);
+					node->value = shared_ptr<Logical>{new Logical(!negate_this->elem)};
+				}	
+				else if (negate->type != INT)
+				{
+					shared_ptr<Int> negate_this = static_pointer_cast<Int>(negate);
+					node->value = shared_ptr<Logical>{new Logical(!negate_this->elem)};
+				}
+				else program_vars::raise_error("Expected a logical (or another primitive) expression for \"!\" operation.");
 			}
 		}
 		else
 		{
 			if (node->token.lexeme == "?")
 			{
-				Logical * condition = (Logical *)node->left->evaluate();
-				if (condition->elem) node->value = node->center->evaluate();
-				else node->value = node->right->evaluate();
+				shared_ptr<Elem> cond = node->left->evaluate();				
+				if (cond->type == LOGICAL)
+				{
+					if (static_pointer_cast<Logical>(cond)->elem) node->value = node->center->evaluate();
+					else node->value = node->right->evaluate();
+				}
+				else if (cond->type == CHAR)
+				{
+					if (static_pointer_cast<Char>(cond)->elem) node->value = node->center->evaluate();
+					else node->value = node->right->evaluate();
+				}
+				else if (cond->type == INT)
+				{
+					if (static_pointer_cast<Int>(cond)->elem) node->value = node->center->evaluate();
+					else node->value = node->right->evaluate();
+				}
+				else program_vars::raise_error("Expected a logical (or another primitive) expression for the \"?\" operation.");
+
 			}
 
 			else if (node->token.lexeme == "V")
 			{
-				Elem * left = node->left->evaluate();
-				Elem * right = node->right->evaluate();
+				shared_ptr<Elem> left = node->left->evaluate();
+				shared_ptr<Elem> right = node->right->evaluate();
 				if (left->type == INT)
 				{
-					Int * l_int = (Int *)left;
+					shared_ptr<Int> l_int = static_pointer_cast<Int>(left);
 					if (right->type == INT)
 					{
-						Int *r_int = (Int *)right;
-						node->value = new Int(l_int->elem || r_int->elem);
+						shared_ptr<Int> r_int = static_pointer_cast<Int>(right);
+						node->value = shared_ptr<Int>{new Int(l_int->elem || r_int->elem)};
 					}
 					else if (right->type == LOGICAL)
 					{
-						Logical *r_logical = (Logical *)right;
-						node->value = new Int(l_int->elem || r_logical->elem);
+						shared_ptr<Logical> r_logical = static_pointer_cast<Logical>(right);
+						node->value = shared_ptr<Int>{new Int(l_int->elem || r_logical->elem)};
 					}
 					else if (right->type == CHAR)
 					{
-						Char *r_char = (Char *)right;
-						node->value = new Int(l_int->elem || r_char->elem);
+						shared_ptr<Char> r_char = static_pointer_cast<Char>(right);
+						node->value = shared_ptr<Int>{new Int(l_int->elem || r_char->elem)};
 					}
+					else program_vars::raise_error("Expected a logical (or another primitive) expression for the \"V\" operation");
 				}
 				else if (left->type == LOGICAL)
 				{
-					Logical * l_int = (Logical *)left;
+					shared_ptr<Logical> l_logical = static_pointer_cast<Logical>(left);
 					if (right->type == INT)
 					{
-						Int *r_int = (Int *)right;
-						node->value = new Logical(l_int->elem || r_int->elem);
+						shared_ptr<Int>r_int = static_pointer_cast<Int>(right);
+						node->value = shared_ptr<Logical>{new Logical(l_logical->elem || r_int->elem)};
 					}
 					else if (right->type == LOGICAL)
 					{
-						Logical *r_logical = (Logical *)right;
-						node->value = new Logical(l_int->elem || r_logical->elem);
+						shared_ptr<Logical>r_logical = static_pointer_cast<Logical>(right);
+						node->value = shared_ptr<Logical>{new Logical(l_logical->elem || r_logical->elem)};
 					}
 					else if (right->type == CHAR)
 					{
-						Char *r_char = (Char *)right;
-						node->value = new Logical(l_int->elem || r_char->elem);
+						shared_ptr<Char>r_char = static_pointer_cast<Char>(right);
+						node->value = shared_ptr<Logical>{new Logical(l_logical->elem || r_char->elem)};
 					}
+					else program_vars::raise_error("Expected a logical (or another primitive) expression for the \"V\" operation");
 				}
 				else if (left->type == CHAR)
 				{
-					Char * l_int = (Char *)left;
+					shared_ptr<Char> l_char = static_pointer_cast<Char>(left);
 					if (right->type == INT)
 					{
-						Int *r_int = (Int *)right;
-						node->value = new Char(l_int->elem || r_int->elem);
+						shared_ptr<Int>r_int = static_pointer_cast<Int>(right);
+						node->value = shared_ptr<Char>{new Char(l_char->elem || r_int->elem)};
 					}
 					else if (right->type == LOGICAL)
 					{
-						Logical *r_logical = (Logical *)right;
-						node->value = new Char(l_int->elem || r_logical->elem);
+						shared_ptr<Logical>r_logical = static_pointer_cast<Logical>(right);
+						node->value = shared_ptr<Char>{new Char(l_char->elem || r_logical->elem)};
 					}
 					else if (right->type == CHAR)
 					{
-						Char *r_char = (Char *)right;
-						node->value = new Char(l_int->elem || r_char->elem);
+						shared_ptr<Char>r_char = static_pointer_cast<Char>(right);
+						node->value = shared_ptr<Char>{new Char(l_char->elem || r_char->elem)};
 					}
+					else program_vars::raise_error("Expected a logical (or another primitive) expression for the \"V\" operation");
 				}
+				else program_vars::raise_error("Expected a logical (or another primitive) expression for the \"V\" operation");
 			}
 			else if (node->token.lexeme == "&")
 			{
-				Elem * left = node->left->evaluate();
-				Elem * right = node->right->evaluate();
+				shared_ptr<Elem> left = node->left->evaluate();
+				shared_ptr<Elem> right = node->right->evaluate();
 				if (left->type == ABSTRACT_SET && right->type == ABSTRACT_SET)
-					node->value = ((AbstractSet *)left)->intersection(*(AbstractSet *)right);
+				{
+					shared_ptr<AbstractSet> l_set = static_pointer_cast<AbstractSet>(left);
+					shared_ptr<AbstractSet> r_set = static_pointer_cast<AbstractSet>(right);
+					node->value = l_set->intersection(*r_set);
+				}
 				else if (left->type == SET && right->type == SET)
 				{
-					Set * l_set = (Set *)left, *r_set = (Set *)right;
+					shared_ptr<Set> l_set = static_pointer_cast<Set>(left);
+					shared_ptr<Set> r_set = static_pointer_cast<Set>(right);
 					node->value = l_set->intersection(*r_set);
 				}
 				else if (left->type == AUTO && right->type == AUTO)
 				{
-					Auto * l_auto = (Auto *)left, *r_auto = (Auto *)right;
+					shared_ptr<Auto> l_auto = static_pointer_cast<Auto>(left);
+					shared_ptr<Auto> r_auto = static_pointer_cast<Auto>(right);
 					node->value = l_auto->accepts_intersection(r_auto);
 				}
-				else if (left->type == INT)
+				if (left->type == INT)
 				{
-					Int * l_int = (Int *)left;
+					shared_ptr<Int> l_int = static_pointer_cast<Int>(left);
 					if (right->type == INT)
 					{
-						Int *r_int = (Int *)right;
-						node->value = new Int(l_int->elem && r_int->elem);
+						shared_ptr<Int> r_int = static_pointer_cast<Int>(right);
+						node->value = shared_ptr<Int>{new Int(l_int->elem && r_int->elem)};
 					}
 					else if (right->type == LOGICAL)
 					{
-						Logical *r_logical = (Logical *)right;
-						node->value = new Int(l_int->elem && r_logical->elem);
+						shared_ptr<Logical> r_logical = static_pointer_cast<Logical>(right);
+						node->value = shared_ptr<Int>{new Int(l_int->elem && r_logical->elem)};
 					}
 					else if (right->type == CHAR)
 					{
-						Char *r_char = (Char *)right;
-						node->value = new Int(l_int->elem && r_char->elem);
+						shared_ptr<Char> r_char = static_pointer_cast<Char>(right);
+						node->value = shared_ptr<Int>{new Int(l_int->elem && r_char->elem)};
 					}
+					else program_vars::raise_error("Expected a logical (or another primitive) expression for the \"&\" operation");
 				}
 				else if (left->type == LOGICAL)
 				{
-					Logical * l_int = (Logical *)left;
+					shared_ptr<Logical> l_logical = static_pointer_cast<Logical>(left);
 					if (right->type == INT)
 					{
-						Int *r_int = (Int *)right;
-						node->value = new Logical(l_int->elem && r_int->elem);
+						shared_ptr<Int>r_int = static_pointer_cast<Int>(right);
+						node->value = shared_ptr<Logical>{new Logical(l_logical->elem && r_int->elem)};
 					}
 					else if (right->type == LOGICAL)
 					{
-						Logical *r_logical = (Logical *)right;
-						node->value = new Logical(l_int->elem && r_logical->elem);
+						shared_ptr<Logical>r_logical = static_pointer_cast<Logical>(right);
+						node->value = shared_ptr<Logical>{new Logical(l_logical->elem && r_logical->elem)};
 					}
 					else if (right->type == CHAR)
 					{
-						Char *r_char = (Char *)right;
-						node->value = new Logical(l_int->elem && r_char->elem);
+						shared_ptr<Char>r_char = static_pointer_cast<Char>(right);
+						node->value = shared_ptr<Logical>{new Logical(l_logical->elem && r_char->elem)};
 					}
+					else program_vars::raise_error("Expected a logical (or another primitive) expression for the \"&\" operation");
 				}
 				else if (left->type == CHAR)
 				{
-					Char * l_int = (Char *)left;
+					shared_ptr<Char> l_char = static_pointer_cast<Char>(left);
 					if (right->type == INT)
 					{
-						Int *r_int = (Int *)right;
-						node->value = new Char(l_int->elem && r_int->elem);
+						shared_ptr<Int>r_int = static_pointer_cast<Int>(right);
+						node->value = shared_ptr<Char>{new Char(l_char->elem && r_int->elem)};
 					}
 					else if (right->type == LOGICAL)
 					{
-						Logical *r_logical = (Logical *)right;
-						node->value = new Char(l_int->elem && r_logical->elem);
+						shared_ptr<Logical>r_logical = static_pointer_cast<Logical>(right);
+						node->value = shared_ptr<Char>{new Char(l_char->elem && r_logical->elem)};
 					}
 					else if (right->type == CHAR)
 					{
-						Char *r_char = (Char *)right;
-						node->value = new Char(l_int->elem && r_char->elem);
+						shared_ptr<Char>r_char = static_pointer_cast<Char>(right);
+						node->value = shared_ptr<Char>{new Char(l_char->elem && r_char->elem)};
 					}
+					else program_vars::raise_error("Expected a logical (or another primitive) expression for the \"&\" operation");
 				}
+				else program_vars::raise_error("Expected a set, abtract set, logical, or another primitive expression for the \"&\" operation");
 			}
 			else if (node->token.lexeme == "in")
 			{
-				Elem * left = node->left->evaluate();
-				Elem * right = node->right->evaluate();
+				shared_ptr<Elem> left = node->left->evaluate(), right = node->right->evaluate();
 				if (right->type == SET)
-					node->value = new Logical(((Set *)right)->has(*left));
+				{
+					node->value = shared_ptr<Logical>{
+						new Logical(static_pointer_cast<Set>(right)->has(*left))
+					};
+				}
 				else if (right->type == ABSTRACT_SET)
-					node->value = new Logical(((AbstractSet *)right)->has(*left));
+				{
+					node->value = shared_ptr<Logical>{
+						new Logical(static_pointer_cast<AbstractSet>(right)->has(*left))
+					};
+				}
 				else if (right->type == TUPLE)
-					node->value = new Logical(((Tuple *)right)->has(*left));
+				{
+					node->value = shared_ptr<Logical>{
+						new Logical(static_pointer_cast<Tuple>(right)->has(*left))
+					};
+				}
+				else if (right->type == STRING)
+				{
+					if (left->type == CHAR)
+					{
+						node->value = shared_ptr<Logical> { 
+							new Logical (
+								static_pointer_cast<String>(right)->elem.find (
+									static_pointer_cast<Char>(left)->elem
+								) != string::npos
+							)
+						};
+					}
+					else if (left->type == STRING)
+					{
+						node->value = shared_ptr<Logical> {
+							new Logical(
+								static_pointer_cast<String>(right)->elem.find(
+									static_pointer_cast<String>(left)->elem
+								) != string::npos
+							)
+						};
+					}
+					else program_vars::raise_error("Expected a char or a string on the LHS for an \"in\" operation with a string on the RHS.");
+				}
+				else program_vars::raise_error("Expected a set, abstract set, tuple or string on the RHS for an \"in\" operation.");
 			}
 			else if (node->token.lexeme == "==")
 			{
-				Elem * left = node->left->evaluate();
-				Elem * right = node->right->evaluate();
-				node->value = new Logical(*left == *right);
+				shared_ptr<Elem> left = node->left->evaluate();
+				shared_ptr<Elem> right = node->right->evaluate();
+				node->value = shared_ptr<Logical>{new Logical(*left == *right)};
+			}
+			else if (node->token.lexeme == "!=")
+			{
+				shared_ptr<Elem> left = node->left->evaluate();
+				shared_ptr<Elem> right = node->right->evaluate();
+				node->value = shared_ptr<Logical>{new Logical(!(*left == *right))};
 			}
 			else if (node->token.lexeme == "<")
 			{
-				Elem * left = node->left->evaluate();
-				Elem * right = node->right->evaluate();
-				node->value = new Logical(*left < *right);
+				shared_ptr<Elem> left = node->left->evaluate();
+				shared_ptr<Elem> right = node->right->evaluate();
+				node->value = shared_ptr<Logical>{new Logical(*left < *right)};
 			}
 			else if (node->token.lexeme == "<=")
 			{
-				Elem * left = node->left->evaluate();
-				Elem * right = node->right->evaluate();
-				node->value = new Logical(*left <= *right);
+				shared_ptr<Elem> left = node->left->evaluate();
+				shared_ptr<Elem> right = node->right->evaluate();
+				node->value = shared_ptr<Logical>{new Logical(*left <= *right)};
 			}
 			else if (node->token.lexeme == ">")
 			{
-				Elem * left = node->left->evaluate();
-				Elem * right = node->right->evaluate();
-				node->value = new Logical(*left > *right);
+				shared_ptr<Elem> left = node->left->evaluate();
+				shared_ptr<Elem> right = node->right->evaluate();
+				node->value = shared_ptr<Logical>{new Logical(*left > *right)};
 			}
 			else if (node->token.lexeme == ">=")
 			{
-				Elem * left = node->left->evaluate();
-				Elem * right = node->right->evaluate();
-				node->value = new Logical(*left >= *right);
+				shared_ptr<Elem> left = node->left->evaluate();
+				shared_ptr<Elem> right = node->right->evaluate();
+				node->value = shared_ptr<Logical>{new Logical(*left >= *right)};
 			}
 			else if (node->token.lexeme == "o")
 			{
-				Elem * f = node->left->evaluate();
-				Elem * g = node->right->evaluate();
+				shared_ptr<Elem> f = node->left->evaluate();
+				shared_ptr<Elem> g = node->right->evaluate();
 				if (f->type == MAP && g->type == MAP)
-					node->value = ((Map *)f)->composed_with(*(Map *)g);
+					node->value = static_pointer_cast<Map>(f)->composed_with(*static_pointer_cast<Map>(g));
+					
 				else if (f->type == ABSTRACT_MAP && g->type == ABSTRACT_MAP)
-					node->value = ((AbstractMap *)f)->composed_with((AbstractMap *)g);
+					node->value = static_pointer_cast<AbstractMap>(f)->composed_with(static_pointer_cast<AbstractMap>(g));
+				
+				else program_vars::raise_error("Expected map or abstract map objects for a \"o\" operation.");
 			}
 			else if (node->token.lexeme == "c")
 			{
-				Elem * f = node->left->evaluate();
-				Elem * g = node->right->evaluate();
-				if (f->type == SET && g->type == SET)
-					node->value = new Logical(((Set *)f)->subset_of(*(Set *)g));
+				shared_ptr<Elem> f = node->left->evaluate();
+				shared_ptr<Elem> g = node->right->evaluate();
+				if (f->type == SET && g->type == SET) 
+				{
+					node->value = shared_ptr < Logical > {
+						new Logical (
+							static_pointer_cast<Set>(f)->subset_of(*static_pointer_cast<Set>(g))
+						)
+					};
+				}
 				else if (f->type == SET && g->type == ABSTRACT_SET)
-					node->value = new Logical(((AbstractSet *)g)->superset_of(*(Set *)f));
+				{
+					node->value = shared_ptr < Logical > {
+						new Logical(
+							static_pointer_cast<AbstractSet>(g)->superset_of(*static_pointer_cast<Set>(f))
+						)
+					};
+				}
+				else program_vars::raise_error("Expected set or abstract set objects for a \"c\" operation.");
 			}
 			else if (node->token.lexeme == "x")
 			{
-				Elem * left =  node->left->evaluate();
-				Elem * right = node->right->evaluate();
+				shared_ptr<Elem> left = node->left->evaluate();
+				shared_ptr<Elem> right = node->right->evaluate();
 				if (left->type == SET && right->type == SET)
-					node->value = ((Set *)left)->cartesian_product(*(Set *)right);
+					node->value = static_pointer_cast<Set>(left)->cartesian_product(
+						*static_pointer_cast<Set>(right)
+					);
+
 				else if (left->type == ABSTRACT_SET && right->type == ABSTRACT_SET)
-					node->value = ((AbstractSet *)left)->cartesian_product(*(AbstractSet *)right);
+					node->value = static_pointer_cast<AbstractSet>(left)->cartesian_product(
+						*static_pointer_cast<AbstractSet>(right)
+					); 
+
+				else program_vars::raise_error("Expected set or abstract set objects for a \"x\" operation.");
 			}
 			else if (node->token.lexeme == "U")
 			{
-				Elem * left = (Set *)node->left->evaluate();
-				Elem * right = (Set *)node->right->evaluate();
+				shared_ptr<Elem> left = node->left->evaluate();
+				shared_ptr<Elem> right = node->right->evaluate();
 				if (left->type == SET && right->type == SET)
-					node->value = ((Set *)left)->_union(*(Set *)right);
+					node->value = static_pointer_cast<Set>(left)->_union(
+						*static_pointer_cast<Set>(right)
+					);
+
 				else if (left->type == AUTO && right->type == AUTO)
-					node->value = ((Auto*)left)->accepts_union((Auto*)right);
+					node->value = static_pointer_cast<Auto>(left)->accepts_union(
+							static_pointer_cast<Auto>(right)
+					);
+
 				else if (left->type == ABSTRACT_SET && right->type == ABSTRACT_SET)
-					node->value = ((AbstractSet *)left)->_union(*(AbstractSet *)right);
+					node->value = static_pointer_cast<AbstractSet>(left)->_union(
+						*static_pointer_cast<AbstractSet>(right)
+					);
+				else program_vars::raise_error("Expected sets, abstract sets, our automata for a \"x\" operation.");
 			}
 			else if (node->token.lexeme == "\\")
 			{
-				Elem * left = (Set *)node->left->evaluate();
-				Elem * right = (Set *)node->right->evaluate();
+				shared_ptr<Elem> left = node->left->evaluate();
+				shared_ptr<Elem> right = node->right->evaluate();
 				if (left->type == SET && right->type == SET)
-					node->value = ((Set *)left)->exclusion(*(Set *)right);
+					node->value = static_pointer_cast<Set>(left)->exclusion(
+						*static_pointer_cast<Set>(right)
+					);
+
 				else if (left->type == AUTO && right->type == AUTO)
-					node->value = ((Auto*)left)->accepts_exclusively((Auto*)right);
+					node->value = static_pointer_cast<Auto>(left)->accepts_exclusively(
+						static_pointer_cast<Auto>(right)
+					);
+
 				else if (left->type == ABSTRACT_SET && right->type == ABSTRACT_SET)
-					node->value = ((AbstractSet *)left)->exclusion(*(AbstractSet *)right);
+					node->value = static_pointer_cast<AbstractSet>(left)->exclusion(
+						*static_pointer_cast<AbstractSet>(right)
+					);
+				else program_vars::raise_error("Expected sets, abstract sets, our automata for a \"\\\" operation.");
 			}
 			else if (node->token.lexeme == "[]")
 			{
-				Elem * elem = node->left->evaluate();
-				Elem * query = node->right->evaluate();
+				shared_ptr<Elem> elem = node->left->evaluate();
+				shared_ptr<Elem> query = node->right->evaluate();
 				if (elem->type == SET && query->type == INT)
 				{
-					Set * e = (Set *)elem;
-					Int * q = (Int *)query;
+					shared_ptr<Set> e = static_pointer_cast<Set>(elem);
+					shared_ptr<Int> q = static_pointer_cast<Int>(query);
 					node->value = (*e)[q->elem];
 				}
 				else if (elem->type == SET && query->type == TUPLE)
 				{
-					Set * e = (Set *)elem;
-					Int * start = (Int *)(*((Tuple *)query)->elems)[0];
-					Int * end = (Int *)(*((Tuple *)query)->elems)[1];
+					shared_ptr<Set> e = static_pointer_cast<Set>(elem);
+					shared_ptr<Tuple> q = static_pointer_cast<Tuple>(query);
+					shared_ptr<Int> start = static_pointer_cast<Int>((*q)[0]);
+					shared_ptr<Int> end = static_pointer_cast<Int>((*q)[1]);
 					node->value = e->subset(start->elem, end->elem);				
 				}
 				else if (elem->type == ABSTRACT_MAP)
 				{
-					AbstractMap * map = (AbstractMap *)elem;
+					shared_ptr<AbstractMap> map = static_pointer_cast<AbstractMap>(elem);
 					node->value = (*map)[*query];
 				}
 				else if (elem->type == TUPLE && query->type == INT)
 				{
-					Tuple * e = (Tuple *)elem;
-					Int * q = (Int *)query;
+					shared_ptr<Tuple> e = static_pointer_cast<Tuple>(elem);
+					shared_ptr<Int> q = static_pointer_cast<Int>(query);
 					node->value = (*e)[q->elem];
 				}
 				else if (elem->type == MAP)
 				{
-					Map * map = (Map *)elem;
+					shared_ptr<Map> map = static_pointer_cast<Map>(elem);
 					node->value = (*map)[*query];
 				}
 				else if (elem->type == AUTO && query->type == STRING)
 				{
-					Auto * auto_ = (Auto *)elem;
-					String * q = (String *)query;
+					shared_ptr<Auto> auto_ = static_pointer_cast<Auto>(elem);
+					shared_ptr<String> q = static_pointer_cast<String>(query);
 					node->value = (*auto_)[*q];
 				}
+				else program_vars::raise_error("Expected a suitable data type for a \"[]\" operation.");
 			}
 			else if (node->token.lexeme == "+")
 			{
-				Elem * left = node->left->evaluate();
-				Elem * right = node->right->evaluate();
+				shared_ptr<Elem> left = node->left->evaluate();
+				shared_ptr<Elem> right = node->right->evaluate();
 				if (left->type == INT)
 				{
-					Int * l_int = (Int *)left;
+					shared_ptr<Int> l_int = static_pointer_cast<Int>(left);
 					if (right->type == INT)
 					{
-						Int *r_int = (Int *)right;
-						node->value = new Int(l_int->elem + r_int->elem);
+						shared_ptr<Int> r_int = static_pointer_cast<Int>(right);
+						node->value = shared_ptr<Int>{new Int(l_int->elem + r_int->elem)};
 					}
 					else if (right->type == LOGICAL)
 					{
-						Logical *r_logical = (Logical *)right;
-						node->value = new Int(l_int->elem + r_logical->elem);
+						shared_ptr<Logical> r_logical = static_pointer_cast<Logical>(right);
+						node->value = shared_ptr<Int>{new Int(l_int->elem + r_logical->elem)};
 					}
 					else if (right->type == CHAR)
 					{
-						Char *r_char = (Char *)right;
-						node->value = new Int(l_int->elem + r_char->elem);
+						shared_ptr<Char> r_char = static_pointer_cast<Char>(right);
+						node->value = shared_ptr<Int>{new Int(l_int->elem + r_char->elem)};
 					}
+					else program_vars::raise_error("Expected an int (or another primitive) for a \"+\" operation.");
 				}
 				else if (left->type == LOGICAL)
 				{
-					Logical * l_int = (Logical *)left;
+					shared_ptr<Logical> l_logical = static_pointer_cast<Logical>(left);
 					if (right->type == INT)
 					{
-						Int *r_int = (Int *)right;
-						node->value = new Logical(l_int->elem + r_int->elem);
+						shared_ptr<Int> r_int = static_pointer_cast<Int>(right);
+						node->value = shared_ptr<Logical>{new Logical(l_logical->elem + r_int->elem)};
 					}
 					else if (right->type == LOGICAL)
 					{
-						Logical *r_logical = (Logical *)right;
-						node->value = new Logical(l_int->elem + r_logical->elem);
+						shared_ptr<Logical> r_logical = static_pointer_cast<Logical>(right);
+						node->value = shared_ptr<Logical>{new Logical(l_logical->elem + r_logical->elem)};
 					}
 					else if (right->type == CHAR)
 					{
-						Char *r_char = (Char *)right;
-						node->value = new Logical(l_int->elem + r_char->elem);
+						shared_ptr<Char> r_char = static_pointer_cast<Char>(right);
+						node->value = shared_ptr<Logical>{new Logical(l_logical->elem + r_char->elem)};
 					}
+					else program_vars::raise_error("Expected an logical (or another primitive) for a \"+\" operation.");
 				}
 				else if (left->type == CHAR)
 				{
-					Char * l_int = (Char *)left;
+					shared_ptr<Char> l_char = static_pointer_cast<Char>(left);
 					if (right->type == INT)
 					{
-						Int *r_int = (Int *)right;
-						node->value = new Char(l_int->elem + r_int->elem);
+						shared_ptr<Int> r_int = static_pointer_cast<Int>(right);
+						node->value = shared_ptr<Char>{new Char(l_char->elem + r_int->elem)};
 					}
 					else if (right->type == LOGICAL)
 					{
-						Logical *r_logical = (Logical *)right;
-						node->value = new Char(l_int->elem + r_logical->elem);
+						shared_ptr<Logical> r_logical = static_pointer_cast<Logical>(right);
+						node->value = shared_ptr<Char>{new Char(l_char->elem + r_logical->elem)};
 					}
 					else if (right->type == CHAR)
 					{
-						Char *r_char = (Char *)right;
-						node->value = new Char(l_int->elem + r_char->elem);
+						shared_ptr<Char> r_char = static_pointer_cast<Char>(right);
+						node->value = shared_ptr<Char>{new Char(l_char->elem + r_char->elem)};
 					}
+					else program_vars::raise_error("Expected an logical (or another primitive) for a \"+\" operation.");
 				}
 				else if (left->type == STRING)
 				{
+					shared_ptr<String> l_str = static_pointer_cast<String>(left);
 					if (right->type == STRING)
 					{	
-						string str = ((String*)left)->elem;
-						str += ((String*)right)->elem;
-						return new String(str);
+						shared_ptr<String> r_str = static_pointer_cast<String>(right);
+						return shared_ptr<String>{new String(l_str->elem + r_str->elem)};
 					}
 					else if (right->type == CHAR)
 					{	
-						string cha = ((String*)left)->elem;
-						cha += ((Char*)right)->elem;
-						return new String(cha);
+						shared_ptr<Char> r_char = static_pointer_cast<Char>(right);
+
+						shared_ptr<String> r_str = static_pointer_cast<String>(right);
+						return shared_ptr<String>{new String(l_str->elem + r_str->elem)}; 
 					}
+					else program_vars::raise_error("Expected a string or a char for a \"+\" operation with a string.");
 				}
+				else program_vars::raise_error("Expected a primitive or a string for a \"+\" operation.");
 			}
 			else if (node->token.lexeme == "-")
 			{
-				Elem * left = node->left->evaluate();
-				Elem * right = node->right->evaluate();
+				shared_ptr<Elem> left = node->left->evaluate();
+				shared_ptr<Elem> right = node->right->evaluate();
 				if (left->type == INT)
 				{
-					Int * l_int = (Int *)left;
+					shared_ptr<Int> l_int = static_pointer_cast<Int>(left);
 					if (right->type == INT)
 					{
-						Int *r_int = (Int *)right;
-						node->value = new Int(l_int->elem - r_int->elem);
+						shared_ptr<Int> r_int = static_pointer_cast<Int>(right);
+						node->value = shared_ptr<Int>{new Int(l_int->elem - r_int->elem)};
 					}
 					else if (right->type == LOGICAL)
 					{
-						Logical *r_logical = (Logical *)right;
-						node->value = new Int(l_int->elem - r_logical->elem);
+						shared_ptr<Logical> r_logical = static_pointer_cast<Logical>(right);
+						node->value = shared_ptr<Int>{new Int(l_int->elem - r_logical->elem)};
 					}
 					else if (right->type == CHAR)
 					{
-						Char *r_char = (Char *)right;
-						node->value = new Int(l_int->elem - r_char->elem);
+						shared_ptr<Char> r_char = static_pointer_cast<Char>(right);
+						node->value = shared_ptr<Int>{new Int(l_int->elem - r_char->elem)};
 					}
+					else program_vars::raise_error("Expected an int (or another primitive) for a \"-\" operation.");
 				}
 				else if (left->type == LOGICAL)
 				{
-					Logical * l_int = (Logical *)left;
+					shared_ptr<Logical> l_logical = static_pointer_cast<Logical>(left);
 					if (right->type == INT)
 					{
-						Int *r_int = (Int *)right;
-						node->value = new Logical(l_int->elem - r_int->elem);
+						shared_ptr<Int> r_int = static_pointer_cast<Int>(right);
+						node->value = shared_ptr<Logical>{new Logical(l_logical->elem - r_int->elem)};
 					}
 					else if (right->type == LOGICAL)
 					{
-						Logical *r_logical = (Logical *)right;
-						node->value = new Logical(l_int->elem - r_logical->elem);
+						shared_ptr<Logical> r_logical = static_pointer_cast<Logical>(right);
+						node->value = shared_ptr<Logical>{new Logical(l_logical->elem - r_logical->elem)};
 					}
 					else if (right->type == CHAR)
 					{
-						Char *r_char = (Char *)right;
-						node->value = new Logical(l_int->elem - r_char->elem);
+						shared_ptr<Char> r_char = static_pointer_cast<Char>(right);
+						node->value = shared_ptr<Logical>{new Logical(l_logical->elem - r_char->elem)};
 					}
+					else program_vars::raise_error("Expected an logical (or another primitive) for a \"-\" operation.");
 				}
 				else if (left->type == CHAR)
 				{
-					Char * l_int = (Char *)left;
+					shared_ptr<Char> l_char = static_pointer_cast<Char>(left);
 					if (right->type == INT)
 					{
-						Int *r_int = (Int *)right;
-						node->value = new Char(l_int->elem - r_int->elem);
+						shared_ptr<Int> r_int = static_pointer_cast<Int>(right);
+						node->value = shared_ptr<Char>{new Char(l_char->elem - r_int->elem)};
 					}
 					else if (right->type == LOGICAL)
 					{
-						Logical *r_logical = (Logical *)right;
-						node->value = new Char(l_int->elem - r_logical->elem);
+						shared_ptr<Logical> r_logical = static_pointer_cast<Logical>(right);
+						node->value = shared_ptr<Char>{new Char(l_char->elem - r_logical->elem)};
 					}
 					else if (right->type == CHAR)
 					{
-						Char *r_char = (Char *)right;
-						node->value = new Char(l_int->elem - r_char->elem);
+						shared_ptr<Char> r_char = static_pointer_cast<Char>(right);
+						node->value = shared_ptr<Char>{new Char(l_char->elem - r_char->elem)};
 					}
+					else program_vars::raise_error("Expected an logical (or another primitive) for a \"-\" operation.");
 				}
+				else program_vars::raise_error("Expected a primitive for a \"-\" operation.");
 			}
 			else if (node->token.lexeme == "*")
 			{
-				Elem * left = node->left->evaluate();
-				Elem * right = node->right->evaluate();
+				shared_ptr<Elem> left = node->left->evaluate();
+				shared_ptr<Elem> right = node->right->evaluate();
 				if (left->type == INT)
 				{
-					Int * l_int = (Int *)left;
+					shared_ptr<Int> l_int = static_pointer_cast<Int>(left);
 					if (right->type == INT)
 					{
-						Int *r_int = (Int *)right;
-						node->value = new Int(l_int->elem * r_int->elem);
+						shared_ptr<Int> r_int = static_pointer_cast<Int>(right);
+						node->value = shared_ptr<Int>{new Int(l_int->elem * r_int->elem)};
 					}
 					else if (right->type == LOGICAL)
 					{
-						Logical *r_logical = (Logical *)right;
-						node->value = new Int(l_int->elem * r_logical->elem);
+						shared_ptr<Logical> r_logical = static_pointer_cast<Logical>(right);
+						node->value = shared_ptr<Int>{new Int(l_int->elem * r_logical->elem)};
 					}
 					else if (right->type == CHAR)
 					{
-						Char *r_char = (Char *)right;
-						node->value = new Int(l_int->elem * r_char->elem);
+						shared_ptr<Char> r_char = static_pointer_cast<Char>(right);
+						node->value = shared_ptr<Int>{new Int(l_int->elem * r_char->elem)};
 					}
+					else program_vars::raise_error("Expected an int (or another primitive) for a \"*\" operation.");
 				}
 				else if (left->type == LOGICAL)
 				{
-					Logical * l_int = (Logical *)left;
+					shared_ptr<Logical> l_logical = static_pointer_cast<Logical>(left);
 					if (right->type == INT)
 					{
-						Int *r_int = (Int *)right;
-						node->value = new Logical(l_int->elem * r_int->elem);
+						shared_ptr<Int> r_int = static_pointer_cast<Int>(right);
+						node->value = shared_ptr<Logical>{new Logical(l_logical->elem * r_int->elem)};
 					}
 					else if (right->type == LOGICAL)
 					{
-						Logical *r_logical = (Logical *)right;
-						node->value = new Logical(l_int->elem * r_logical->elem);
+						shared_ptr<Logical> r_logical = static_pointer_cast<Logical>(right);
+						node->value = shared_ptr<Logical>{new Logical(l_logical->elem * r_logical->elem)};
 					}
 					else if (right->type == CHAR)
 					{
-						Char *r_char = (Char *)right;
-						node->value = new Logical(l_int->elem * r_char->elem);
+						shared_ptr<Char> r_char = static_pointer_cast<Char>(right);
+						node->value = shared_ptr<Logical>{new Logical(l_logical->elem * r_char->elem)};
 					}
+					else program_vars::raise_error("Expected an logical (or another primitive) for a \"*\" operation.");
 				}
 				else if (left->type == CHAR)
 				{
-					Char * l_int = (Char *)left;
+					shared_ptr<Char> l_char = static_pointer_cast<Char>(left);
 					if (right->type == INT)
 					{
-						Int *r_int = (Int *)right;
-						node->value = new Char(l_int->elem * r_int->elem);
+						shared_ptr<Int> r_int = static_pointer_cast<Int>(right);
+						node->value = shared_ptr<Char>{new Char(l_char->elem * r_int->elem)};
 					}
 					else if (right->type == LOGICAL)
 					{
-						Logical *r_logical = (Logical *)right;
-						node->value = new Char(l_int->elem * r_logical->elem);
+						shared_ptr<Logical> r_logical = static_pointer_cast<Logical>(right);
+						node->value = shared_ptr<Char>{new Char(l_char->elem * r_logical->elem)};
 					}
 					else if (right->type == CHAR)
 					{
-						Char *r_char = (Char *)right;
-						node->value = new Char(l_int->elem * r_char->elem);
+						shared_ptr<Char> r_char = static_pointer_cast<Char>(right);
+						node->value = shared_ptr<Char>{new Char(l_char->elem * r_char->elem)};
 					}
+					else program_vars::raise_error("Expected an logical (or another primitive) for a \"*\" operation.");
 				}
+				else program_vars::raise_error("Expected a primitive for a \"*\" operation.");
 			}
 			else if (node->token.lexeme == "/")
 			{
-				Elem * left = node->left->evaluate();
-				Elem * right = node->right->evaluate();
+				shared_ptr<Elem> left = node->left->evaluate();
+				shared_ptr<Elem> right = node->right->evaluate();
 				if (left->type == INT)
 				{
-					Int * l_int = (Int *)left;
+					shared_ptr<Int> l_int = static_pointer_cast<Int>(left);
 					if (right->type == INT)
 					{
-						Int *r_int = (Int *)right;
-						node->value = new Int(l_int->elem / r_int->elem);
+						shared_ptr<Int> r_int = static_pointer_cast<Int>(right);
+						node->value = shared_ptr<Int>{new Int(l_int->elem / r_int->elem)};
 					}
 					else if (right->type == LOGICAL)
 					{
-						Logical *r_logical = (Logical *)right;
-						node->value = new Int(l_int->elem / r_logical->elem);
+						shared_ptr<Logical> r_logical = static_pointer_cast<Logical>(right);
+						node->value = shared_ptr<Int>{new Int(l_int->elem / r_logical->elem)};
 					}
 					else if (right->type == CHAR)
 					{
-						Char *r_char = (Char *)right;
-						node->value = new Int(l_int->elem / r_char->elem);
+						shared_ptr<Char> r_char = static_pointer_cast<Char>(right);
+						node->value = shared_ptr<Int>{new Int(l_int->elem / r_char->elem)};
 					}
+					else program_vars::raise_error("Expected an int (or another primitive) for a \"/\" operation.");
 				}
 				else if (left->type == LOGICAL)
 				{
-					Logical * l_int = (Logical *)left;
+					shared_ptr<Logical> l_logical = static_pointer_cast<Logical>(left);
 					if (right->type == INT)
 					{
-						Int *r_int = (Int *)right;
-						node->value = new Logical(l_int->elem / r_int->elem);
+						shared_ptr<Int> r_int = static_pointer_cast<Int>(right);
+						node->value = shared_ptr<Logical>{new Logical(l_logical->elem / r_int->elem)};
 					}
 					else if (right->type == LOGICAL)
 					{
-						Logical *r_logical = (Logical *)right;
-						node->value = new Logical(l_int->elem / r_logical->elem);
+						shared_ptr<Logical> r_logical = static_pointer_cast<Logical>(right);
+						node->value = shared_ptr<Logical>{new Logical(l_logical->elem / r_logical->elem)};
 					}
 					else if (right->type == CHAR)
 					{
-						Char *r_char = (Char *)right;
-						node->value = new Logical(l_int->elem / r_char->elem);
+						shared_ptr<Char> r_char = static_pointer_cast<Char>(right);
+						node->value = shared_ptr<Logical>{new Logical(l_logical->elem / r_char->elem)};
 					}
+					else program_vars::raise_error("Expected an logical (or another primitive) for a \"/\" operation.");
 				}
 				else if (left->type == CHAR)
 				{
-					Char * l_int = (Char *)left;
+					shared_ptr<Char> l_char = static_pointer_cast<Char>(left);
 					if (right->type == INT)
 					{
-						Int *r_int = (Int *)right;
-						node->value = new Char(l_int->elem / r_int->elem);
+						shared_ptr<Int> r_int = static_pointer_cast<Int>(right);
+						node->value = shared_ptr<Char>{new Char(l_char->elem / r_int->elem)};
 					}
 					else if (right->type == LOGICAL)
 					{
-						Logical *r_logical = (Logical *)right;
-						node->value = new Char(l_int->elem / r_logical->elem);
+						shared_ptr<Logical> r_logical = static_pointer_cast<Logical>(right);
+						node->value = shared_ptr<Char>{new Char(l_char->elem / r_logical->elem)};
 					}
 					else if (right->type == CHAR)
 					{
-						Char *r_char = (Char *)right;
-						node->value = new Char(l_int->elem / r_char->elem);
+						shared_ptr<Char> r_char = static_pointer_cast<Char>(right);
+						node->value = shared_ptr<Char>{new Char(l_char->elem / r_char->elem)};
 					}
+					else program_vars::raise_error("Expected an logical (or another primitive) for a \"/\" operation.");
 				}
+				else program_vars::raise_error("Expected a primitive for a \"/\" operation.");
 			}
 			else if (node->token.lexeme == "^")
 			{
-				Elem * left = node->left->evaluate();
-				Elem * right = node->right->evaluate();
+				shared_ptr<Elem> left = node->left->evaluate();
+				shared_ptr<Elem> right = node->right->evaluate();
 				if (left->type == INT)
 				{
-					Int * l_int = (Int *)left;
+					shared_ptr<Int> l_int = static_pointer_cast<Int>(left);
 					if (right->type == INT)
 					{
-						Int *r_int = (Int *)right;
-						node->value = new Int(pow(l_int->elem, r_int->elem));
+						shared_ptr<Int> r_int = static_pointer_cast<Int>(right);
+						node->value = shared_ptr<Int>{new Int(pow(l_int->elem, r_int->elem))};
 					}
 					else if (right->type == LOGICAL)
 					{
-						Logical *r_logical = (Logical *)right;
-						node->value = new Int(pow(l_int->elem, r_logical->elem));
+						shared_ptr<Logical> r_logical = static_pointer_cast<Logical>(right);
+						node->value = shared_ptr<Int>{new Int(pow(l_int->elem, r_logical->elem))};
 					}
 					else if (right->type == CHAR)
 					{
-						Char *r_char = (Char *)right;
-						node->value = new Int(pow(l_int->elem, r_char->elem));
+						shared_ptr<Char> r_char = static_pointer_cast<Char>(right);
+						node->value = shared_ptr<Int>{new Int(pow(l_int->elem, r_char->elem))};
 					}
+					else program_vars::raise_error("Expected an int (or another primitive) for a \"^\" operation.");
 				}
 				else if (left->type == LOGICAL)
 				{
-					Logical * l_int = (Logical *)left;
+					shared_ptr<Logical> l_logical = static_pointer_cast<Logical>(left);
 					if (right->type == INT)
 					{
-						Int *r_int = (Int *)right;
-						node->value = new Logical(pow(l_int->elem, r_int->elem));
+						shared_ptr<Int> r_int = static_pointer_cast<Int>(right);
+						node->value = shared_ptr<Logical>{new Logical(pow(l_logical->elem, r_int->elem))};
 					}
 					else if (right->type == LOGICAL)
 					{
-						Logical *r_logical = (Logical *)right;
-						node->value = new Logical(pow(l_int->elem, r_logical->elem));
+						shared_ptr<Logical> r_logical = static_pointer_cast<Logical>(right);
+						node->value = shared_ptr<Logical>{new Logical(pow(l_logical->elem, r_logical->elem))};
 					}
 					else if (right->type == CHAR)
 					{
-						Char *r_char = (Char *)right;
-						node->value = new Logical(pow(l_int->elem, r_char->elem));
+						shared_ptr<Char> r_char = static_pointer_cast<Char>(right);
+						node->value = shared_ptr<Logical>{new Logical(pow(l_logical->elem, r_char->elem))};
 					}
+					else program_vars::raise_error("Expected an logical (or another primitive) for a \"^\" operation.");
 				}
 				else if (left->type == CHAR)
 				{
-					Char * l_int = (Char *)left;
+					shared_ptr<Char> l_char = static_pointer_cast<Char>(left);
 					if (right->type == INT)
 					{
-						Int *r_int = (Int *)right;
-						node->value = new Char(pow(l_int->elem, r_int->elem));
+						shared_ptr<Int> r_int = static_pointer_cast<Int>(right);
+						node->value = shared_ptr<Char>{new Char(pow(l_char->elem, r_int->elem))};
 					}
 					else if (right->type == LOGICAL)
 					{
-						Logical *r_logical = (Logical *)right;
-						node->value = new Char(pow(l_int->elem, r_logical->elem));
+						shared_ptr<Logical> r_logical = static_pointer_cast<Logical>(right);
+						node->value = shared_ptr<Char>{new Char(pow(l_char->elem, r_logical->elem))};
 					}
 					else if (right->type == CHAR)
 					{
-						Char *r_char = (Char *)right;
-						node->value = new Char(pow(l_int->elem, r_char->elem));
+						shared_ptr<Char> r_char = static_pointer_cast<Char>(right);
+						node->value = shared_ptr<Char>{new Char(pow(l_char->elem, r_char->elem))};
 					}
+					else program_vars::raise_error("Expected an logical (or another primitive) for a \"^\" operation.");
 				}
+				else program_vars::raise_error("Expected a primitive for a \"^\" operation.");
 			}
 			else if (node->token.lexeme == "%")
 			{
-				Elem * left = node->left->evaluate();
-				Elem * right = node->right->evaluate();
+				shared_ptr<Elem> left = node->left->evaluate();
+				shared_ptr<Elem> right = node->right->evaluate();
 				if (left->type == INT)
 				{
-					Int * l_int = (Int *)left;
+					shared_ptr<Int> l_int = static_pointer_cast<Int>(left);
 					if (right->type == INT)
 					{
-						Int *r_int = (Int *)right;
-						node->value = new Int(l_int->elem % r_int->elem);
+						shared_ptr<Int> r_int = static_pointer_cast<Int>(right);
+						node->value = shared_ptr<Int>{new Int(l_int->elem % r_int->elem)};
 					}
 					else if (right->type == LOGICAL)
 					{
-						Logical *r_logical = (Logical *)right;
-						node->value = new Int(l_int->elem % r_logical->elem);
+						shared_ptr<Logical> r_logical = static_pointer_cast<Logical>(right);
+						node->value = shared_ptr<Int>{new Int(l_int->elem % r_logical->elem)};
 					}
 					else if (right->type == CHAR)
 					{
-						Char *r_char = (Char *)right;
-						node->value = new Int(l_int->elem % r_char->elem);
+						shared_ptr<Char> r_char = static_pointer_cast<Char>(right);
+						node->value = shared_ptr<Int>{new Int(l_int->elem % r_char->elem)};
 					}
+					else program_vars::raise_error("Expected an int (or another primitive) for a \"%\" operation.");
 				}
 				else if (left->type == LOGICAL)
 				{
-					Logical * l_int = (Logical *)left;
+					shared_ptr<Logical> l_logical = static_pointer_cast<Logical>(left);
 					if (right->type == INT)
 					{
-						Int *r_int = (Int *)right;
-						node->value = new Logical(l_int->elem % r_int->elem);
+						shared_ptr<Int> r_int = static_pointer_cast<Int>(right);
+						node->value = shared_ptr<Logical>{new Logical(l_logical->elem % r_int->elem)};
 					}
 					else if (right->type == LOGICAL)
 					{
-						Logical *r_logical = (Logical *)right;
-						node->value = new Logical(l_int->elem % r_logical->elem);
+						shared_ptr<Logical> r_logical = static_pointer_cast<Logical>(right);
+						node->value = shared_ptr<Logical>{new Logical(l_logical->elem % r_logical->elem)};
 					}
 					else if (right->type == CHAR)
 					{
-						Char *r_char = (Char *)right;
-						node->value = new Logical(l_int->elem % r_char->elem);
+						shared_ptr<Char> r_char = static_pointer_cast<Char>(right);
+						node->value = shared_ptr<Logical>{new Logical(l_logical->elem % r_char->elem)};
 					}
+					else program_vars::raise_error("Expected an logical (or another primitive) for a \"%\" operation.");
 				}
 				else if (left->type == CHAR)
 				{
-					Char * l_int = (Char *)left;
+					shared_ptr<Char> l_char = static_pointer_cast<Char>(left);
 					if (right->type == INT)
 					{
-						Int *r_int = (Int *)right;
-						node->value = new Char(l_int->elem % r_int->elem);
+						shared_ptr<Int> r_int = static_pointer_cast<Int>(right);
+						node->value = shared_ptr<Char>{new Char(l_char->elem % r_int->elem)};
 					}
 					else if (right->type == LOGICAL)
 					{
-						Logical *r_logical = (Logical *)right;
-						node->value = new Char(l_int->elem % r_logical->elem);
+						shared_ptr<Logical> r_logical = static_pointer_cast<Logical>(right);
+						node->value = shared_ptr<Char>{new Char(l_char->elem % r_logical->elem)};
 					}
 					else if (right->type == CHAR)
 					{
-						Char *r_char = (Char *)right;
-						node->value = new Char(l_int->elem % r_char->elem);
+						shared_ptr<Char> r_char = static_pointer_cast<Char>(right);
+						node->value = shared_ptr<Char>{new Char(l_char->elem % r_char->elem)};
 					}
+					else program_vars::raise_error("Expected an logical (or another primitive) for a \"%\" operation.");
 				}
+				else program_vars::raise_error("Expected a primitive for a \"%\" operation.");
 			}
 		}
 	}
@@ -810,6 +978,11 @@ Token ExpressionTree::get_next_token()				// The limited lexical analyzer to par
 
 	else if (expr[current_index] == '!')
 	{
+		if ((current_index + 1 < expr.size()) && expr[current_index + 1] == '=')
+		{
+			current_index += 2;
+			return{ "!=", { OP } };
+		}
 		current_index++;
 		return{ "!", { OP, UNARY } };
 	}
@@ -1323,20 +1496,9 @@ ExpressionTree::ExpressionTree(string &expr)
 	// By now we've exhausted all the cases where a check was necessary on the first token.
 }
 
-ExpressionTree::ExpressionTree(string &expr, int is_root) : ExpressionTree(expr)
-{
-	this->is_root = true;
-}
-
 ExpressionTree::~ExpressionTree()
 {
-	if (!this->is_root)
-		delete node;
-	else
-	{
-		node->at_root = true;
-		delete node;
-	}
+	delete node;
 }
 
 // -------------------------------------------------<CLASS EXPRESSIONTREE>--------------------------------------//

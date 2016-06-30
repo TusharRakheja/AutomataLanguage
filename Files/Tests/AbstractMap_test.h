@@ -7,8 +7,8 @@ namespace AbstractMap_test
 {
 	void test_all()
 	{
-		AbstractMap * f = new AbstractMap((string)"x --> (x) + 2");
-		AbstractMap * g = new AbstractMap((string)"x --> (x) * 3");
+		shared_ptr<AbstractMap> f = shared_ptr<AbstractMap>{new AbstractMap((string)"x --> (x) + 2")},
+		g = shared_ptr<AbstractMap>{new AbstractMap((string)"x --> (x) * 3")};
 
 		Int x(3); Char a('a'), excl('!');
 
@@ -19,11 +19,9 @@ namespace AbstractMap_test
 		cout << "g[3] = " << (*g)[x]->to_string() << endl;				// Should be 9.
 		cout << "g['!'] = " << (*g)[excl]->to_string() << endl << endl;			// Should be 'c'.
 
-		AbstractMap * fog = f->composed_with(g);
+		shared_ptr<AbstractMap> fog = f->composed_with(g);
 
 		cout << "fog[3] = " << (*fog)[x]->to_string() << endl;				// Should be 11.
 		cout << "fog['!'] = " << (*fog)[excl]->to_string() << endl << endl;		// Should be 'e'.
-
-		delete f, g, fog;
 	}
 }

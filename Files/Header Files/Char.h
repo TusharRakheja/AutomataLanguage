@@ -58,7 +58,7 @@ public:
 	{
 		return (this->type != elem.type) ? false : this->elem >= ((Char *)&elem)->elem;
 	}
-	Elem* deep_copy() { return new Char(elem); }
+	shared_ptr<Elem> deep_copy() { return shared_ptr<Elem>{new Char(elem)}; }
 
 	string to_string_raw()
 	{

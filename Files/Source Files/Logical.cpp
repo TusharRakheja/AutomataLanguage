@@ -17,9 +17,9 @@ Logical::Logical(string &t_val) : Elem(LOGICAL) // Construct a logical object us
 	elem = (t_val == "True") ? true : false;
 }
 
-Elem* Logical::deep_copy()			// Deep_copy method, which of course returns just a logical instance since it's atomic.
+shared_ptr<Elem> Logical::deep_copy()		// Deep_copy method, which of course returns just a logical instance since it's atomic.
 {
-	return new Logical(elem);		// Return the address to a new Logical object, initialized with the same value as this.
+	return shared_ptr<Elem>{new Logical(elem)};	// Return the address to a new Logical object, initialized with the same value as this.
 }
 
 const Logical& Logical::operator=(Logical &x)	// Overloaded assignment operator.

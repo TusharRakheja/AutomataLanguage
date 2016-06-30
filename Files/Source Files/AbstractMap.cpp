@@ -18,13 +18,13 @@ void AbstractMap::add_scheme(string &mapping_scheme_full)
 	this->mapping_scheme = mapping_scheme_full.substr(start, mapping_scheme_full.size() - start);	
 }
 
-AbstractMap::AbstractMap(AbstractSet * domain, AbstractSet * codomain) : Elem(ABSTRACT_MAP)
+AbstractMap::AbstractMap(shared_ptr<AbstractSet> domain, shared_ptr<AbstractSet> codomain) : Elem(ABSTRACT_MAP)
 {
 	this->domain = domain;
 	this->codomain = codomain;
 }
 
-AbstractMap::AbstractMap(AbstractSet * domain, AbstractSet * codomain, string &mapping_scheme_full) : Elem(ABSTRACT_MAP)
+AbstractMap::AbstractMap(shared_ptr<AbstractSet> domain, shared_ptr<AbstractSet> codomain, string &mapping_scheme_full) : Elem(ABSTRACT_MAP)
 {	
 	this->domain = domain; 
 	this->codomain = codomain;
@@ -32,7 +32,7 @@ AbstractMap::AbstractMap(AbstractSet * domain, AbstractSet * codomain, string &m
 	this->mapping_scheme = mapping_scheme.substr(start, mapping_scheme.size() - start);
 }
 
-AbstractMap * AbstractMap::composed_with(AbstractMap * g)	// Returns an abstract_map (this composed with g).
+shared_ptr<AbstractMap> AbstractMap::composed_with(shared_ptr<AbstractMap> g)	// Returns an abstract_map (this composed with g).
 {
 	// For the comments that follow, this == f. Just for convenience, really.
 	
@@ -57,14 +57,14 @@ AbstractMap * AbstractMap::composed_with(AbstractMap * g)	// Returns an abstract
 	scheme_fog = "";
 	for (auto &part : scheme_parts) scheme_fog += part;
 	
-	AbstractMap * fog = new AbstractMap();
+	shared_ptr<AbstractMap> fog = shared_ptr<AbstractMap>{new AbstractMap()};
 	fog->domain = g->domain;
 	fog->codomain = this->codomain;
 	fog->mapping_scheme = scheme_fog;
 	return fog;
 }
 
-Elem * AbstractMap::operator[](Elem & pre_image)
+shared_ptr<Elem> AbstractMap::operator[](Elem & pre_image)
 {
 	if (domain != nullptr && !domain->has(pre_image)) program_vars::raise_error("Mapping unsuccessful. Pre-image not found in domain.");
 	string to_be_evaluated = this->mapping_scheme;		// We'll replace all instances of 'elem' with elem->to_string().
@@ -76,13 +76,13 @@ Elem * AbstractMap::operator[](Elem & pre_image)
 		string part3 = to_be_evaluated.substr(elem_pos + 3, to_be_evaluated.size() - (elem_pos + 3));
 		to_be_evaluated = part1 + part2 + part3;
 	}
-	ExpressionTree eval(to_be_evaluated, ROOT);
-	Elem * image = eval.evaluate();
+	ExpressionTree eval(to_be_evaluated);
+	shared_ptr<Elem> image = eval.evaluate();
 	if (codomain != nullptr && !codomain->has(*image)) program_vars::raise_error("Mapping unsuccessful. Pre-image not found in domain."); 
 	return image;
 }
 
-const Elem * AbstractMap::operator[](Elem & pre_image) const
+const shared_ptr<Elem> AbstractMap::operator[](Elem & pre_image) const
 {
 	if (domain != nullptr && !domain->has(pre_image)) program_vars::raise_error("Mapping unsuccessful. Pre-image not found in domain.");
 	string to_be_evaluated = this->mapping_scheme;		// We'll replace all instances of 'elem' with elem->to_string().
@@ -94,8 +94,8 @@ const Elem * AbstractMap::operator[](Elem & pre_image) const
 		string part3 = to_be_evaluated.substr(elem_pos + 3, to_be_evaluated.size() - (elem_pos + 3));
 		to_be_evaluated = part1 + part2 + part3;
 	}
-	ExpressionTree eval(to_be_evaluated, ROOT);
-	Elem * image = eval.evaluate();
+	ExpressionTree eval(to_be_evaluated);
+	shared_ptr<Elem> image = eval.evaluate();
 	if (codomain != nullptr && !codomain->has(*image)) program_vars::raise_error("Mapping unsuccessful. Pre-image not found in domain.");
 	return image;
 }

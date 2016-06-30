@@ -14,7 +14,10 @@ public:
 	Int(int x) : Elem(INT) { elem = x; }			// Parameterized constructor.
 	Int(string x) : Elem(INT) { elem = std::stoi(x); } 	// Construct an int object using a string representation of it.
 		
-	Elem* deep_copy() { return new Int(elem); }		// Return the address of a new Int object constructed with the value of this.
+	shared_ptr<Elem> deep_copy()				// Return the address of a new Int object constructed with the value of this.
+	{ 
+		return shared_ptr<Elem>{new Int(elem)}; 
+	} 
 	bool operator==(Elem &x)
 	{
 		if (x.type != INT) return false;		// Check for types first and foremost.

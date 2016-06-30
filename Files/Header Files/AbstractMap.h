@@ -7,24 +7,26 @@ class AbstractMap : public Elem
 {
 public:
 	string mapping_scheme;
-	AbstractSet * domain, * codomain;
+	shared_ptr<AbstractSet> domain, codomain;
 	
 	AbstractMap() : Elem(ABSTRACT_MAP) { }
-	AbstractMap(AbstractSet *, AbstractSet *, string &);
-	AbstractMap(AbstractSet *, AbstractSet *);
+	AbstractMap(shared_ptr<AbstractSet>, shared_ptr<AbstractSet>, string &);
+	AbstractMap(shared_ptr<AbstractSet>, shared_ptr<AbstractSet>);
 	AbstractMap(string &);
 	void add_scheme(string &);
-	AbstractMap * composed_with(AbstractMap *);
-	Elem * deep_copy() 
+	shared_ptr<AbstractMap> composed_with(shared_ptr<AbstractMap>);
+	shared_ptr<Elem> deep_copy()
 	{
-		return new AbstractMap(
-			(domain == nullptr) ? nullptr : (AbstractSet *)domain->deep_copy(), 
-			(codomain == nullptr) ? nullptr : (AbstractSet *)codomain->deep_copy(), 
-			mapping_scheme
-		); 
+		return shared_ptr<AbstractMap>{
+			new AbstractMap (
+				(domain == nullptr) ? nullptr : std::static_pointer_cast<AbstractSet>(domain->deep_copy()), 
+				(codomain == nullptr) ? nullptr : std::static_pointer_cast<AbstractSet>(codomain->deep_copy()),
+				mapping_scheme
+			)
+		}; 
 	};
-	Elem * operator[](Elem &);
-	const Elem * operator[](Elem &) const;
+	shared_ptr<Elem> operator[](Elem &);
+	const shared_ptr<Elem> operator[](Elem &) const;
 	string to_string() { return mapping_scheme; }
 };
 

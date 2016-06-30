@@ -6,17 +6,17 @@
 
 Tuple::Tuple() : Elem(TUPLE)				// Default constructor, empty tuple.
 {
-	elems = new vector < Elem * >;
+	elems = new vector<shared_ptr<Elem>>;
 }
 
-Tuple::Tuple(vector<Elem *> *elems) : Elem(TUPLE)	// Tuple-ize an existing vector of element_pointers.
+Tuple::Tuple(vector<shared_ptr<Elem>> * elems) : Elem(TUPLE)	// Tuple-ize an existing vector of element_pointers.
 {
-	this->elems = new vector<Elem *>(*elems);
+	this->elems = new vector<shared_ptr<Elem>>(*elems);
 }
 
-Tuple::Tuple(string &x) : Elem(TUPLE)			// Construct a set using a string representation of it.
+Tuple::Tuple(string &x) : Elem(TUPLE)				// Construct a set using a string representation of it.
 {
-	elems = new vector < Elem * >;
+	elems = new vector < shared_ptr<Elem> >;
 	int level = 0, start = 0;
 	bool in_string = false;
 	vector<string> elements;			// We're going to extract e1, e2 ... out of x = "{ e1, e2, ... }".	
@@ -57,44 +57,36 @@ Tuple::Tuple(string &x) : Elem(TUPLE)			// Construct a set using a string repres
 	for (auto &rep : elements)
 	{
 		if (rep[0] == '{')				// If the element to be parsed is a set ...
-			this->elems->push_back(new Set(rep));	// ... recursively parse that too.
+			this->elems->push_back(shared_ptr<Elem>{new Set(rep)});	// ... recursively parse that too.
 		else if (rep[0] == '(')
-			this->elems->push_back(new Tuple(rep));
+			this->elems->push_back(shared_ptr<Elem>{new Tuple(rep)});
 		else if (isdigit(rep[0]))
-			this->elems->push_back(new Int(rep));
+			this->elems->push_back(shared_ptr<Elem>{new Int(rep)});
 		else if (rep[0] == '\'')
-			this->elems->push_back(new Char(rep));
+			this->elems->push_back(shared_ptr<Elem>{new Char(rep)});
 		else if (rep[0] == '"')
-			this->elems->push_back(new String(rep, 0));
+			this->elems->push_back(shared_ptr<Elem>{new String(rep, 0)});
 		else if (rep == "True" || rep == "False")
-			this->elems->push_back(new Logical(rep));
+			this->elems->push_back(shared_ptr<Elem>{new Logical(rep)});
 		else
 		{
-			ExpressionTree expr(rep, ROOT);
-			Elem * e = expr.evaluate();
-			this->elems->push_back(e);
+			ExpressionTree expr(rep);
+			this->elems->push_back(expr.evaluate());
 		}
 	}
 }
 
-Tuple::Tuple(vector<Elem *> *elems, int direct_assign) : Elem(TUPLE) // Tuple-ize an existing vector of element_pointers (Direct Assign).
+Tuple::Tuple(vector<shared_ptr<Elem>> *elems, int direct_assign) : Elem(TUPLE) // Tuple-ize an existing vector of element_pointers (Direct Assign).
 {
 	this->elems = elems;
 }
 
-Elem* Tuple::deep_copy()				// Returns a tuple which is a deep_copy of this tuple.
+shared_ptr<Elem> Tuple::deep_copy()				// Returns a tuple which is a deep_copy of this tuple.
 {
-	Tuple *clone = new Tuple;				// Make an empty clone tuple.
+	shared_ptr<Tuple> clone = shared_ptr<Tuple>{new Tuple};	// Make an empty clone tuple.
 	for (auto &elem_p1 : *elems)				// For every element pointed to in the vector of element_pointers in this ...
 		clone->elems->push_back(elem_p1->deep_copy());  // ... tuple, add to the clone tuple a deep_copy (recursively gen) of it.
 	return clone;						// Then return the clone.
-}
-
-void Tuple::delete_elems()
-{
-	for (auto &elem_p1 : *elems)		// For every element_pointer in the vector of element_pointers in this tuple ...
-		if (elem_p1 != nullptr)		// ... if an object exists at the address that the pointer has ...
-			delete elem_p1;		// ... delete the object pointed to by that pointer.
 }
 
 bool Tuple::has(Elem &elem)				// Checks if a certain element is present in the tuple.
@@ -105,17 +97,17 @@ bool Tuple::has(Elem &elem)				// Checks if a certain element is present in the 
 	return false;						// Else return false.
 }
 
-const Elem * Tuple::operator[](int index) const         // R-value access.
+const shared_ptr<Elem> Tuple::operator[](int index) const       // R-value access.
 {
-	return (*elems)[index];                         // Return a reference to an element pointed to by the element_pointer at index. 
+	return (*elems)[index];					// Return a reference to an element pointed to by the element_pointer at index. 
 }
 
-Elem * Tuple::operator[](int index)			// L-value access.
+shared_ptr<Elem> Tuple::operator[](int index)			// L-value access.
 {
-	return (*elems)[index];				// Return a reference to an element pointed to by the element_pointer at index.
+	return (*elems)[index];					// Return a reference to an element pointed to by the element_pointer at index.
 }
 
-bool Tuple::operator==(Elem &other_tuple)		// Checks two tuples for equality.	
+bool Tuple::operator==(Elem &other_tuple)			// Checks two tuples for equality.	
 {
 	if (other_tuple.type != TUPLE) return false;
 	Tuple *other = (Tuple *)&other_tuple;
@@ -162,8 +154,5 @@ string Tuple::to_string_raw()				// Returns a string representation of the tuple
 
 Tuple::~Tuple()				  // Destructor.
 {
-	for (auto &elem_p1 : *elems)	  // For every element_pointer in the vector of element_pointers in this tuple ...
-		if (elem_p1 != nullptr)   // ... if an object exists at the address that the pointer has ...
-			delete elem_p1;	  // ... delete the object pointed to by that pointer.
-	delete elems;			  // And when done, delete the vector too.
+	delete elems;			  // Delete the vector of (shared) element pointers before you delete the object.
 }
