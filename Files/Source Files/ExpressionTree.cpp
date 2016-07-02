@@ -592,14 +592,16 @@ shared_ptr<Elem> ExpressionTree::evaluate()
 					if (right->type == STRING)
 					{	
 						shared_ptr<String> r_str = str(right);
-						return shared_ptr<String>{new String(l_str->elem + r_str->elem)};
+						string concat_combine = l_str->elem;
+						concat_combine += r_str->elem;
+						return shared_ptr<String>{new String(concat_combine)};
 					}
 					else if (right->type == CHAR)
 					{	
 						shared_ptr<Char> r_char = character(right);
-
-						shared_ptr<String> r_str = str(right);
-						return shared_ptr<String>{new String(l_str->elem + r_str->elem)}; 
+						string char_append = l_str->elem;
+						char_append += r_char->elem;
+						return shared_ptr<String>{new String(char_append)}; 
 					}
 					else raise_error("Expected a string or a char for a \"+\" operation with a string.");
 				}
