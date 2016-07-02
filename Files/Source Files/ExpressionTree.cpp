@@ -1,5 +1,4 @@
 #include "../Header Files/ExpressionTree.h"
-#include <cmath>
 
 using program_vars::raise_error;
 

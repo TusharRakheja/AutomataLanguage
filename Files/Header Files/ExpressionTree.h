@@ -4,6 +4,7 @@
 #include "ProgramVars.h"
 #include "Auto.h"
 #include "AbstractMap.h"
+#include <cmath>
 
 enum Token_type 
 { 
