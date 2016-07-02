@@ -2,8 +2,6 @@
 #define CHAR_H
 
 #include "Elem.h"
-#include <iostream>
-using std::cout;
 
 class Char : public Elem
 {
@@ -82,4 +80,8 @@ public:
 		return string(1, elem);
 	}
 };
+
+
+#define character static_pointer_cast<Char>
+
 #endif

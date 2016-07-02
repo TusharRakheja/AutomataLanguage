@@ -30,4 +30,6 @@ public:
 	string to_string();			// Returns a string representation of the automaton.
 };
 
+#define automaton static_pointer_cast<Auto>
+
 #endif

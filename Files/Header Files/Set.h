@@ -33,5 +33,6 @@ public:
 	~Set();						// Destructor.
 };
 
+#define set static_pointer_cast<Set>
 
 #endif

@@ -19,15 +19,17 @@ public:
 	{
 		return shared_ptr<AbstractMap>{
 			new AbstractMap (
-				(domain == nullptr) ? nullptr : std::static_pointer_cast<AbstractSet>(domain->deep_copy()), 
-				(codomain == nullptr) ? nullptr : std::static_pointer_cast<AbstractSet>(codomain->deep_copy()),
+				(domain == nullptr) ? nullptr : aset(domain->deep_copy()), 
+				(codomain == nullptr) ? nullptr : aset(codomain->deep_copy()),
 				mapping_scheme
 			)
 		}; 
 	};
 	shared_ptr<Elem> operator[](Elem &);
 	const shared_ptr<Elem> operator[](Elem &) const;
-	string to_string() { return mapping_scheme; }
+	string to_string() { return "x --> " + mapping_scheme; }
 };
+
+#define amap static_pointer_cast<AbstractMap>
 
 #endif

@@ -9,7 +9,6 @@ using std::istream;
 using std::ios;
 using std::getline;
 using std::ifstream;
-using std::static_pointer_cast;
 
 unordered_map<string, shared_ptr<Elem>> * program_vars::identify = new unordered_map<string, shared_ptr<Elem>>
 { 
@@ -33,8 +32,8 @@ using program_vars::line_num;
 Token current_token;		// The current token we're looking at. 
 istream * program;		// The stream of text constituting the program.
 bool read_right_expr = false;	// Notes whether or not you're reading an expression on the right side of an '=' sign.
-bool read_map_expr = false;
-bool read_left_expr = false;	// Notes whether or not you're reading an expression on the right side of an '=' sign.
+bool read_map_expr = false;     // Notes whether or not you're reading an expression that represents a map.
+bool read_left_expr = false;	// Notes whether or not you're reading an expression on the left side of an '=' sign.
 bool read_mapdom_expr = false;	// Notes whether or not you're reading an expression in the domain of the map (left of '-->' sign).
 
 Token get_next_token();		// Lexer.
@@ -70,9 +69,23 @@ Token get_next_token()						// The lexer.
 	{
 		getline(*program, lexeme, '=');			// Read the whole thing first;
 		if (program == &cin) 
-			program->unget();
+		{
+			if (!isspace(lexeme[lexeme.size() - 1]))
+			{
+				program->unget(); program->unget();
+				lexeme = lexeme.substr(0, lexeme.size() - 1);
+			}
+			else program->unget();
+		}
 		else
-			program->seekg(-1L*(int)sizeof(char), ios::cur);	
+		{
+			if (!isspace(lexeme[lexeme.size() - 1]))
+			{
+				program->seekg(-2L * (int)sizeof(char), ios::cur);
+				lexeme = lexeme.substr(0, lexeme.size() - 1);
+			}
+			else program->seekg(-1L*(int)sizeof(char), ios::cur);	
+		}
 		read_left_expr = false;
 	}	
 	else if (read_map_expr)
@@ -164,7 +177,18 @@ Token get_next_token()						// The lexer.
 		 lexeme == "char" || lexeme == "tuple" || lexeme == "map" ||
 	       	 lexeme == "logical" || lexeme == "auto")
 		 return{ lexeme, { TYPE } };
-	else if (lexeme == "=")		return{ lexeme, { EQUAL_SIGN } };
+	else if (lexeme == "=")		return{ lexeme, { UPDATE_OP } };
+	else if (lexeme == "&=")	return{ lexeme, { UPDATE_OP} };
+	else if (lexeme == "U=")	return{ lexeme, { UPDATE_OP } };
+	else if (lexeme == "\\=")	return{ lexeme, { UPDATE_OP } };
+	else if (lexeme == "x=")	return{ lexeme, { UPDATE_OP } };
+	else if (lexeme == "V=")	return{ lexeme, { UPDATE_OP } };
+	else if (lexeme == "+=")	return{ lexeme, { UPDATE_OP } };
+	else if (lexeme == "-=")	return{ lexeme, { UPDATE_OP } };
+	else if (lexeme == "*=")	return{ lexeme, { UPDATE_OP } };
+	else if (lexeme == "/=")	return{ lexeme, { UPDATE_OP } };
+	else if (lexeme == "^=")	return{ lexeme, { UPDATE_OP } };
+	else if (lexeme == "%=")	return{ lexeme, { UPDATE_OP } };
 	else if (lexeme == "-->")	return{ lexeme, { MAPPING_SYMBOL } };
 	else if (lexeme == "let")	return{ lexeme, { LET } };
 	else if (lexeme == "under")	return{ lexeme, { UNDER } };
@@ -184,9 +208,9 @@ Token get_next_token()						// The lexer.
 
 void parse_program()
 {
-	if (program == &std::cin) cout << static_pointer_cast<String>((*identify)["__prompt__"])->to_string();
+	if (program == &std::cin) cout << str((*identify)["__prompt__"])->to_string();
 	current_token = get_next_token();
-	while (current_token.types[0] != END)
+	while (current_token.types[0] != END) 
 	{	
 		parse_statement();
 	}
@@ -203,7 +227,7 @@ void parse_statement()
 	else if (current_token.types[0] == PRINTR) parse_printr();
 	else if (current_token.types[0] == LET) parse_assignment();
 	else if (current_token.types[0] == UNDER) parse_mapping();
-	if (program == &std::cin) cout << static_pointer_cast<String>((*identify)["__prompt__"])->to_string();
+	if (program == &std::cin) cout << str((*identify)["__prompt__"])->to_string();
 	current_token = get_next_token();
 }
 
@@ -226,7 +250,7 @@ void parse_mapping()
 
 	if (candidate_map->type == MAP)
 	{
-		shared_ptr<Map> map = static_pointer_cast<Map>(candidate_map);
+		shared_ptr<Map> m = map(candidate_map);
 		
 		read_mapdom_expr = true;
 
@@ -240,14 +264,15 @@ void parse_mapping()
 
 		Token image = get_next_token();
 
-		ExpressionTree pre_im_expr(pre_image.lexeme);	// Not going to mark these two with ROOT ...
-		ExpressionTree im_expr(image.lexeme);		// ... because these values will only be used for lookup.
+		ExpressionTree pre_im_expr(pre_image.lexeme);	
 
-		map->add_maping(*pre_im_expr.evaluate(), *im_expr.evaluate());
+		ExpressionTree im_expr(image.lexeme);		
+
+		m->add_maping(*pre_im_expr.evaluate(), *im_expr.evaluate());
 	}
 	else
 	{
-		shared_ptr<AbstractMap> absmap = static_pointer_cast<AbstractMap>(candidate_map);
+		shared_ptr<AbstractMap> absmap = amap(candidate_map);
 		
 		read_right_expr = true;
 		
@@ -261,21 +286,737 @@ void parse_assignment()
 {
 	read_left_expr = true;
 		
-	Token update = get_next_token();
+	Token update_this = get_next_token();
 
-	Token eq_sign = get_next_token();
+	Token op = get_next_token();
 
-	if (eq_sign.types[0] != EQUAL_SIGN) raise_error("Missing operator \"=\".");
+	if (op.types[0] != UPDATE_OP) raise_error("Missing operator for assignment/update.");
 
 	read_right_expr = true;
 
 	Token expression = get_next_token();
 
+	ExpressionTree update_expr(update_this.lexeme);
+
+	shared_ptr<Elem> update = update_expr.evaluate();
+
 	ExpressionTree expr(expression.lexeme);
 	
 	shared_ptr<Elem> new_value = expr.evaluate();
-	
-	(*identify)[update.lexeme] = new_value;
+
+	if (op.lexeme == "=")
+	{
+		if (update->type == SET)
+		{
+			if (new_value->type == SET)							   // Gon' A = B right here.
+			{
+				delete set(update)->elems;						   // Get rid of A's vector.
+				set(update)->elems = new vector<shared_ptr<Elem>>(*set(new_value)->elems); // Give it a new vector with B's elems.
+			}
+			else raise_error("Expected a set on the RHS for a \"=\" operation with a set on the LHS.");
+		}
+		else if (update->type == TUPLE)
+		{
+			if (new_value->type == SET)							   // Gon' A = B right here.
+			{
+				delete _tuple(update)->elems;						   // Get rid of A's vector.
+				_tuple(update)->elems = new vector<shared_ptr<Elem>>(*_tuple(new_value)->elems);
+			}
+			else raise_error("Expected a tuple on the RHS for a \"=\" operation with a tuple on the LHS.");
+		}
+		else if (update->type == INT)
+		{
+			if (new_value->type == INT)
+			{
+				integer(update)->elem = integer(new_value)->elem;
+			}
+			else if (new_value->type == CHAR)
+			{
+				integer(update)->elem = character(new_value)->elem;
+			}
+			else if (new_value->type == LOGICAL)
+			{
+				integer(update)->elem = logical(new_value)->elem;
+			}
+			else raise_error("Expected an integer or a primitive on the RHS for a \"=\" operation with an integer on the LHS.");
+		}
+		else if (update->type == LOGICAL)
+		{
+			if (new_value->type == INT)
+			{
+				logical(update)->elem = integer(new_value)->elem;
+			}
+			else if (new_value->type == CHAR)
+			{
+				logical(update)->elem = character(new_value)->elem;
+			}
+			else if (new_value->type == LOGICAL)
+			{
+				logical(update)->elem = logical(new_value)->elem;
+			}
+			else raise_error("Expected a logical or a primitive on the RHS for a \"=\" operation with a logical on the LHS.");
+		}
+		else if (update->type == CHAR)
+		{
+			if (new_value->type == INT)
+			{
+				character(update)->elem = integer(new_value)->elem;
+			}
+			else if (new_value->type == CHAR)
+			{
+				character(update)->elem = character(new_value)->elem;
+			}
+			else if (new_value->type == LOGICAL)
+			{
+				character(update)->elem = logical(new_value)->elem;
+			}
+			else raise_error("Expected a character or a primitive on the RHS for a \"=\" operation with a character on the LHS.");
+		}
+		else if (update->type == STRING)
+		{
+			if (new_value->type == STRING)
+			{
+				str(update)->elem = str(new_value)->elem;
+			}
+			else raise_error("Expected a string on the RHS for a \"=\" operation with a string in the LHS");
+		}
+		else if (update->type == MAP)
+		{
+			if (new_value->type == MAP)
+			{
+				shared_ptr<Map> updating = map(update), new_map = map(new_value);
+				updating->domain_s = new_map->domain_s;
+				updating->codomain_s = new_map->codomain_s;
+				delete updating->pi_indices;
+				updating->pi_indices = new vector<int>(*new_map->pi_indices);
+				delete updating->_map;
+				updating->_map = new unordered_map<int, int>(*new_map->_map);
+			}
+			else raise_error("Expected a string on the RHS for a \"=\" operation with a string in the LHS");
+		}
+		else if (update->type == AUTO)
+		{
+			if (new_value->type == AUTO)
+			{
+				shared_ptr<Auto> updating = automaton(update), new_auto = automaton(new_value);
+				updating->states = new_auto->states;
+				updating->sigma = new_auto->sigma;
+				updating->start = new_auto->start;
+				updating->delta = new_auto->delta;
+				updating->accepting = new_auto->accepting;
+			}
+			else if (new_value->type == TUPLE)
+			{
+				if (_tuple(new_value)->size() != 5) raise_error("An automaton is a 5-tuple.");
+				shared_ptr<Auto> updating = automaton(update);
+				shared_ptr<Tuple> new_auto = _tuple(new_value);
+				updating->states = set((*new_auto)[0]);
+				updating->sigma = set((*new_auto)[1]);
+				updating->start = (*new_auto)[2];
+				updating->delta = map((*new_auto)[3]);
+				updating->accepting = set((*new_auto)[4]);
+			}
+			else raise_error("Expected an automaton or a tuple on the RHS for a \"=\" operation with an automaton in the LHS");
+		}
+		else if (update->type == ABSTRACT_SET)
+		{
+			if (new_value->type == ABSTRACT_SET)
+			{
+				// Just replace A's criteria with that of B. 
+				aset(update)->criteria = aset(update)->criteria;
+			}
+			else raise_error("Expected an abstract set on the RHS for a \"=\" operation with an abstract set in the LHS");
+		}
+		else if (update->type == ABSTRACT_MAP)
+		{
+			if (new_value->type == ABSTRACT_MAP)
+			{
+				// Just replace A's scheme with that of B.
+				amap(update)->mapping_scheme = amap(new_value)->mapping_scheme;
+			}
+			else raise_error("Expected an abstract map on the RHS for a \"=\" operation with an abstract map in the LHS");
+		}
+	}
+	else 
+	{
+		if (op.lexeme == "&=")
+		{	
+			if (update->type == LOGICAL)
+			{
+				if (new_value->type == LOGICAL)
+					logical(update)->elem = logical(update)->elem && logical(new_value)->elem;
+
+				else if (new_value->type == INT)
+					logical(update)->elem = logical(update)->elem && integer(new_value)->elem;
+
+				else if (new_value->type == CHAR)
+					logical(update)->elem = logical(update)->elem && character(new_value)->elem;
+
+				else raise_error("Expected a primitive on the RHS for a \"&=\" operation with a logical on the LHS.");
+			}
+			else if (update->type == INT)
+			{
+				if (new_value->type == LOGICAL)
+					integer(update)->elem = integer(update)->elem && logical(new_value)->elem;
+
+				else if (new_value->type == INT)
+					integer(update)->elem = integer(update)->elem && integer(new_value)->elem;
+
+				else if (new_value->type == CHAR)
+					integer(update)->elem = integer(update)->elem && character(new_value)->elem;
+
+				else raise_error("Expected a primitive on the RHS for a \"&=\" operation with an int on the LHS.");
+			}
+			else if (update->type == CHAR)
+			{
+				if (new_value->type == LOGICAL)
+					character(update)->elem = character(update)->elem && logical(new_value)->elem;
+
+				else if (new_value->type == INT)
+					character(update)->elem = character(update)->elem && integer(new_value)->elem;
+
+				else if (new_value->type == CHAR)
+					character(update)->elem = character(update)->elem && character(new_value)->elem;
+
+				else raise_error("Expected a primitive on the RHS for a \"&=\" operation with a char on the LHS.");
+			}
+			else if (update->type == SET)
+			{
+				if (new_value->type == SET)
+				{
+					shared_ptr<Set> updating = set(update), intersect = set(new_value);	// We need A = A & B
+
+					for (int i {0}; i < updating->elems->size(); i++)			// So for all elements in A ...
+						if (!intersect->has(*(*updating->elems)[i]))			// if any one is not in B.
+							updating->elems->erase(updating->elems->begin() + i);   // ... remove it from the set.
+				}
+				else raise_error("Expected a set on the RHS for a \"&=\" operation with a set on the LHS.");
+			}
+			else if (update->type == ABSTRACT_SET)
+			{
+				if (new_value->type == ABSTRACT_SET)
+				{
+					shared_ptr<AbstractSet> updating = aset(update), intersect = aset(new_value);	// We need A = A & B
+
+					shared_ptr<AbstractSet> intersection = updating->intersection(*intersect);	// Let C = A & B.
+
+					updating->criteria = intersection->criteria;		// Now just replace A's criteria by that of C.
+				}
+				else raise_error("Expected an abstract set on the RHS for a \"&=\" operation with an abstract set on the LHS.");
+			}
+			else if (update->type == AUTO)
+			{
+				if (new_value->type == AUTO)
+				{
+					shared_ptr<Auto> updating = automaton(update), intersect = automaton(new_value);
+
+					shared_ptr<Auto> intersection = updating->accepts_intersection(intersect);
+
+					updating->states = intersection->states;		// Simple assignments, no pressure.
+					updating->start = intersection->start;
+					updating->delta = intersection->delta;
+					updating->accepting = intersection->accepting;
+				}				
+				else raise_error("Expected an automaton on the RHS for a \"&=\" operation with an automaton on the LHS.");
+			}
+			else raise_error("Expected a primitive, set, abstract set, or automaton for a \"&=\" operation.");
+		}
+		else if (op.lexeme == "U=")
+		{
+			if (update->type == SET)
+			{
+				if (new_value->type == SET)
+				{
+					shared_ptr<Set> updating = set(update), unifywith = set(new_value);	// We need A = A U B
+
+					for (int i{ 0 }; i < unifywith->elems->size(); i++)			// So for all elements in B ...
+						if (!updating->has(*(*unifywith->elems)[i]))			// if any one is not in A.
+							updating->elems->push_back((*unifywith->elems)[i]);     // ... add it to A.
+				}				
+				else raise_error("Expected a set on the RHS for a \"U=\" operation with a set on the LHS.");
+			}
+			else if (update->type == ABSTRACT_SET)
+			{
+				if (new_value->type == ABSTRACT_SET)
+				{
+					shared_ptr<AbstractSet> updating = aset(update), unifywith = aset(new_value);	// We need A = A U B
+
+					shared_ptr<AbstractSet> unified = updating->_union(*unifywith);	// Let C = A U B.
+
+					updating->criteria = unified->criteria;			// Now just replace A's criteria by that of C.
+				}
+				else raise_error("Expected an abstract set on the RHS for a \"U=\" operation with an abstract set on the LHS.");
+			}
+			else if (update->type == AUTO)
+			{
+				if (new_value->type == AUTO)
+				{
+					shared_ptr<Auto> updating = automaton(update), unifywith = automaton(new_value);
+
+					shared_ptr<Auto> unified = updating->accepts_union(unifywith);
+
+					updating->states = unified->states;		// Simple assignments, no pressure.
+					updating->start = unified->start;
+					updating->delta = unified->delta;
+					updating->accepting = unified->accepting;
+				}
+				else raise_error("Expected an automaton on the RHS for a \"U=\" operation with an automaton on the LHS.");
+			}
+			else raise_error("Expected a set, abstract set, or automaton for a \"U=\" operation.");
+		}
+		else if (op.lexeme == "\\=")
+		{
+			if (update->type == SET)
+			{
+				if (new_value->type == SET)
+				{
+					shared_ptr<Set> updating = set(update), exclude = set(new_value);	// We need A = A U B
+
+					for (int i{ 0 }; i < updating->elems->size(); i++)			// So for all elements in B ...
+						if (exclude->has(*(*updating->elems)[i]))			// ... if there is any that is not in A.
+							updating->elems->erase(updating->elems->begin() + i);   // ... add it to A.
+				}
+				else raise_error("Expected a set on the RHS for a \"\\=\" operation with a set on the LHS.");
+			}
+			else if (update->type == ABSTRACT_SET)
+			{
+				if (new_value->type == ABSTRACT_SET)
+				{
+					shared_ptr<AbstractSet> updating = aset(update), unifywith = aset(new_value);	// We need A = A U B
+
+					shared_ptr<AbstractSet> unified = updating->_union(*unifywith);	// Let C = A U B.
+
+					updating->criteria = unified->criteria;				// Now just replace A's criteria by that of C.
+				}
+				else raise_error("Expected an abstract set on the RHS for a \"\\=\" operation with an abstract set on the LHS.");
+			}
+			else if (update->type == AUTO)
+			{
+				if (new_value->type == AUTO)
+				{
+					shared_ptr<Auto> updating = automaton(update), unifywith = automaton(new_value);
+
+					shared_ptr<Auto> unified = updating->accepts_union(unifywith);
+
+					updating->states = unified->states;		// Simple assignments, no pressure.
+					updating->start = unified->start;
+					updating->delta = unified->delta;
+					updating->accepting = unified->accepting;
+				}
+				else raise_error("Expected an automaton on the RHS for a \"\\=\" operation with an automaton on the LHS.");
+			}
+			else raise_error("Expected a set, abstract set, or automaton on the RHS for a \"\\=\" operation.");
+		}
+		else if (op.lexeme == "x=")
+		{
+			if (update->type == SET)
+			{
+				if (new_value->type == SET)
+				{
+					shared_ptr<Set> updating = set(update), prodwith = set(new_value);	// We need A = A x B
+
+					shared_ptr<Set> product = updating->cartesian_product(*prodwith);	// Just let C = A x B
+
+					delete updating->elems;							// Get rid of A's vector.
+
+					// And give it a new vector initialized with the elements in C's vector.
+					updating->elems = new vector<shared_ptr<Elem>>(*prodwith->elems);	
+				}
+				else raise_error("Expected a set on the RHS for a \"x=\" operation with a set on the LHS.");
+			}
+			else if (update->type == ABSTRACT_SET)
+			{	
+				if (new_value->type == ABSTRACT_SET)
+				{
+					shared_ptr<AbstractSet> updating = aset(update), prodwith = aset(new_value);	// We need A = A x B
+
+					shared_ptr<AbstractSet> product = updating->cartesian_product(*prodwith);	// Let C = A x B.
+
+					updating->criteria = product->criteria;		   // Now just replace A's criteria by that of C.
+				}
+				else raise_error("Expected an abstract set on the RHS for a \"x=\" operation with an abstract set on the LHS.");
+			}
+			else raise_error("Expected a set or an abstract set a \"x=\" operation.");
+		}
+		else if (op.lexeme == "V=")
+		{
+			if (update->type == LOGICAL)
+			{
+				if (new_value->type == LOGICAL)
+					logical(update)->elem = logical(update)->elem || logical(new_value)->elem;
+
+				else if (new_value->type == INT)
+					logical(update)->elem = logical(update)->elem || integer(new_value)->elem;
+
+				else if (new_value->type == CHAR)
+					logical(update)->elem = logical(update)->elem || character(new_value)->elem;
+
+				else raise_error("Expected a primitive on the RHS for a \"V=\" operation with a logical on the LHS.");
+			}
+			else if (update->type == INT)
+			{
+				if (new_value->type == LOGICAL)
+					integer(update)->elem = integer(update)->elem || logical(new_value)->elem;
+
+				else if (new_value->type == INT)
+					integer(update)->elem = integer(update)->elem || integer(new_value)->elem;
+
+				else if (new_value->type == CHAR)
+					integer(update)->elem = integer(update)->elem || character(new_value)->elem;
+
+				else raise_error("Expected a primitive on the RHS for a \"V=\" operation with an int on the LHS.");
+			}
+			else if (update->type == CHAR)
+			{
+				if (new_value->type == LOGICAL)
+					character(update)->elem = character(update)->elem || logical(new_value)->elem;
+
+				else if (new_value->type == INT)
+					character(update)->elem = character(update)->elem || integer(new_value)->elem;
+
+				else if (new_value->type == CHAR)
+					character(update)->elem = character(update)->elem || character(new_value)->elem;
+
+				else raise_error("Expected a primitive on the RHS for a \"V=\" operation with a char on the LHS.");
+			}
+			else raise_error("Expected a primitive for a \"V=\" operation.");
+		}
+		else if (op.lexeme == "+=")
+		{
+			if (update->type == LOGICAL)
+			{
+				if (new_value->type == LOGICAL)
+					logical(update)->elem = logical(update)->elem + logical(new_value)->elem;
+
+				else if (new_value->type == INT)
+					logical(update)->elem = logical(update)->elem + integer(new_value)->elem;
+
+				else if (new_value->type == CHAR)
+					logical(update)->elem = logical(update)->elem + character(new_value)->elem;
+
+				else raise_error("Expected a primitive on the RHS for a \"+=\" operation with a logical on the LHS.");
+			}
+			else if (update->type == INT)
+			{
+				if (new_value->type == LOGICAL)
+					integer(update)->elem = integer(update)->elem + logical(new_value)->elem;
+
+				else if (new_value->type == INT)
+					integer(update)->elem = integer(update)->elem + integer(new_value)->elem;
+
+				else if (new_value->type == CHAR)
+					integer(update)->elem = integer(update)->elem + character(new_value)->elem;
+					
+				else raise_error("Expected a primitive on the RHS for a \"+=\" operation with an int on the LHS.");
+			}
+			else if (update->type == CHAR)
+			{
+				if (new_value->type == LOGICAL)
+					character(update)->elem = character(update)->elem + logical(new_value)->elem;
+
+				else if (new_value->type == INT)
+					character(update)->elem = character(update)->elem + integer(new_value)->elem;
+
+				else if (new_value->type == CHAR)
+					character(update)->elem = character(update)->elem + character(new_value)->elem;
+
+				else raise_error("Expected a primitive on the RHS for a \"+=\" operation with a char on the LHS.");
+			}
+			else if (update->type == STRING)
+			{
+				if (new_value->type == STRING)
+					str(update)->elem = str(update)->elem + str(new_value)->elem;
+
+				else if (new_value->type == CHAR)
+					str(update)->elem = str(update)->elem + character(new_value)->elem;
+
+				else raise_error("Expected a string or a char on the RHS for a \"+=\" operation with a string on the LHS.");
+			}
+			else raise_error("Expected a primitive or a string for a \"+=\" operation.");
+		}
+		else if (op.lexeme == "-=")
+		{
+			if (update->type == LOGICAL)
+			{
+				if (new_value->type == LOGICAL)
+					logical(update)->elem = logical(update)->elem - logical(new_value)->elem;
+
+				else if (new_value->type == INT)
+					logical(update)->elem = logical(update)->elem - integer(new_value)->elem;
+
+				else if (new_value->type == CHAR)
+					logical(update)->elem = logical(update)->elem - character(new_value)->elem;
+
+				else raise_error("Expected a primitive on the RHS for a \"-=\" operation with a logical on the LHS.");
+			}
+			else if (update->type == INT)
+			{
+				if (new_value->type == LOGICAL)
+					integer(update)->elem = integer(update)->elem - logical(new_value)->elem;
+
+				else if (new_value->type == INT)
+					integer(update)->elem = integer(update)->elem - integer(new_value)->elem;
+
+				else if (new_value->type == CHAR)
+					integer(update)->elem = integer(update)->elem - character(new_value)->elem;
+
+				else raise_error("Expected a primitive on the RHS for a \"-=\" operation with an int on the LHS.");
+			}
+			else if (update->type == CHAR)
+			{
+				if (new_value->type == LOGICAL)
+					character(update)->elem = character(update)->elem - logical(new_value)->elem;
+
+				else if (new_value->type == INT)
+					character(update)->elem = character(update)->elem - integer(new_value)->elem;
+
+				else if (new_value->type == CHAR)
+					character(update)->elem = character(update)->elem - character(new_value)->elem;
+
+				else raise_error("Expected a primitive on the RHS for a \"-=\" operation with a char on the LHS.");
+			}
+			else raise_error("Expected a primitive for a \"-=\" operation.");
+		}
+		else if (op.lexeme == "*=")
+		{
+			if (update->type == LOGICAL)
+			{
+				if (new_value->type == LOGICAL)
+					logical(update)->elem = logical(update)->elem * logical(new_value)->elem;
+
+				else if (new_value->type == INT)
+					logical(update)->elem = logical(update)->elem * integer(new_value)->elem;
+
+				else if (new_value->type == CHAR)
+					logical(update)->elem = logical(update)->elem * character(new_value)->elem;
+
+				else raise_error("Expected a primitive on the RHS for a \"*=\" operation with a logical on the LHS.");
+			}
+			else if (update->type == INT)
+			{
+				if (new_value->type == LOGICAL)
+					integer(update)->elem = integer(update)->elem * logical(new_value)->elem;
+
+				else if (new_value->type == INT)
+					integer(update)->elem = integer(update)->elem * integer(new_value)->elem;
+
+				else if (new_value->type == CHAR)
+					integer(update)->elem = integer(update)->elem * character(new_value)->elem;
+
+				else raise_error("Expected a primitive on the RHS for a \"*=\" operation with an int on the LHS.");
+			}
+			else if (update->type == CHAR)
+			{
+				if (new_value->type == LOGICAL)
+					character(update)->elem = character(update)->elem * logical(new_value)->elem;
+
+				else if (new_value->type == INT)
+					character(update)->elem = character(update)->elem * integer(new_value)->elem;
+
+				else if (new_value->type == CHAR)
+					character(update)->elem = character(update)->elem * character(new_value)->elem;
+
+				else raise_error("Expected a primitive on the RHS for a \"*=\" operation with a char on the LHS.");
+			}
+
+			else raise_error("Expected a primitive for a \"*=\" operation.");
+		}
+		else if (op.lexeme == "/=")
+		{
+			if (update->type == LOGICAL)
+			{
+				if (new_value->type == LOGICAL)
+					logical(update)->elem = logical(update)->elem / logical(new_value)->elem;
+
+				else if (new_value->type == INT)
+					logical(update)->elem = logical(update)->elem / integer(new_value)->elem;
+
+				else if (new_value->type == CHAR)
+					logical(update)->elem = logical(update)->elem / character(new_value)->elem;
+
+				else raise_error("Expected a primitive on the RHS for a \"/=\" operation with a logical on the LHS.");
+			}
+			else if (update->type == INT)
+			{
+				if (new_value->type == LOGICAL)
+					integer(update)->elem = integer(update)->elem / logical(new_value)->elem;
+
+				else if (new_value->type == INT)
+					integer(update)->elem = integer(update)->elem / integer(new_value)->elem;
+
+				else if (new_value->type == CHAR)
+					integer(update)->elem = integer(update)->elem / character(new_value)->elem;
+
+				else raise_error("Expected a primitive on the RHS for a \"/=\" operation with an int on the LHS.");
+			}
+			else if (update->type == CHAR)
+			{
+				if (new_value->type == LOGICAL)
+					character(update)->elem = character(update)->elem / logical(new_value)->elem;
+
+				else if (new_value->type == INT)
+					character(update)->elem = character(update)->elem / integer(new_value)->elem;
+
+				else if (new_value->type == CHAR)
+					character(update)->elem = character(update)->elem / character(new_value)->elem;
+
+				else raise_error("Expected a primitive on the RHS for a \"/=\" operation with a char on the LHS.");
+			}
+
+			else raise_error("Expected a primitive for a \"/=\" operation.");
+		}
+		else if (op.lexeme == "^=")
+		{
+			if (update->type == LOGICAL)
+			{
+				if (new_value->type == LOGICAL)
+					logical(update)->elem = pow(logical(update)->elem, logical(new_value)->elem);
+
+				else if (new_value->type == INT)
+					logical(update)->elem = pow(logical(update)->elem, integer(new_value)->elem);
+
+				else if (new_value->type == CHAR)
+					logical(update)->elem = pow(logical(update)->elem, character(new_value)->elem);
+
+				else raise_error("Expected a primitive on the RHS for a \"^=\" operation with a logical on the LHS.");
+			}
+			else if (update->type == INT)
+			{
+				if (new_value->type == LOGICAL)
+					integer(update)->elem = pow(integer(update)->elem, logical(new_value)->elem);
+
+				else if (new_value->type == INT)
+					integer(update)->elem = pow(integer(update)->elem, integer(new_value)->elem);
+
+				else if (new_value->type == CHAR)
+					integer(update)->elem = pow(integer(update)->elem, character(new_value)->elem);
+
+				else raise_error("Expected a primitive on the RHS for a \"^=\" operation with an int on the LHS.");
+			}
+			else if (update->type == CHAR)
+			{
+				if (new_value->type == LOGICAL)
+					character(update)->elem = pow(character(update)->elem, logical(new_value)->elem);
+
+				else if (new_value->type == INT)
+					character(update)->elem = pow(character(update)->elem, integer(new_value)->elem);
+
+				else if (new_value->type == CHAR)
+					character(update)->elem = pow(character(update)->elem, character(new_value)->elem);
+
+				else raise_error("Expected a primitive on the RHS for a \"^=\" operation with a char on the LHS.");
+			}
+			else if (update->type == MAP)
+			{
+				if (new_value->type == INT || new_value->type == CHAR || new_value->type == LOGICAL)
+				{
+					int power = 0;			// Compose the map with itself power times
+
+					if (new_value->type == LOGICAL)  power =  integer(new_value)->elem - 1;	
+					else if (new_value->type = INT)  power =  logical(new_value)->elem - 1;
+					else if (new_value->type = CHAR) power = character(new_value)->elem- 1;
+
+					while (power--)
+					{
+						shared_ptr<Map> raised_map = map(update)->composed_with(*map(update));
+						delete map(update)->pi_indices;
+						delete map(update)->_map;
+						map(update)->pi_indices = new vector<int>(*raised_map->pi_indices);
+						map(update)->_map = new unordered_map<int, int>(*raised_map->_map);
+					}
+				}	
+				else raise_error("Expected an integer or another primitive on the RHS for a \"^=\" operation with a map on the LHS");
+			}
+			else if (update->type == ABSTRACT_MAP)
+			{
+				if (new_value->type == INT || new_value->type == CHAR || new_value->type == LOGICAL)
+				{
+					int power = 0;			// Compose the abstract map with itself power times
+
+					if (new_value->type == LOGICAL)  power = integer(new_value)->elem - 1;
+					else if (new_value->type = INT)  power = logical(new_value)->elem - 1;
+					else if (new_value->type = CHAR) power = character(new_value)->elem - 1;
+
+					while (power--)
+					{
+						shared_ptr<AbstractMap> raised_map = amap(update)->composed_with(amap(update));
+						amap(update)->mapping_scheme = raised_map->mapping_scheme;
+					}
+				}
+				else raise_error("Expected an integer or another primitive on the RHS for a \"^=\" operation with an abstract map on the LHS");
+			}
+			else raise_error("Expected a primitive, map, or abstract map for a \"^=\" operation.");
+		}
+		else if (op.lexeme == "%=")
+		{
+			if (update->type == LOGICAL)
+			{
+				if (new_value->type == LOGICAL)
+					logical(update)->elem = logical(update)->elem % logical(new_value)->elem;
+
+				else if (new_value->type == INT)
+					logical(update)->elem = logical(update)->elem % integer(new_value)->elem;
+
+				else if (new_value->type == CHAR)
+					logical(update)->elem = logical(update)->elem % character(new_value)->elem;
+
+				else raise_error("Expected a primitive on the RHS for a \"%=\" operation with a logical on the LHS.");
+			}
+			else if (update->type == INT)
+			{
+				if (new_value->type == LOGICAL)
+					integer(update)->elem = integer(update)->elem % logical(new_value)->elem;
+
+				else if (new_value->type == INT)
+					integer(update)->elem = integer(update)->elem % integer(new_value)->elem;
+
+				else if (new_value->type == CHAR)
+					integer(update)->elem = integer(update)->elem % character(new_value)->elem;
+
+				else raise_error("Expected a primitive on the RHS for a \"%=\" operation with an int on the LHS.");
+			}
+			else if (update->type == CHAR)
+			{
+				if (new_value->type == LOGICAL)
+					character(update)->elem = character(update)->elem % logical(new_value)->elem;
+
+				else if (new_value->type == INT)
+					character(update)->elem = character(update)->elem % integer(new_value)->elem;
+
+				else if (new_value->type == CHAR)
+					character(update)->elem = character(update)->elem % character(new_value)->elem;
+
+				else raise_error("Expected a primitive on the RHS for a \"%=\" operation with a char on the LHS.");
+			}
+
+			else raise_error("Expected a primitive for a \"%=\" operation.");
+		}
+		else if (op.lexeme == "o=")
+		{
+			if (update->type == MAP)
+			{
+				if (new_value->type == MAP)
+				{
+					shared_ptr<Map> raised_map = map(update)->composed_with(*map(new_value));
+					delete map(update)->pi_indices;
+					delete map(update)->_map;
+					map(update)->pi_indices = new vector<int>(*raised_map->pi_indices);
+					map(update)->_map = new unordered_map<int, int>(*raised_map->_map);
+				}
+				else raise_error("Expected a map on the RHS for a \"o=\" operation with a map on the LHS");
+			}
+			else if (update->type == ABSTRACT_MAP)
+			{
+				if (new_value->type == ABSTRACT_MAP)
+				{
+					shared_ptr<AbstractMap> raised_map = amap(update)->composed_with(amap(new_value));
+					amap(update)->mapping_scheme = raised_map->mapping_scheme;
+				}
+				else raise_error("Expected an abstract map on the RHS for a \"o=\" operation with an abstract map on the LHS");
+			}
+			else raise_error("Expected a map or an abstract map for a \"o=\" operation.");
+		}
+	}
 }
 
 void parse_print()
@@ -356,7 +1097,7 @@ void parse_initialization()
 		{
 			Token equal_sign = get_next_token();
 
-			if (equal_sign.types[0] != EQUAL_SIGN) raise_error("Missing operator \"=\".");
+			if (equal_sign.lexeme != "=") raise_error("Missing operator \"=\".");
 
 			read_right_expr = true;
 
@@ -374,7 +1115,7 @@ void parse_initialization()
 		{
 			Token equal_sign = get_next_token();
 
-			if (equal_sign.types[0] != EQUAL_SIGN) raise_error("Missing operator \"=\".");
+			if (equal_sign.lexeme != "=") raise_error("Missing operator \"=\".");
 
 			read_right_expr = true;
 
@@ -439,15 +1180,15 @@ void parse_initialization()
 					raise_error("The codomain of a map must be a set.");
 			}
 			(*identify)[new_identifier.lexeme] = shared_ptr<Map> {new Map(
-				static_pointer_cast<Set>(map_domain),
-				static_pointer_cast<Set>(map_codomain)
+				set(map_domain),
+				set(map_codomain)
 			)};
 		}
 		else if (data_type.lexeme == "int") 
 		{
 			Token equal_sign = get_next_token();
 		
-			if (equal_sign.types[0] != EQUAL_SIGN) raise_error("Missing operator \"=\".");
+			if (equal_sign.lexeme != "=") raise_error("Missing operator \"=\".");
 
 			read_right_expr = true;
 
@@ -459,15 +1200,16 @@ void parse_initialization()
 
 			if (val->type != INT) raise_error("Cannot assign a non-int value to an int identifier.");
 
-			(*identify)[new_identifier.lexeme] = static_pointer_cast<Int>(val);
+			(*identify)[new_identifier.lexeme] = integer(val);
 		}
 		else if (data_type.lexeme == "char")
 		{
 			Token equal_sign = get_next_token();
 
-			if (equal_sign.types[0] != EQUAL_SIGN) raise_error("Missing operator \"=\".");
+			if (equal_sign.lexeme != "=") raise_error("Missing operator \"=\".");
 
 			read_right_expr = true;
+
 			Token char_expression = get_next_token();
 
 			ExpressionTree char_expr(char_expression.lexeme);
@@ -476,13 +1218,13 @@ void parse_initialization()
 
 			if (val->type != CHAR) raise_error("Cannot assign a non-char value to a char identifier.");
 
-			(*identify)[new_identifier.lexeme] = static_pointer_cast<Char>(val);
+			(*identify)[new_identifier.lexeme] = character(val);
 		}
 		else if (data_type.lexeme == "string") 
 		{
 			Token equal_sign = get_next_token();
 
-			if (equal_sign.types[0] != EQUAL_SIGN) raise_error("Missing operator \"=\".");
+			if (equal_sign.lexeme != "=") raise_error("Missing operator \"=\".");
 
 			read_right_expr = true;
 
@@ -494,13 +1236,13 @@ void parse_initialization()
 
 			if (val->type != STRING) raise_error("Cannot assign a non-string value to a string identifier.");
 
-			(*identify)[new_identifier.lexeme] = static_pointer_cast<String>(val);
+			(*identify)[new_identifier.lexeme] = str(val);
 		}
 		else if (data_type.lexeme == "logical")
 		{
 			Token equal_sign = get_next_token();
 
-			if (equal_sign.types[0] != EQUAL_SIGN) raise_error("Missing operator \"=\".");
+			if (equal_sign.lexeme != "=") raise_error("Missing operator \"=\".");
 
 			Token logic_expression = get_next_token();
 
@@ -512,35 +1254,42 @@ void parse_initialization()
 
 			if (val->type != LOGICAL) raise_error("Cannot assign a non-logical value to a logical identifier.");
 
-			(*identify)[new_identifier.lexeme] = static_pointer_cast<Logical>(val);
+			(*identify)[new_identifier.lexeme] = logical(val);
 		}
 		else if (data_type.lexeme == "auto")
 		{
 			Token equal_sign = get_next_token();
 
-			if (equal_sign.types[0] != EQUAL_SIGN) raise_error("Missing operator \"=\".");
+			if (equal_sign.lexeme != "=") raise_error("Missing operator \"=\".");
 
 			read_right_expr = true;
+
 			Token tuple_expression = get_next_token();
 
 			ExpressionTree tuple_expr(tuple_expression.lexeme);
 
 			shared_ptr<Elem> val = tuple_expr.evaluate();
 
-			if (val->type != TUPLE) raise_error("Initializing an automaton needs a tuple.");
+			if (val->type == TUPLE) 
+			{
+				shared_ptr<Tuple> val_ = _tuple(val);
 
-			shared_ptr<Tuple> val_ = static_pointer_cast<Tuple>(val);
+				if (val_->size() != 5) raise_error("Initializing an automaton needs a 5-tuple.");
 
-			if (val_->size() != 5) raise_error("Initializing an automaton needs a 5-tuple.");
-
-			(*identify)[new_identifier.lexeme] = shared_ptr<Auto>{new Auto(	// Make a new automaton object.
-				static_pointer_cast<Set>((*val_)[0]), 
-				static_pointer_cast<Set>((*val_)[1]), 
-				(*val_)[2], 
-				static_pointer_cast<Map>((*val_)[3]), 
-				static_pointer_cast<Set>((*val_)[4]),
-				DIRECT_ASSIGN
-			)};
+				(*identify)[new_identifier.lexeme] = shared_ptr<Auto>{new Auto(	// Make a new automaton object.
+					set((*val_)[0]), 
+					set((*val_)[1]), 
+					(*val_)[2], 
+					map((*val_)[3]), 
+					set((*val_)[4]),
+					DIRECT_ASSIGN
+				)};
+			}
+			else if (val->type == AUTO)
+			{
+				(*identify)[new_identifier.lexeme] = automaton(val);
+			}
+			else raise_error("Initializing an automaton needs an automaton or a tuple.");
 		}
 	}
 	else if (data_type.types[0] == ABSTRACT)
@@ -557,7 +1306,7 @@ void parse_initialization()
 		{ 
 			Token eq_sign = get_next_token();
 
-			if (eq_sign.types[0] != EQUAL_SIGN) raise_error("Missing operator \"=\".");
+			if (eq_sign.lexeme != "=") raise_error("Missing operator \"=\".");
 
 			read_right_expr = true;
 
@@ -565,7 +1314,7 @@ void parse_initialization()
 
 			(*identify)[new_identifier.lexeme] = shared_ptr<AbstractSet>{new AbstractSet(abstract_set.lexeme)};
 		}
-		else
+		else if (type.lexeme == "map")
 		{
 			Token colon = get_next_token();
 
@@ -592,10 +1341,11 @@ void parse_initialization()
 			if (domain->type != ABSTRACT_SET || codomain->type != ABSTRACT_SET) raise_error("Abstract sets expected.");
 
 			(*identify)[new_identifier.lexeme] = shared_ptr<AbstractMap> { new AbstractMap (
-				static_pointer_cast<AbstractSet>(domain), 
-				static_pointer_cast<AbstractSet>(codomain)
+				aset(domain), 
+				aset(codomain)
 			)};
 		}
+		else raise_error("Only sets and maps can be abstract.");
 	}
 }
 
@@ -620,7 +1370,7 @@ void parse_while()
 
 	if (do_or_not->type != LOGICAL) raise_error("Expected a logical expression.");
 
-	while (static_pointer_cast<Logical>(do_or_not)->elem)
+	while (logical(do_or_not)->elem)
 	{
 		if (logical_condition != nullptr) delete logical_condition;	// We have no use for the old parse tree of the condition ...
 
@@ -647,7 +1397,7 @@ void parse_while()
 		Token token = get_next_token();
 		if (token.types[0] == LET) read_left_expr = true;
 		if (token.types[0] == UNDER) read_map_expr = true;
-		if (token.types[0] == EQUAL_SIGN || token.types[0] == COLON || token.types[0] == PRINT
+		if (token.types[0] == UPDATE_OP || token.types[0] == COLON || token.types[0] == PRINT
 		    || token.types[0] == WHILE || token.types[0] == IF) read_right_expr = true;
 		if (token.types[0] == L_BRACE) level++;
 		if (token.types[0] == R_BRACE) 
@@ -675,7 +1425,7 @@ void parse_if()		// Parsing if statements.
 
 	if (do_or_not->type != LOGICAL) raise_error("Expected a logical expression.");
 
-	if (static_pointer_cast<Logical>(do_or_not)->elem)
+	if (logical(do_or_not)->elem)
 	{
 		delete logical_condition;	// We have no use for the old parse tree of the condition ...
 
@@ -702,7 +1452,7 @@ void parse_if()		// Parsing if statements.
 			Token token = get_next_token();
 			if (token.types[0] == LET) read_left_expr = true;
 			if (token.types[0] == UNDER) read_map_expr = true;
-			if (token.types[0] == EQUAL_SIGN || token.types[0] == COLON || token.types[0] == PRINT
+			if (token.types[0] == UPDATE_OP || token.types[0] == COLON || token.types[0] == PRINT
 				|| token.types[0] == WHILE || token.types[0] == IF) read_right_expr = true;
 			if (token.types[0] == L_BRACE) level++;
 			if (token.types[0] == R_BRACE)
@@ -724,7 +1474,7 @@ void parse_if()		// Parsing if statements.
 
 			if (token.types[0] == LET) read_left_expr = true;
 			if (token.types[0] == UNDER) read_map_expr = true;
-			if (token.types[0] == EQUAL_SIGN || token.types[0] == COLON || token.types[0] == PRINT
+			if (token.types[0] == UPDATE_OP || token.types[0] == COLON || token.types[0] == PRINT
 				|| token.types[0] == WHILE || token.types[0] == IF) read_right_expr = true;
 			if (token.types[0] == L_BRACE) level++;
 			if (token.types[0] == R_BRACE)
@@ -746,30 +1496,30 @@ void parse_if()		// Parsing if statements.
 	}
 }
 
-void trim(string &str)
+void trim(string &s)
 {
-	if (all_spaces(str)) return;
-	int start = 0, end = str.size() - 1;
-	while (isspace(str[start])) start++;
-	while (isspace(str[ end ]))  end-- ;
-	if (start >= end) str == "";
-	str = str.substr(start, end - start + 1);
+	if (all_spaces(s)) return;
+	int start = 0, end = s.size() - 1;
+	while (isspace(s[start])) start++;
+	while (isspace(s[ end ]))  end-- ;
+	if (start >= end) s == "";
+	s = s.substr(start, end - start + 1);
 }
 
-bool identifier(string &str)
+bool identifier(string &s)
 {
-	if (str[0] == '_' || isalpha(str[0])) {
-		for (int i = 1; i < str.size(); i++)
-			if (!isalnum(str[i]) && str[i] != '_')
+	if (s[0] == '_' || isalpha(s[0])) {
+		for (int i = 1; i < s.size(); i++)
+			if (!isalnum(s[i]) && s[i] != '_')
 				return false;
 		return true;
 	}
 	else return false;
 }
 
-bool all_spaces(string& str)
+bool all_spaces(string& s)
 {
-	for (auto& c : str)
+	for (auto& c : s)
 		if (!isspace(c))
 			return false;
 	return true;
@@ -783,28 +1533,28 @@ void print_info()
 	cout << "To change the prompt, use the env. variable \"__prompt__\"." << endl << endl;	
 }
 
-void remove_comment(string &str)
+void remove_comment(string &s)
 {
 	int level = 0, i = 0, comment_found_at = 0;
 	bool in_string = false, comment_found = false;
-	for (i = 0; i < str.size(); i++)
+	for (i = 0; i < s.size(); i++)
 	{
-		if (((str[i] == '"' && !in_string) || str[i] == '{' || str[i] == '(' || str[i] == '[')
-			&& (i == 0 || str[i - 1] != '\\')) {
+		if (((s[i] == '"' && !in_string) || s[i] == '{' || s[i] == '(' || s[i] == '[')
+			&& (i == 0 || s[i - 1] != '\\')) {
 			level++;
-			if (str[i] == '"' && !in_string) in_string = true;
+			if (s[i] == '"' && !in_string) in_string = true;
 		}
-		else if (((str[i] == '"' && in_string) || str[i] == '}' || str[i] == ')' || str[i] == ']')
-			&& (i == 0 || str[i - 1] != '\\')) {
+		else if (((s[i] == '"' && in_string) || s[i] == '}' || s[i] == ')' || s[i] == ']')
+			&& (i == 0 || s[i - 1] != '\\')) {
 			level--;
-			if (str[i] == '"' && in_string) in_string = false;
+			if (s[i] == '"' && in_string) in_string = false;
 		}
-		else if (str[i] == '#' && level == 0)		// It's a tuple if a comma exists at level 0.
+		else if (s[i] == '#' && level == 0)		// It's a tuple if a comma exists at level 0.
 		{
 			comment_found = true;
 			comment_found_at = i;
 			break;
 		}
 	}
-	if (comment_found) str = str.substr(0, comment_found_at);
+	if (comment_found) s = s.substr(0, comment_found_at);
 } 

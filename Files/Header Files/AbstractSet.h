@@ -27,4 +27,6 @@ public:
 	string to_string() {return "{ elem | " + criteria + " }";} // Just return the set-builder notation.
 };
 
+#define aset static_pointer_cast<AbstractSet>
+
 #endif

@@ -74,7 +74,7 @@ bool AbstractSet::has(Elem &elem)				// Returns true if the argument elem fulfil
 		to_be_evaluated = part1 + part2 + part3;
 	}
 	ExpressionTree eval(to_be_evaluated);
-	bool answer = (std::static_pointer_cast<Logical>(eval.evaluate()))->elem;
+	bool answer = logical(eval.evaluate())->elem;
 	return answer;
 }
 

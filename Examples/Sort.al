@@ -20,12 +20,13 @@ while (|A| > 0)
 		}
 		else { }
 		
-		let i = i + 1
+		let i += 1
 	}
-	
-	let A_s = A_s U {min}
 
-	let A = A \ {min}
+	let A \= { min } 
+	
+	let A_s U= { .min }
+	
 }
 
 print "Sorted Set: "

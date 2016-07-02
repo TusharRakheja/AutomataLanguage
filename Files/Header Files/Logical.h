@@ -21,4 +21,6 @@ public:
 	~Logical() { }				// Empty destructor.
 };
 
+#define logical static_pointer_cast<Logical>
+
 #endif

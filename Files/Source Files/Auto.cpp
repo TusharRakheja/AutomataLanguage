@@ -23,11 +23,11 @@ Auto::Auto(shared_ptr<Set> states, shared_ptr<Set> sigma, shared_ptr<Elem>start,
 		!delta->codomain()->subset_of(*states))				// ... or if the codomain is not a subset of states ...
 		program_vars::raise_error("The transition function has improper domain or codomain.");
 
-	this->states    = std::static_pointer_cast<Set>(states->deep_copy());
-	this->sigma     = std::static_pointer_cast<Set>(sigma->deep_copy());
+	this->states    = set(states->deep_copy());
+	this->sigma     = set(sigma->deep_copy());
 	this->start     = start->deep_copy();
-	this->delta     = std::static_pointer_cast<Map>(delta->deep_copy());
-	this->accepting = std::static_pointer_cast<Set>(accepting->deep_copy());
+	this->delta     = map(delta->deep_copy());
+	this->accepting = set(accepting->deep_copy());
 }
 
 Auto::Auto(shared_ptr<Set> states, shared_ptr<Set> sigma, shared_ptr<Elem>start, shared_ptr<Map>delta, shared_ptr<Set> accepting, int) : Elem(AUTO)	     // Constructor (Direct assign).
@@ -53,12 +53,12 @@ Auto::Auto(shared_ptr<Set> states, shared_ptr<Set> sigma, shared_ptr<Elem>start,
 shared_ptr<Logical> Auto::operator[](String &query)
 {
 	shared_ptr<Elem> current_state = start;			// Initially, the current_state is the starting state 'start'.
-	for (auto &character : query.elem)		// For every character in the query string ...
+	for (auto &c : query.elem)				// For every character in the query string ...
 	{	
 		Tuple t ( 
 			new vector< shared_ptr< Elem > > {	        // Make a tuple t ...
 				current_state->deep_copy(), 
-				shared_ptr<Char>(new Char(character))   // ... that contains pointers to the deep_copies of the current_state...
+				shared_ptr<Char>(new Char(c))   // ... that contains pointers to the deep_copies of the current_state...
 			}, 
 			DIRECT_ASSIGN
 		);							// ... and a Char object constructed with the current character.
@@ -75,11 +75,11 @@ shared_ptr<Logical> Auto::operator[](String &query)
 const shared_ptr<Logical> Auto::operator[](String &query) const
 {
 	shared_ptr<Elem> current_state = start;			// Initially, the current_state is the starting state 'start'.
-	for (auto &character : query.elem)		// For every character in the query string ...
+	for (auto &c : query.elem)				// For every character in the query string ...
 	{
 		Tuple t( new vector< shared_ptr< Elem > >{	        // Make a tuple t ...
 			current_state,					// ... that is (q_current, c). 
-			shared_ptr<Char>(new Char(character))		
+			shared_ptr<Char>(new Char(c))		
 			},
 			DIRECT_ASSIGN
 		);							
@@ -116,9 +116,9 @@ shared_ptr<mytuple> Auto::make_super_automata(shared_ptr<Auto> other)	// Makes t
 
 	for (auto &pre_image : *new_delta_domain->elems)				// Now we'll add mappings M((q1, q2), c) = (M1(q1, c), M2(q2, c)) 
 	{
-		shared_ptr<Tuple> preimage = std::static_pointer_cast<Tuple>(pre_image);	// *preimage = ((q1, q2), c)
-		shared_ptr<Tuple> state_pair = std::static_pointer_cast<Tuple>((*preimage)[0]);	// *state_pair = (q1, q2)
-		shared_ptr<Char>  sigma = std::static_pointer_cast<Char>((*preimage)[1]);	// *sigma = c 
+		shared_ptr<Tuple> preimage = _tuple(pre_image);		// *preimage = ((q1, q2), c)
+		shared_ptr<Tuple> state_pair = _tuple((*preimage)[0]);	// *state_pair = (q1, q2)
+		shared_ptr<Char>  sigma = character((*preimage)[1]);	// *sigma = c 
 
 		Tuple first_state_char_pair (					// first_state_char_pair = (q1, c)
 			new vector < shared_ptr<Elem> > {
@@ -172,7 +172,7 @@ shared_ptr<Auto> Auto::accepts_union(shared_ptr<Auto> other)	// Returns an autom
 	for (auto &state_pair : *new_states->elems)		// For every state in the set of states of the union(ized) automaton ...
 	{
 		// ... cast it into (q1, q2) for C++, because it's too dumb to do it itself.
-		shared_ptr<Tuple> statepair = std::static_pointer_cast<Tuple>(state_pair); 
+		shared_ptr<Tuple> statepair = _tuple(state_pair); 
 
 		if (this->accepting->has(*(*statepair)[0]) ||   // Now, if the q1 is in the set of accepting states of this automaton, or if ...
 		    other->accepting->has(*(*statepair)[1]))	// ... q2 is in the accepting states of the other automaton ...
@@ -196,7 +196,7 @@ shared_ptr<Auto> Auto::accepts_intersection(shared_ptr<Auto> other)	// Returns a
 	for (auto &state_pair : *new_states->elems)		// For every state in the set of states of the union(ized) automaton ...
 	{
 		// ... cast it into (q1, q2) for C++, because it's too dumb to do it itself.
-		shared_ptr<Tuple> statepair = std::static_pointer_cast<Tuple>(state_pair);
+		shared_ptr<Tuple> statepair = _tuple(state_pair);
 
 		if (this->accepting->has(*(*statepair)[0]) &&    // Now, if the q1 is in the set of accepting states of this automaton, and if ...
 			other->accepting->has(*(*statepair)[1])) // ... q2 is in the accepting states of the other automaton ...
@@ -220,7 +220,7 @@ shared_ptr<Auto> Auto::accepts_exclusively(shared_ptr<Auto> other) // Returns an
 	for (auto &state_pair : *new_states->elems)		// For every state in the set of states of the union(ized) automaton ...
 	{
 		// ... cast it into (q1, q2) for C++, because it's too dumb to do it itself.
-		shared_ptr<Tuple> statepair = std::static_pointer_cast<Tuple>(state_pair);
+		shared_ptr<Tuple> statepair = _tuple(state_pair);
 		if (this->accepting->has(*(*statepair)[0]) &&   // Now, if the q1 is in the set of accepting states of this automaton, and ...
 		   (!other->accepting->has(*(*statepair)[1])))	// ... q2 is NOT in the accepting states of the other automaton ...
 		{
@@ -236,11 +236,11 @@ shared_ptr<Elem> Auto::deep_copy()					// Return a deep_copy() of this automaton
 	return shared_ptr<Auto>
 	{
 		new Auto (					// Simply just construct a new automaton ... 
-			std::static_pointer_cast<Set>(this->states->deep_copy()), // ... with deep_copies of all its components ...
-			std::static_pointer_cast<Set>(this->sigma->deep_copy()),
+			set(this->states->deep_copy()), // ... with deep_copies of all its components ...
+			set(this->sigma->deep_copy()),
 			this->start->deep_copy(),
-			std::static_pointer_cast<Map>(this->delta->deep_copy()),
-			std::static_pointer_cast<Set>(this->accepting->deep_copy()),
+			map(this->delta->deep_copy()),
+			set(this->accepting->deep_copy()),
 			DIRECT_ASSIGN						  // ... directly assign to its corresponding fields.
 		)
 	};

@@ -48,4 +48,6 @@ public:
 	~Int() { }						// Empty destructor.
 };
 
+#define integer static_pointer_cast<Int>
+
 #endif

@@ -1,8 +1,6 @@
 #ifndef EXPRESSION_TREE_H            
 #define EXPRESSION_TREE_H           
 
-#define ROOT 27			// Every expression tree that we explicitly make here will have this as argument as well. 
-                                     
 #include "ProgramVars.h"
 #include "Auto.h"
 #include "AbstractMap.h"
@@ -11,8 +9,9 @@ enum Token_type
 { 
 	INT_LIT, LOGICAL_LIT, CHAR_LIT, STRING_LIT, SET_LIT, TUPLE_LIT, LITERAL,
 	INDEX, IDENTIFIER, OP, UNARY, END, ERROR, EXPR, TYPE, MAPPING_SYMBOL,
-	INPUT, PRINT, IF, ELSEIF, ELSE, WHILE, DECLARE, EQUAL_SIGN, L_BRACE, 
-	R_BRACE, QUIT, DELETE, DELETE_ELEMS, MAP_OP, COLON, LET, UNDER, ABSTRACT, PRINTR
+	INPUT, PRINT, IF, ELSEIF, ELSE, WHILE, DECLARE, L_BRACE, UPDATE_OP,
+	R_BRACE, QUIT, DELETE, DELETE_ELEMS, MAP_OP, COLON, LET, UNDER, ABSTRACT, PRINTR,
+
 };
 
 class Token

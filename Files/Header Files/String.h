@@ -76,4 +76,6 @@ public:
 	~String() {  }						// Destructor - Delete the elem object.
 };
 
+#define str static_pointer_cast<String>
+
 #endif

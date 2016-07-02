@@ -12,7 +12,7 @@ class Map : public Elem
 {
 public:
 	shared_ptr<Set>domain_s, codomain_s;		// The domain and codomain sets.
-	unordered_map<int, int> * map;
+	unordered_map<int, int> * _map;
 	vector<int> * pi_indices;			// Pre_image indices.
 
 	Map();						// Default constructor.
@@ -31,5 +31,7 @@ public:
 	string to_string_raw();				// Returns a raw_string representation of the map.
 	~Map();						// Destructor.
 };
+
+#define map static_pointer_cast<Map>
 
 #endif

@@ -6,6 +6,7 @@
 
 using std::string;
 using std::shared_ptr;
+using std::static_pointer_cast;
 
 /* The definition of a generic Elem(ent) in Autolang. */
 

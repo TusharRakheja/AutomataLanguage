@@ -1,17 +1,18 @@
 #include "../Header Files/Map.h"
+#include "../Header Files/ExpressionTree.h"
 
 /* Implementations for methods in the class Map. */
 
 Map::Map() : Elem(MAP)					// Default constructor.
 {
 	domain_s = codomain_s = nullptr;
-	pi_indices = nullptr; map = nullptr;
+	pi_indices = nullptr; _map = nullptr;
 }
 
 Map::Map(shared_ptr<Set> domain_s, shared_ptr<Set> codomain_s) : Elem(MAP)	// Parameterized constructor.
 {
 	this->domain_s = domain_s; this->codomain_s = codomain_s;
-	map = new unordered_map<int, int>();
+	_map = new unordered_map<int, int>();
 	pi_indices = new vector<int>();
 }
 
@@ -34,7 +35,7 @@ void Map::add_maping(Elem &pre_image, Elem &image)	// Adds a mapping from the le
 		else
 			image_index++;			// ... otherwise look at the next element_pointer.
 
-	(*map)[pre_image_index] = image_index;		// Once both the pre_image_index as well as the image_index are found, add the mapping.
+	(*_map)[pre_image_index] = image_index;		// Once both the pre_image_index as well as the image_index are found, add the mapping.
 
 	pi_indices->push_back(pre_image_index);		// Also add the pre_image_index to the vector (to note which pre_images are mapped).
 }
@@ -46,11 +47,11 @@ shared_ptr<Map> Map::composed_with(Map &other_map)	// Returns a reference to a m
 
 	shared_ptr<Map> fog { new Map((other_map.domain_s), codomain_s) };   // If the compose is possible, let's make a map the apt sets.
 
-	for (auto &index : *(other_map.map)) 				     // THE UGLIEST if-condition follows.
+	for (auto &index : *(other_map._map)) 				     // THE UGLIEST if-condition follows.
 
 		if (std::find(pi_indices->begin(), pi_indices->end(), index.second) != pi_indices->end())
 
-			(*fog->map)[index.first] = (*this->map)[index.second];		// fog(x) = f(g(x))
+			(*fog->_map)[index.first] = (*this->_map)[index.second];		// fog(x) = f(g(x))
 
 	return fog;							     // Return the composition.		
 }
@@ -60,12 +61,12 @@ shared_ptr<Set> Map::domain()   { return  domain_s; }		// Returns a pointer to t
 
 shared_ptr<Elem> Map::deep_copy()				// Returns a deep_copy of this map (NOTE: Also deep_copies the codomain and domain).
 {
-	shared_ptr<Set> deep_domain   { std::static_pointer_cast<Set>(domain_s->deep_copy())   };	// Deep_copy the domain.
-	shared_ptr<Set> deep_codomain { std::static_pointer_cast<Set>(codomain_s->deep_copy()) };	// Deep_copy the codomain.
+	shared_ptr<Set> deep_domain   { std::set(domain_s->deep_copy())   };	// Deep_copy the domain.
+	shared_ptr<Set> deep_codomain { std::set(codomain_s->deep_copy()) };	// Deep_copy the codomain.
 
 	shared_ptr<Map> deep_map {new Map(deep_domain, deep_codomain)};	// Make a new map object with the deep_domain and deep_range.
 
-	*deep_map->map = *this->map;			// Deep_copy the unordered map of pre_image_indices and image_indices.
+	*deep_map->_map = *this->_map;			// Deep_copy the unordered map of pre_image_indices and image_indices.
 	*deep_map->pi_indices = *this->pi_indices;	// Deep_copy the vector of pre_image_indices.
 
 	return deep_map;				// Return the deeply_copied map.
@@ -73,7 +74,7 @@ shared_ptr<Elem> Map::deep_copy()				// Returns a deep_copy of this map (NOTE: A
 
 void Map::delete_elems()
 {
-	delete pi_indices, map;				// Delete the mappings and pi_indices.
+	delete pi_indices, _map;				// Delete the mappings and pi_indices.
 }
 
 shared_ptr<Elem> Map::operator[](Elem &pre_image)	// Returns the image of the pre-image [L-value].
@@ -89,7 +90,7 @@ shared_ptr<Elem> Map::operator[](Elem &pre_image)	// Returns the image of the pr
 	if (pre_image_index == domain_s->cardinality()) // If we didn't find the pre_image in the domain ...
 		return default_l_val;			// ... return nullptr.
 
-	return (*codomain_s)[(*map)[pre_image_index]];	// Otherwise of course return the image.
+	return (*codomain_s)[(*_map)[pre_image_index]];	// Otherwise of course return the image.
 }
 
 const shared_ptr<Elem> Map::operator[](Elem &pre_image) const	// Returns the image of the pre-image [R-value].
@@ -104,7 +105,7 @@ const shared_ptr<Elem> Map::operator[](Elem &pre_image) const	// Returns the ima
 	if (pre_image_index == domain_s->cardinality()) // If we didn't find the pre_image in the domain ...
 		return nullptr;				// ... return nullptr.
 
-	return (*codomain_s)[map->at(pre_image_index)];	// Otherwise of course return the image.
+	return (*codomain_s)[_map->at(pre_image_index)];	// Otherwise of course return the image.
 }
 
 bool Map::operator==(Elem &elem)			// Compares this to another map.
@@ -115,7 +116,7 @@ bool Map::operator==(Elem &elem)			// Compares this to another map.
 
 	if (*other_map->domain_s == *this->domain_s &&		// Maps are only equal if they have the same domain ...
 	    *other_map->codomain_s == *this->codomain_s &&	// ... the same co-domain ...
-	    *other_map->map == *this->map)			// ... and the same pre_image-image mappings.
+	    *other_map->_map == *this->_map)			// ... and the same pre_image-image mappings.
 	    return true;					// All those things together imply the same range as well!
 
 	return false;					// Otherwise they're not equal.
@@ -124,7 +125,7 @@ bool Map::operator==(Elem &elem)			// Compares this to another map.
 shared_ptr<Set> Map::range()					// The set of all values in the codomain that are mapped to.
 {
 	shared_ptr<Set> x { new Set() };				        // Make a new empty set.
-	for (auto &mapping : *this->map)				// For every (pre_image_index,image_index) pair in the set ...
+	for (auto &mapping : *this->_map)				// For every (pre_image_index,image_index) pair in the set ...
 		x->elems->push_back((*codomain_s)[mapping.second]);	// ... put the element in the codomain at the image_index  
 	return x;
 }
@@ -133,14 +134,14 @@ string Map::to_string()					// The virtual to_string() method for display.
 {
 	string representation = "{";	
 	int i{ 0 };
-	for (auto &index : *map)
+	for (auto &index : *_map)
 	{		
 		representation += "(";
 		representation += domain_s->operator[](index.first)->to_string();   // Recursive, awesome representations. ;)
 		representation += ", ";
 		representation += codomain_s->operator[](index.second)->to_string();
 		representation += ")";
-		if (i != map->size() - 1)
+		if (i != _map->size() - 1)
 			representation += ", ";
 		i++;
 	}
@@ -151,14 +152,14 @@ string Map::to_string_raw()					// The virtual to_string() method for display.
 {
 	string representation = "{";
 	int i{ 0 };
-	for (auto &index : *map)
+	for (auto &index : *_map)
 	{
 		representation += "(";
 		representation += domain_s->operator[](index.first)->to_string_raw();   // Recursive, awesome representations. ;)
 		representation += ", ";
 		representation += codomain_s->operator[](index.second)->to_string_raw();
 		representation += ")";
-		if (i != map->size() - 1)
+		if (i != _map->size() - 1)
 			representation += ", ";
 		i++;
 	}
@@ -167,6 +168,6 @@ string Map::to_string_raw()					// The virtual to_string() method for display.
 
 Map::~Map()
 {
-	delete map; 
+	delete _map; 
 	delete pi_indices;
 }

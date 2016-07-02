@@ -34,4 +34,6 @@ public:
 	~Tuple();					// Destructor.
 };
 
+#define _tuple static_pointer_cast<Tuple>
+
 #endif
