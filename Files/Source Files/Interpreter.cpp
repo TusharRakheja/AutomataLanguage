@@ -916,13 +916,15 @@ void parse_assignment()
 					else if (new_value->type = INT)  power =  logical(new_value)->elem - 1;
 					else if (new_value->type = CHAR) power = character(new_value)->elem- 1;
 
+					shared_ptr<Map> original_map = map(update->deep_copy());
+
 					while (power--)
 					{
-						shared_ptr<Map> raised_map = map(update)->composed_with(*map(update));
+						shared_ptr<Map> temp = map(update)->composed_with(*original_map);
 						delete map(update)->pi_indices;
 						delete map(update)->_map;
-						map(update)->pi_indices = new vector<int>(*raised_map->pi_indices);
-						map(update)->_map = new unordered_map<int, int>(*raised_map->_map);
+						map(update)->pi_indices = new vector<int>(*temp->pi_indices);
+						map(update)->_map = new unordered_map<int, int>(*temp->_map);
 					}
 				}	
 				else raise_error("Expected an integer or another primitive on the RHS for a \"^=\" operation with a map on the LHS");

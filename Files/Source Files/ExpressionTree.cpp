@@ -882,7 +882,8 @@ shared_ptr<Elem> ExpressionTree::evaluate()
 
 						while (power--)
 						{
-							raised_map = raised_map->composed_with(*map(left));
+							shared_ptr<Map> temp = raised_map->composed_with(*map(left));
+							raised_map = temp;
 						}
 						node->value = raised_map;
 					}

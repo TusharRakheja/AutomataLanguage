@@ -45,14 +45,20 @@ shared_ptr<Map> Map::composed_with(Map &other_map)	// Returns a reference to a m
 	if (!other_map.range()->subset_of(*domain_s))	// If the range of g is !c domain of f, the compose operation is not possible.
 		return nullptr;
 
-	shared_ptr<Map> fog { new Map((other_map.domain_s), codomain_s) };   // If the compose is possible, let's make a map the apt sets.
+	shared_ptr<Map> fog { new Map(other_map.domain_s, codomain_s) };   // If the compose is possible, let's make a map the apt sets.
 
 	for (auto &index : *(other_map._map)) 				     // THE UGLIEST if-condition follows.
+	{
+		auto mid_image = (*other_map.codomain_s)[index.second];	     // preimage -> midimage -> image | x -> g(x) -> f(g(x))
+		int mid_image_index{ 0 };
 
-		if (std::find(pi_indices->begin(), pi_indices->end(), index.second) != pi_indices->end())
-
-			(*fog->_map)[index.first] = (*this->_map)[index.second];		// fog(x) = f(g(x))
-
+		for (auto &elem_p1 : *domain_s->elems)		// For every (any) element_pointer in the domain's vector of element_pointers ...
+			if (*elem_p1 == *mid_image)		// ... if the element pointed to by it == pre_image ...
+				break;				// ... stop looking.
+			else
+				mid_image_index++;		// ... otherwise look at the next element_pointer.
+		(*fog->_map)[index.first] = (*this->_map)[mid_image_index];
+	}
 	return fog;							     // Return the composition.		
 }
 
@@ -61,8 +67,8 @@ shared_ptr<Set> Map::domain()   { return  domain_s; }		// Returns a pointer to t
 
 shared_ptr<Elem> Map::deep_copy()				// Returns a deep_copy of this map (NOTE: Also deep_copies the codomain and domain).
 {
-	shared_ptr<Set> deep_domain   { std::set(domain_s->deep_copy())   };	// Deep_copy the domain.
-	shared_ptr<Set> deep_codomain { std::set(codomain_s->deep_copy()) };	// Deep_copy the codomain.
+	shared_ptr<Set> deep_domain   { set(domain_s->deep_copy())   };	// Deep_copy the domain.
+	shared_ptr<Set> deep_codomain { set(codomain_s->deep_copy()) };	// Deep_copy the codomain.
 
 	shared_ptr<Map> deep_map {new Map(deep_domain, deep_codomain)};	// Make a new map object with the deep_domain and deep_range.
 
@@ -168,6 +174,6 @@ string Map::to_string_raw()					// The virtual to_string() method for display.
 
 Map::~Map()
 {
-	delete _map; 
-	delete pi_indices;
+	if (_map != nullptr) delete _map; 
+	if (pi_indices != nullptr) delete pi_indices;
 }
