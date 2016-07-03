@@ -357,37 +357,577 @@ shared_ptr<Elem> ExpressionTree::evaluate()
 			{
 				shared_ptr<Elem> left = node->left->evaluate();
 				shared_ptr<Elem> right = node->right->evaluate();
-				node->value = shared_ptr<Logical>{new Logical(*left == *right)};
+				if (left->type == INT)
+				{
+					shared_ptr<Int> l_int = integer(left);
+					if (right->type == INT)
+					{
+						shared_ptr<Int> r_int = integer(right);
+						node->value = shared_ptr<Logical>{new Logical(l_int->elem == r_int->elem)};
+					}
+					else if (right->type == LOGICAL)
+					{
+						shared_ptr<Logical> r_logical = logical(right);
+						node->value = shared_ptr<Logical>{new Logical(l_int->elem == r_logical->elem)};
+					}
+					else if (right->type == CHAR)
+					{
+						shared_ptr<Char> r_char = character(right);
+						node->value = shared_ptr<Logical>{new Logical(l_int->elem == r_char->elem)};
+					}
+					else node->value = shared_ptr<Logical>{new Logical(false)};
+				}
+				else if (left->type == LOGICAL)
+				{
+					shared_ptr<Logical> l_logical = logical(left);
+					if (right->type == INT)
+					{
+						shared_ptr<Int> r_int = integer(right);
+						node->value = shared_ptr<Logical>{new Logical(l_logical->elem == r_int->elem)};
+					}
+					else if (right->type == LOGICAL)
+					{
+						shared_ptr<Logical> r_logical = logical(right);
+						node->value = shared_ptr<Logical>{new Logical(l_logical->elem == r_logical->elem)};
+					}
+					else if (right->type == CHAR)
+					{
+						shared_ptr<Char> r_char = character(right);
+						node->value = shared_ptr<Logical>{new Logical(l_logical->elem == r_char->elem)};
+					}
+					else node->value = shared_ptr<Logical>{new Logical(false)};
+				}
+				else if (left->type == CHAR)
+				{
+					shared_ptr<Char> l_char = character(left);
+					if (right->type == INT)
+					{
+						shared_ptr<Int> r_int = integer(right);
+						node->value = shared_ptr<Logical>{new Logical(l_char->elem == r_int->elem)};
+					}
+					else if (right->type == LOGICAL)
+					{
+						shared_ptr<Logical> r_logical = logical(right);
+						node->value = shared_ptr<Logical>{new Logical(l_char->elem == r_logical->elem)};
+					}
+					else if (right->type == CHAR)
+					{
+						shared_ptr<Char> r_char = character(right);
+						node->value = shared_ptr<Logical>{new Logical(l_char->elem == r_char->elem)};
+					}
+					else node->value = shared_ptr<Logical>{new Logical(false)};
+				}
+				else if (left->type == STRING)
+				{
+					shared_ptr<String> l_str = str(left);
+					if (right->type == STRING)
+					{
+						shared_ptr<String> r_str = str(right);
+						return shared_ptr<Logical>{new Logical(l_str->elem == r_str->elem)};
+					}
+					else node->value = shared_ptr<Logical>{new Logical(false)};
+				}
+				else if (left->type == SET)
+				{
+					shared_ptr<Set> l_set = set(left);
+					if (right->type == SET)
+					{
+						shared_ptr<Set> r_set = set(right);
+						return shared_ptr<Logical>{new Logical(*l_set == *r_set)};
+					}
+					else node->value = shared_ptr<Logical>{new Logical(false)};
+				}
+				else if (left->type == TUPLE)
+				{
+					shared_ptr<Tuple> l_tup = _tuple(left);
+					if (right->type == TUPLE)
+					{
+						shared_ptr<Tuple> r_tup = _tuple(right);
+						return shared_ptr<Logical>{new Logical(*l_tup == *r_tup)};
+					}
+					else node->value = shared_ptr<Logical>{new Logical(false)};
+				}
+				else if (left->type == MAP)
+				{
+					shared_ptr<Map> l_map = map(left);
+					if (right->type == MAP)
+					{
+						shared_ptr<Map> r_map = map(right);
+						return shared_ptr<Logical>{new Logical(*l_map == *r_map)};
+					}
+					else node->value = shared_ptr<Logical>{new Logical(false)};
+				}
+				else if (left->type == AUTO)
+				{
+					shared_ptr<Auto> l_auto = automaton(left);
+					if (right->type == AUTO)
+					{
+						shared_ptr<Auto> r_auto = automaton(right);
+						return shared_ptr<Logical>{new Logical(*l_auto == *r_auto)};
+					}
+					else node->value = shared_ptr<Logical>{new Logical(false)};
+				}
+				else if (left->type == ABSTRACT_SET)
+				{
+					shared_ptr<AbstractSet> l_aset = aset(left);
+					if (right->type == ABSTRACT_SET)
+					{
+						shared_ptr<AbstractSet> r_aset = aset(right);
+						return shared_ptr<Logical>{new Logical(l_aset->criteria == r_aset->criteria)};
+					}
+					else node->value = shared_ptr<Logical>{new Logical(false)};
+				}
+				else if (left->type == ABSTRACT_MAP)
+				{
+					shared_ptr<AbstractMap> l_aset = amap(left);
+					if (right->type == ABSTRACT_MAP)
+					{
+						shared_ptr<AbstractMap> r_aset = amap(right);
+						return shared_ptr<Logical>{new Logical(l_aset->mapping_scheme == r_aset->mapping_scheme)};
+					}
+					else node->value = shared_ptr<Logical>{new Logical(false)};
+				}
+				else node->value = shared_ptr<Logical>{new Logical(false)};
 			}
 			else if (node->token.lexeme == "!=")
 			{
 				shared_ptr<Elem> left = node->left->evaluate();
 				shared_ptr<Elem> right = node->right->evaluate();
-				node->value = shared_ptr<Logical>{new Logical(!(*left == *right))};
+				if (left->type == INT)
+				{
+					shared_ptr<Int> l_int = integer(left);
+					if (right->type == INT)
+					{
+						shared_ptr<Int> r_int = integer(right);
+						node->value = shared_ptr<Logical>{new Logical(l_int->elem != r_int->elem)};
+					}
+					else if (right->type == LOGICAL)
+					{
+						shared_ptr<Logical> r_logical = logical(right);
+						node->value = shared_ptr<Logical>{new Logical(l_int->elem != r_logical->elem)};
+					}
+					else if (right->type == CHAR)
+					{
+						shared_ptr<Char> r_char = character(right);
+						node->value = shared_ptr<Logical>{new Logical(l_int->elem != r_char->elem)};
+					}
+					else node->value = shared_ptr<Logical>{new Logical(true)};
+				}
+				else if (left->type == LOGICAL)
+				{
+					shared_ptr<Logical> l_logical = logical(left);
+					if (right->type == INT)
+					{
+						shared_ptr<Int> r_int = integer(right);
+						node->value = shared_ptr<Logical>{new Logical(l_logical->elem != r_int->elem)};
+					}
+					else if (right->type == LOGICAL)
+					{
+						shared_ptr<Logical> r_logical = logical(right);
+						node->value = shared_ptr<Logical>{new Logical(l_logical->elem != r_logical->elem)};
+					}
+					else if (right->type == CHAR)
+					{
+						shared_ptr<Char> r_char = character(right);
+						node->value = shared_ptr<Logical>{new Logical(l_logical->elem != r_char->elem)};
+					}
+					else node->value = shared_ptr<Logical>{new Logical(true)};
+				}
+				else if (left->type == CHAR)
+				{
+					shared_ptr<Char> l_char = character(left);
+					if (right->type == INT)
+					{
+						shared_ptr<Int> r_int = integer(right);
+						node->value = shared_ptr<Logical>{new Logical(l_char->elem != r_int->elem)};
+					}
+					else if (right->type == LOGICAL)
+					{
+						shared_ptr<Logical> r_logical = logical(right);
+						node->value = shared_ptr<Logical>{new Logical(l_char->elem != r_logical->elem)};
+					}
+					else if (right->type == CHAR)
+					{
+						shared_ptr<Char> r_char = character(right);
+						node->value = shared_ptr<Logical>{new Logical(l_char->elem != r_char->elem)};
+					}
+					else node->value = shared_ptr<Logical>{new Logical(true)};
+				}
+				else if (left->type == STRING)
+				{
+					shared_ptr<String> l_str = str(left);
+					if (right->type == STRING)
+					{
+						shared_ptr<String> r_str = str(right);
+						return shared_ptr<Logical>{new Logical(l_str->elem != r_str->elem)};
+					}
+					else node->value = shared_ptr<Logical>{new Logical(true)};
+				}
+				else if (left->type == SET)
+				{
+					shared_ptr<Set> l_set = set(left);
+					if (right->type == SET)
+					{
+						shared_ptr<Set> r_set = set(right);
+						return shared_ptr<Logical>{new Logical(!(*l_set == *r_set))};
+					}
+					else node->value = shared_ptr<Logical>{new Logical(true)};
+				}
+				else if (left->type == TUPLE)
+				{
+					shared_ptr<Tuple> l_tup = _tuple(left);
+					if (right->type == TUPLE)
+					{
+						shared_ptr<Tuple> r_tup = _tuple(right);
+						return shared_ptr<Logical>{new Logical(!(*l_tup == *r_tup))};
+					}
+					else node->value = shared_ptr<Logical>{new Logical(true)};
+				}
+				else if (left->type == MAP)
+				{
+					shared_ptr<Map> l_map = map(left);
+					if (right->type == MAP)
+					{
+						shared_ptr<Map> r_map = map(right);
+						return shared_ptr<Logical>{new Logical(!(*l_map == *r_map))};
+					}
+					else node->value = shared_ptr<Logical>{new Logical(true)};
+				}
+				else if (left->type == AUTO)
+				{
+					shared_ptr<Auto> l_auto = automaton(left);
+					if (right->type == AUTO)
+					{
+						shared_ptr<Auto> r_auto = automaton(right);
+						return shared_ptr<Logical>{new Logical(!(*l_auto == *r_auto))};
+					}
+					else node->value = shared_ptr<Logical>{new Logical(true)};
+				}
+				else if (left->type == ABSTRACT_SET)
+				{
+					shared_ptr<AbstractSet> l_aset = aset(left);
+					if (right->type == ABSTRACT_SET)
+					{
+						shared_ptr<AbstractSet> r_aset = aset(right);
+						return shared_ptr<Logical>{new Logical(l_aset->criteria != r_aset->criteria)};
+					}
+					else node->value = shared_ptr<Logical>{new Logical(true)};
+				}
+				else if (left->type == ABSTRACT_MAP)
+				{
+					shared_ptr<AbstractMap> l_aset = amap(left);
+					if (right->type == ABSTRACT_MAP)
+					{
+						shared_ptr<AbstractMap> r_aset = amap(right);
+						return shared_ptr<Logical>{new Logical(l_aset->mapping_scheme != r_aset->mapping_scheme)};
+					}
+					else node->value = shared_ptr<Logical>{new Logical(true)};
+				}
+				else node->value = shared_ptr<Logical>{new Logical(true)};
 			}
 			else if (node->token.lexeme == "<")
 			{
 				shared_ptr<Elem> left = node->left->evaluate();
 				shared_ptr<Elem> right = node->right->evaluate();
-				node->value = shared_ptr<Logical>{new Logical(*left < *right)};
+				if (left->type == INT)
+				{
+					shared_ptr<Int> l_int = integer(left);
+					if (right->type == INT)
+					{
+						shared_ptr<Int> r_int = integer(right);
+						node->value = shared_ptr<Logical>{new Logical(l_int->elem < r_int->elem)};
+					}
+					else if (right->type == LOGICAL)
+					{
+						shared_ptr<Logical> r_logical = logical(right);
+						node->value = shared_ptr<Logical>{new Logical(l_int->elem < r_logical->elem)};
+					}
+					else if (right->type == CHAR)
+					{
+						shared_ptr<Char> r_char = character(right);
+						node->value = shared_ptr<Logical>{new Logical(l_int->elem < r_char->elem)};
+					}
+					else raise_error("Expected an integer or another primitive on the RHS for an \"<\" operation with an integer on the LHS.");
+				}
+				else if (left->type == LOGICAL)
+				{
+					shared_ptr<Logical> l_logical = logical(left);
+					if (right->type == INT)
+					{
+						shared_ptr<Int> r_int = integer(right);
+						node->value = shared_ptr<Logical>{new Logical(l_logical->elem < r_int->elem)};
+					}
+					else if (right->type == LOGICAL)
+					{
+						shared_ptr<Logical> r_logical = logical(right);
+						node->value = shared_ptr<Logical>{new Logical(l_logical->elem < r_logical->elem)};
+					}
+					else if (right->type == CHAR)
+					{
+						shared_ptr<Char> r_char = character(right);
+						node->value = shared_ptr<Logical>{new Logical(l_logical->elem < r_char->elem)};
+					}
+					else raise_error("Expected a logical or another primitive on the RHS for an \"<\" operation with a logical on the LHS.");
+				}
+				else if (left->type == CHAR)
+				{
+					shared_ptr<Char> l_char = character(left);
+					if (right->type == INT)
+					{
+						shared_ptr<Int> r_int = integer(right);
+						node->value = shared_ptr<Logical>{new Logical(l_char->elem < r_int->elem)};
+					}
+					else if (right->type == LOGICAL)
+					{
+						shared_ptr<Logical> r_logical = logical(right);
+						node->value = shared_ptr<Logical>{new Logical(l_char->elem < r_logical->elem)};
+					}
+					else if (right->type == CHAR)
+					{
+						shared_ptr<Char> r_char = character(right);
+						node->value = shared_ptr<Logical>{new Logical(l_char->elem < r_char->elem)};
+					}
+					else raise_error("Expected a character or another primitive on the RHS for an \"<\" operation with an character on the LHS.");
+				}
+				else if (left->type == STRING)
+				{
+					shared_ptr<String> l_str = str(left);
+					if (right->type == STRING)
+					{
+						shared_ptr<String> r_str = str(right);
+						return shared_ptr<Logical>{new Logical(l_str->elem < r_str->elem)};
+					}
+					else raise_error("Expected a string on the RHS for an \"<\" operation with a string on the LHS.");
+				}
+				else raise_error("Expected a primitive or a string for an \"<\" operation.");
 			}
 			else if (node->token.lexeme == "<=")
 			{
 				shared_ptr<Elem> left = node->left->evaluate();
 				shared_ptr<Elem> right = node->right->evaluate();
-				node->value = shared_ptr<Logical>{new Logical(*left <= *right)};
+				if (left->type == INT)
+				{
+					shared_ptr<Int> l_int = integer(left);
+					if (right->type == INT)
+					{
+						shared_ptr<Int> r_int = integer(right);
+						node->value = shared_ptr<Logical>{new Logical(l_int->elem <= r_int->elem)};
+					}
+					else if (right->type == LOGICAL)
+					{
+						shared_ptr<Logical> r_logical = logical(right);
+						node->value = shared_ptr<Logical>{new Logical(l_int->elem <= r_logical->elem)};
+					}
+					else if (right->type == CHAR)
+					{
+						shared_ptr<Char> r_char = character(right);
+						node->value = shared_ptr<Logical>{new Logical(l_int->elem <= r_char->elem)};
+					}
+					else raise_error("Expected an integer or another primitive on the RHS for an \"<=\" operation with an integer on the LHS.");
+				}
+				else if (left->type == LOGICAL)
+				{
+					shared_ptr<Logical> l_logical = logical(left);
+					if (right->type == INT)
+					{
+						shared_ptr<Int> r_int = integer(right);
+						node->value = shared_ptr<Logical>{new Logical(l_logical->elem <= r_int->elem)};
+					}
+					else if (right->type == LOGICAL)
+					{
+						shared_ptr<Logical> r_logical = logical(right);
+						node->value = shared_ptr<Logical>{new Logical(l_logical->elem <= r_logical->elem)};
+					}
+					else if (right->type == CHAR)
+					{
+						shared_ptr<Char> r_char = character(right);
+						node->value = shared_ptr<Logical>{new Logical(l_logical->elem <= r_char->elem)};
+					}
+					else raise_error("Expected a logical or another primitive on the RHS for an \"<=\" operation with a logical on the LHS.");
+				}
+				else if (left->type == CHAR)
+				{
+					shared_ptr<Char> l_char = character(left);
+					if (right->type == INT)
+					{
+						shared_ptr<Int> r_int = integer(right);
+						node->value = shared_ptr<Logical>{new Logical(l_char->elem <= r_int->elem)};
+					}
+					else if (right->type == LOGICAL)
+					{
+						shared_ptr<Logical> r_logical = logical(right);
+						node->value = shared_ptr<Logical>{new Logical(l_char->elem <= r_logical->elem)};
+					}
+					else if (right->type == CHAR)
+					{
+						shared_ptr<Char> r_char = character(right);
+						node->value = shared_ptr<Logical>{new Logical(l_char->elem <= r_char->elem)};
+					}
+					else raise_error("Expected a character or another primitive on the RHS for an \"<=\" operation with an character on the LHS.");
+				}
+				else if (left->type == STRING)
+				{
+					shared_ptr<String> l_str = str(left);
+					if (right->type == STRING)
+					{
+						shared_ptr<String> r_str = str(right);
+						return shared_ptr<Logical>{new Logical(l_str->elem < r_str->elem)};
+					}
+					else raise_error("Expected a string on the RHS for an \"<=\" operation with a string on the LHS.");
+				}
+				else raise_error("Expected a primitive or a string for an \"<=\" operation.");
 			}
 			else if (node->token.lexeme == ">")
 			{
 				shared_ptr<Elem> left = node->left->evaluate();
 				shared_ptr<Elem> right = node->right->evaluate();
-				node->value = shared_ptr<Logical>{new Logical(*left > *right)};
+				if (left->type == INT)
+				{
+					shared_ptr<Int> l_int = integer(left);
+					if (right->type == INT)
+					{
+						shared_ptr<Int> r_int = integer(right);
+						node->value = shared_ptr<Logical>{new Logical(l_int->elem > r_int->elem)};
+					}
+					else if (right->type == LOGICAL)
+					{
+						shared_ptr<Logical> r_logical = logical(right);
+						node->value = shared_ptr<Logical>{new Logical(l_int->elem > r_logical->elem)};
+					}
+					else if (right->type == CHAR)
+					{
+						shared_ptr<Char> r_char = character(right);
+						node->value = shared_ptr<Logical>{new Logical(l_int->elem > r_char->elem)};
+					}
+					else raise_error("Expected an integer or another primitive on the RHS for an \">\" operation with an integer on the LHS.");
+				}
+				else if (left->type == LOGICAL)
+				{
+					shared_ptr<Logical> l_logical = logical(left);
+					if (right->type == INT)
+					{
+						shared_ptr<Int> r_int = integer(right);
+						node->value = shared_ptr<Logical>{new Logical(l_logical->elem > r_int->elem)};
+					}
+					else if (right->type == LOGICAL)
+					{
+						shared_ptr<Logical> r_logical = logical(right);
+						node->value = shared_ptr<Logical>{new Logical(l_logical->elem > r_logical->elem)};
+					}
+					else if (right->type == CHAR)
+					{
+						shared_ptr<Char> r_char = character(right);
+						node->value = shared_ptr<Logical>{new Logical(l_logical->elem > r_char->elem)};
+					}
+					else raise_error("Expected a logical or another primitive on the RHS for an \">\" operation with a logical on the LHS.");
+				}
+				else if (left->type == CHAR)
+				{
+					shared_ptr<Char> l_char = character(left);
+					if (right->type == INT)
+					{
+						shared_ptr<Int> r_int = integer(right);
+						node->value = shared_ptr<Logical>{new Logical(l_char->elem > r_int->elem)};
+					}
+					else if (right->type == LOGICAL)
+					{
+						shared_ptr<Logical> r_logical = logical(right);
+						node->value = shared_ptr<Logical>{new Logical(l_char->elem > r_logical->elem)};
+					}
+					else if (right->type == CHAR)
+					{
+						shared_ptr<Char> r_char = character(right);
+						node->value = shared_ptr<Logical>{new Logical(l_char->elem > r_char->elem)};
+					}
+					else raise_error("Expected a character or another primitive on the RHS for an \">\" operation with an character on the LHS.");
+				}
+				else if (left->type == STRING)
+				{
+					shared_ptr<String> l_str = str(left);
+					if (right->type == STRING)
+					{
+						shared_ptr<String> r_str = str(right);
+						return shared_ptr<Logical>{new Logical(l_str->elem > r_str->elem)};
+					}
+					else raise_error("Expected a string on the RHS for an \">\" operation with a string on the LHS.");
+				}
+				else raise_error("Expected a primitive or a string for an \">\" operation.");
 			}
 			else if (node->token.lexeme == ">=")
 			{
 				shared_ptr<Elem> left = node->left->evaluate();
 				shared_ptr<Elem> right = node->right->evaluate();
-				node->value = shared_ptr<Logical>{new Logical(*left >= *right)};
+				if (left->type == INT)
+				{
+					shared_ptr<Int> l_int = integer(left);
+					if (right->type == INT)
+					{
+						shared_ptr<Int> r_int = integer(right);
+						node->value = shared_ptr<Logical>{new Logical(l_int->elem >= r_int->elem)};
+					}
+					else if (right->type == LOGICAL)
+					{
+						shared_ptr<Logical> r_logical = logical(right);
+						node->value = shared_ptr<Logical>{new Logical(l_int->elem >= r_logical->elem)};
+					}
+					else if (right->type == CHAR)
+					{
+						shared_ptr<Char> r_char = character(right);
+						node->value = shared_ptr<Logical>{new Logical(l_int->elem >= r_char->elem)};
+					}
+					else raise_error("Expected an integer or another primitive on the RHS for an \">=\" operation with an integer on the LHS.");
+				}
+				else if (left->type == LOGICAL)
+				{
+					shared_ptr<Logical> l_logical = logical(left);
+					if (right->type == INT)
+					{
+						shared_ptr<Int> r_int = integer(right);
+						node->value = shared_ptr<Logical>{new Logical(l_logical->elem >= r_int->elem)};
+					}
+					else if (right->type == LOGICAL)
+					{
+						shared_ptr<Logical> r_logical = logical(right);
+						node->value = shared_ptr<Logical>{new Logical(l_logical->elem >= r_logical->elem)};
+					}
+					else if (right->type == CHAR)
+					{
+						shared_ptr<Char> r_char = character(right);
+						node->value = shared_ptr<Logical>{new Logical(l_logical->elem >= r_char->elem)};
+					}
+					else raise_error("Expected a logical or another primitive on the RHS for an \">=\" operation with a logical on the LHS.");
+				}
+				else if (left->type == CHAR)
+				{
+					shared_ptr<Char> l_char = character(left);
+					if (right->type == INT)
+					{
+						shared_ptr<Int> r_int = integer(right);
+						node->value = shared_ptr<Logical>{new Logical(l_char->elem >= r_int->elem)};
+					}
+					else if (right->type == LOGICAL)
+					{
+						shared_ptr<Logical> r_logical = logical(right);
+						node->value = shared_ptr<Logical>{new Logical(l_char->elem >= r_logical->elem)};
+					}
+					else if (right->type == CHAR)
+					{
+						shared_ptr<Char> r_char = character(right);
+						node->value = shared_ptr<Logical>{new Logical(l_char->elem >= r_char->elem)};
+					}
+					else raise_error("Expected a character or another primitive on the RHS for an \">=\" operation with an character on the LHS.");
+				}
+				else if (left->type == STRING)
+				{
+					shared_ptr<String> l_str = str(left);
+					if (right->type == STRING)
+					{
+						shared_ptr<String> r_str = str(right);
+						return shared_ptr<Logical>{new Logical(l_str->elem >= r_str->elem)};
+					}
+					else raise_error("Expected a string on the RHS for an \">=\" operation with a string on the LHS.");
+				}
+				else raise_error("Expected a primitive or a string for an \">=\" operation.");
 			}
 			else if (node->token.lexeme == "o")
 			{

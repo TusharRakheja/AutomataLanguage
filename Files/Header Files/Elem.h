@@ -19,25 +19,10 @@ public:
 	{
 		this->type = type;
 	}
-	virtual bool operator==(Elem &elem)   // The equality comparison between two elements.
+	virtual bool operator==(Elem &e)
 	{
-		return (this->type != elem.type) ? false : this->operator==(elem);
-	}
-	virtual bool operator<(Elem &elem)
-	{
-		return (this->type != elem.type) ? false : this->operator<(elem);
-	}
-	virtual bool operator<=(Elem &elem)
-	{
-		return (this->type != elem.type) ? false : this->operator<(elem) || this->operator==(elem); 
-	}
-	virtual bool operator>(Elem &elem)
-	{
-		return (this->type != elem.type) ? false : !this->operator<=(elem);
-	}	
-	virtual bool operator>=(Elem &elem)
-	{
-		return (this->type != elem.type) ? false : !this->operator<(elem);
+		if (this->type != e.type) return false;
+		else return *this == e;
 	}
 	virtual string to_string() = 0;					// Virtual to_string method for display.
 	virtual string to_string_raw() { return this->to_string(); }	// Only ever makes sense to use this for characters and strings.

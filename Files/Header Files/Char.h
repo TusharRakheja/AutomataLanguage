@@ -3,6 +3,8 @@
 
 #include "Elem.h"
 
+#define character static_pointer_cast<Char>
+
 class Char : public Elem
 {
 public:
@@ -32,30 +34,12 @@ public:
 		else this->elem = c[2];
 	}
 
-	bool operator==(Elem &x)							// Overloaded == operator.
-	{ 
-		if (x.type != CHAR) return false;					// Check for types first and foremost.
-		Char *_x = (Char *)&x;
-		return this->elem == _x->elem;						// Then check for value.
-	} 
+	bool operator==(Elem &e)
+	{
+		Char * x = (Char *)&e;
+		return x->elem == this->elem;
+	}
 
-	bool operator<(Elem &x)								// Lexicographically compares two strings.
-	{
-		Char *_x = (Char *)&x;
-		return this->elem < _x->elem;
-	}
-	bool operator<=(Elem &elem)
-	{
-		return (this->type != elem.type) ? false : this->elem <= ((Char *)&elem)->elem;
-	}
-	bool operator>(Elem &elem)
-	{
-		return (this->type != elem.type) ? false : this->elem > ((Char *)&elem)->elem;
-	}
-	bool operator>=(Elem &elem)
-	{
-		return (this->type != elem.type) ? false : this->elem >= ((Char *)&elem)->elem;
-	}
 	shared_ptr<Elem> deep_copy() { return shared_ptr<Elem>{new Char(elem)}; }
 
 	string to_string_raw()
@@ -81,7 +65,5 @@ public:
 	}
 };
 
-
-#define character static_pointer_cast<Char>
 
 #endif

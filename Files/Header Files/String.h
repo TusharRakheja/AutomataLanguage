@@ -16,29 +16,12 @@ public:
 
 	String(const char* x) : Elem(STRING) { elem = x; }	// Parameterized constructor 2.
 
-	bool operator==(Elem &x)				// Overloaded == operator.
-	{ 
-		if (x.type != STRING) return false;		// Check for types first and foremost.
-		String* _x = (String *)&x;
-		return this->elem == _x->elem;			// Then check for value.
-	}
-	bool operator<(Elem &x)					// Lexicographically compares two strings.
+	bool operator==(Elem &e)
 	{
-		String *_x = (String *)&x;
-		return this->elem < _x->elem;
+		String * x = (String *)&e;
+		return x->elem == this->elem;
 	}
-	bool operator<=(Elem &elem)
-	{
-		return (this->type != elem.type) ? false : this->elem <= ((String *)&elem)->elem;
-	}
-	bool operator>(Elem &elem)
-	{
-		return (this->type != elem.type) ? false : this->elem > ((String *)&elem)->elem;
-	}
-	bool operator>=(Elem &elem)
-	{
-		return (this->type != elem.type) ? false : this->elem >= ((String *)&elem)->elem;
-	}
+
 	shared_ptr<Elem> deep_copy()				// Since String is an atomic data type, a deep copy is very simple.
 	{ 
 		return shared_ptr<Elem> {new String(elem)}; 

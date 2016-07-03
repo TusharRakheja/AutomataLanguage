@@ -16,13 +16,6 @@ unordered_map<string, shared_ptr<Elem>> * program_vars::identify = new unordered
 };
 // Identifiers mapped to their objects.
 
-void program_vars::raise_error(const char *message)
-{
-	cout << "ERROR: Line " << line_num-1 << ": " << message << endl;
-	delete program_vars::identify;
-	exit(0);
-}
-
 int program_vars::line_num = 1;
 
 using program_vars::identify;
@@ -54,12 +47,23 @@ bool identifier(string &);	// Returns true if a string is an identifier.
 bool all_spaces(string &);	// Returns true if a string is full of spaces.
 void print_info();		// Prints the license and other info.
 
+void program_vars::raise_error(const char *message)
+{
+	cout << "ERROR: ";
+	if (program != &cin) cout << " Line" << (line_num - 1) << ": ";
+	cout << message << endl;
+	delete program_vars::identify;
+	exit(0);
+}
+
 int main(int argc, char **argv) 
 {
 	if (argc == 1) { print_info(); program = &cin; }
 	else program = new std::ifstream(argv[1]);
 	parse_program();
 }
+
+
 
 Token get_next_token()						// The lexer.
 {
@@ -1246,9 +1250,9 @@ void parse_initialization()
 
 			if (equal_sign.lexeme != "=") raise_error("Missing operator \"=\".");
 
-			Token logic_expression = get_next_token();
-
 			read_right_expr = true;
+
+			Token logic_expression = get_next_token();
 
 			ExpressionTree logic_expr(logic_expression.lexeme);
 
