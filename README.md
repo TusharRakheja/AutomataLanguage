@@ -4,7 +4,7 @@
 
 It supports primitive data types (`int`, `char`, and `logical`), containers (`sets`, `tuples`,`maps`, and `strings`), and abstract containers (`abstract sets`, `abstract maps`).
 
-### Building
+## Building
 
 **Dependencies**
 
@@ -22,13 +22,13 @@ $ make
 $ make clean
 ```
 
-### Usage
+## Usage
 
 Autolang can be used either with a file, or interactively. The filename argument is optional.
 
 `$ ./auto filename.al`
 
-### Examples
+## Examples
 
 The real joy of Autolang is its very math-oriented syntax. Here are some cool examples you can try. 
 
@@ -47,15 +47,15 @@ The real joy of Autolang is its very math-oriented syntax. Here are some cool ex
  * [Loops and Conditionals](https://github.com/TusharRakheja/Autolang#4-loops-and-conditionals)
  * [Notes](https://github.com/TusharRakheja/Autolang#5-notes)
  
-#### 1. Primitives
+### 1. Primitives
 
 Autolang has three primitve data types, `int, char,` and `logical`. 
 
-##### a) Integers
+#### a) Integers
 
 Standard 32-bit. The type keyword is `int`, as you've already probably seen.
 
-**`Basic Syntax`**
+**Basic Syntax**
 
 ```perl
 >>> declare int i                                         # Integers are initialized to 0 by default. Characters to '\0', and logicals to False. 
@@ -66,7 +66,7 @@ Standard 32-bit. The type keyword is `int`, as you've already probably seen.
 1
 ```
 
-**`Operations and Updates`**
+**Operations and Updates**
 
 Here is a brief list of examples illustrating operators and updaters that work with integers; in fact, with all primitive values in Autolang. For _**characters**_, they are basically the same. The operators (`==`, `+`, `^` etc), as noted, will implicitly cast values across them if need be. However, updaters (`=`, `+=`, `^=` etc) will not.
 
@@ -80,11 +80,11 @@ Here is a brief list of examples illustrating operators and updaters that work w
 >>> print (i % 2) == 0                               # All comparative operators are supported (<, >, <= etc).
 True
 ```
-##### b) Characters
+#### b) Characters
 
 Characters are quite similar to integers. They keyword is `char`. I'll illustrate the main situations in which they behave differently from integers.
 
-**`Basic Syntax`**
+**Basic Syntax**
 
 They are declared and initialized like so:
 
@@ -98,15 +98,15 @@ True
 >>> printr brace                                      # To print a char in its 'raw' form, with quotes and all, use the printr command.
 '\\}'
 ```
-**`Operations and Updates`**
+**Operations and Updates**
 
 _(refer to section [`Operations and Updates`](https://github.com/TusharRakheja/Autolang/blob/master/README.md#a-integers) under Integers)_
 
-##### c) Logicals
+#### c) Logicals
 
 Boolean values have the keyword `logical`, and the literals are represented by `True` and `False`.
 
-**`Basic Syntax`**
+**Basic Syntax**
 
 ```perl
 >>> declare logical val                           # By default, logicals are initialized to False.
@@ -116,7 +116,8 @@ False
 >>> print val
 True
 ```
-**`Operations and Updates`**
+
+**Operations and Updates**
 
 ```perl
 >>> print True V False                            # The logical OR (disjunction).
@@ -140,15 +141,15 @@ False
 
 _(For more, refer to section [`Operations and Updates`](https://github.com/TusharRakheja/Autolang/blob/master/README.md#a-integers) under Integers)_
 
-#### 2. Containers
+### 2. Containers
 
 Autolang has four kinds of containers, viz `sets`, `tuples`, `maps` and `strings`.
 
-##### a) Sets
+#### a) Sets
 
 The key data structure in Autolang is a  **set** - a (possibly heterogeneous) collection of elements. 
 
-**`Basic Syntax`**
+**Basic Syntax**
 
 ```perl
 >>> declare set A                                 # Declares an empty set A.
@@ -214,11 +215,11 @@ The **`in`** operator returns a *logical* value if the left argument is present 
 True
 ```
 
-##### b) Tuples
+#### b) Tuples
 
 Basically a lightweight container which works just like a set, but with a somewhat limited interface. A **tuple** doesn't have either operators or updaters of its own, unlike `U, U=` for sets and `V, V=` for logicals.
 
-**`Basic Syntax`**
+**Basic Syntax**
 
 ```perl
 >>> tuple A = (1, )                                   # A single-element tuple needs a trailing comma.
@@ -238,7 +239,7 @@ The rationale behind adding tuples was to provide support for generalized ordere
 
 In order to help with that, we'll introduce a new operator.
 
-**`Deep Copy`**
+**Deep Copy**
 
 The deep copy operator **`.`** is a unary operator, that makes a copy of the expression to the right of it. It's called _deep_ copy because if the expression is a container, all elements within the container will also be copied, recursively. 
 
@@ -259,11 +260,11 @@ The deep copy operator **`.`** is a unary operator, that makes a copy of the exp
 
 So, this is how the **`.`** operator works. If ever one needs to use something inside a tuple as an rvalue, it will be preferable to use a deep copy there as well, in order to preserve the convention of tuple immutability. It is possible, however, to access individual elements in a tuple using the **`[]`** operator, both as lvalues and rvalues. 
 
-##### c) Strings
+#### c) Strings
 
 Container for a sequence of characters.
 
-**`Basic Syntax`**
+**Basic Syntax**
 
 ```perl
 >>> declare string null                              # By default strings are initialized to "".
@@ -277,7 +278,7 @@ True
 "\\(\\n\\)"
 ```
 
-**`Operations and Updates`**
+**Operations and Updates**
 
 ```perl
 >>> string hello = "Hello"      
@@ -306,11 +307,11 @@ True
 
 A think to keep in mind is that the **`[]`** operator in strings follows _value semantics_, unlike in the case of sets and tuples. It does not return references to characters of the string, but instead, returns new copies of those characters.  
 
-##### d) Maps
+#### d) Maps
 
 Containers that store mappings between two sets of elements are called **maps**. Their syntax is inspired by the mathematical definition of a function.
 
-**`Basic Syntax`**
+**Basic Syntax**
 
 ```perl
 >>> declare map fog                                  # Declare a map fog
@@ -321,6 +322,7 @@ Containers that store mappings between two sets of elements are called **maps**.
 {(One, True), (Zero, False)}
 ```
 
+**Operations and Updates**
 
 Maps can be queried for their mappings using the **`[]`** operator, and just like regular mathematical functions, maps can be **composed** with each other, using the **`o`** operator (given that the domains and ranges of the arguments match appropriately).
 
@@ -360,18 +362,19 @@ For instance, for a map _F_, _F<sup>3</sup>_ is equivalent to _F o F o F_ ( i.e,
 
 Maps have many uses. For instance, they can be used to implement **associative arrays**. See the `Examples` directory for an example. 
 
-#### 3. Abstract Containers
+### 3. Abstract Containers
 
 Autolang has two abstract containers, **sets** and **maps**. Abstract containers are preceded by the **`abstract`** keyword during declaration/initialization.
 
-##### a) Abstract Sets
+#### a) Abstract Sets
 One very powerful concept Autolang supports is that of an **abstract set**. Unlike a normal set, an *abstract* set does not have fixed members, but rather, a membership criteria. 
 
 The criteria is supposed to be a *logical* expression, which is evaluated for every query on the set when needed. One must use the **`elem`** keyword as a placeholder for the incoming query. 
 
-**`Basic Syntax`**
+**Basic Syntax**
 
 If you get creative, there's a lot that suddenly became possible. For instance.
+
 ```perl
 >>> set A = {1, 2, 3} 		                         # Autolang also supports the notion of 'abstract' sets.
 >>> abstract set PowA = { elem | elem c A }          # Define the PowA as the power set of A.
@@ -381,7 +384,7 @@ True
 False
 ```
 
-**`Operations and Updates`**
+**Operations and Updates**
 
 Most set operations will also work with abstract sets, except the **`[]`** operator (since an abstract set can be potentially uncountably infinite in size). However, an operation between an abstract set and a normal set is __not__ possible (for now), except a subset operation (which, (un)interestingly, cannot be performed on two abstract sets).
 
@@ -396,13 +399,14 @@ False
 >>> print {{1, 2}, {2, 3}} c Inter                  # A subset op between a normal and an abstract set.
 True
 ```
+
 Of course, one can make new abstract sets by taking unions, exclusions, and cartesian products of two abstract sets as well, as well as perform the corresponding updates.
 
-##### b) Abstract Maps (&lambda;)
+#### b) Abstract Maps (&lambda;)
 
 Autolang supports a certain *flavor* of lambda expressions in the form of **abstract maps**.
 
-**`Basic Syntax`**
+**Basic Syntax**
 
 **Factorial**
 ```perl
@@ -418,7 +422,8 @@ Again, like abstract sets, abstract maps work by replacing a certain keyword wit
 
 It's a good time to remember that a abstract maps are also objects, just like regular maps, and hence can be part of sets and tuples. 
 
-**`Operations and Updates`**
+**Operations and Updates**
+
 ```perl
 >>> declare abstract map square
 >>> declare abstract map octa
@@ -433,11 +438,11 @@ x --> (((x) ^ 2) ^ 2) ^ 2
 256
 ```
 
-#### 4. Loops and Conditionals
+### 4. Loops and Conditionals
 
 To see an example of how the while loop (the only looping construct in the language, right now) and the if statements work, check `Examples/Example7.al` out. A language specification is coming soon.
 
-#### 5. Notes
+### 5. Notes
 
 Operators in Autolang are *always* right-associative by default. There is no concept of operator precedence currently. Hence, ***parentheses are important*** to get the results you need.
 
