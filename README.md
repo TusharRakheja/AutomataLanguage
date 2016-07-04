@@ -318,8 +318,8 @@ Containers that store mappings between two sets of elements are called **maps**.
 ```perl
 >>> declare map fog                                  # Declare a map fog
 >>> map f : {"One", "Zero"} --> {True, False}		 # Initialize a map with a given domain and codomain.
->>> under f : "One"  --> True					
->>> under f : "Zero" --> False		                 # `Under f, "Zero" goes to False.`
+>>> under f : "One"  --> True					     # `Under f, "One" goes to True.`
+>>> under f : "Zero" --> False		                 
 >>> print f
 {(One, True), (Zero, False)}
 ```
@@ -334,6 +334,8 @@ True
 >>> map g : {1, 0} --> {"One", "Zero"}				
 >>> under g : 1 --> "One"
 >>> under g : 0 --> "Zero"
+>>> print |g|                                        # Prints the number of mappings in the map.
+2
 >>> let fog = f o g					                 # Let fog = the composition of maps f and g.
 >>> print fog
 {(1, True), (0, False)}				  
@@ -344,7 +346,7 @@ True
 
 Autolang also supports the notion of __functional powers__. Maps are kind of a translation of the mathematical notion of a function as a mapping between two sets. Hence, it only makes sense that if composition is supported, powers should be too.
 
-For instance, for a map _F_, _F<sup>3</sup>_ is equivalent to _F o F o F_ ( i.e, _F_ composed with itself twice).
+For instance, for a map F, F<sup>3</sup> is equivalent to F o F o F ( i.e, F composed with itself twice).
 
 ```perl
 >>> map f : {1, 2, 3} --> {1, 2, 3}                  # Will be used for illustration.
@@ -369,9 +371,9 @@ Maps have many uses. For instance, they can be used to implement **associative a
 Autolang has two abstract containers, **sets** and **maps**. Abstract containers are preceded by the **`abstract`** keyword during declaration/initialization.
 
 #### a) Abstract Sets
-One very powerful concept Autolang supports is that of an **abstract set**. Unlike a normal set, an *abstract* set does not have fixed members, but rather, a membership criteria. 
+One very powerful concept Autolang supports is that of an **abstract set**. Unlike a normal set, an abstract set does not have fixed members, but rather, a membership criteria. 
 
-The criteria is supposed to be a *logical* expression, which is evaluated for every query on the set when needed. One must use the **`elem`** keyword as a placeholder for the incoming query. 
+The criteria is supposed to be a logical expression, which is evaluated for every query on the set when needed. One must use the **`elem`** keyword as a placeholder for the incoming query. 
 
 **Basic Syntax**
 
