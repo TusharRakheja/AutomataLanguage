@@ -12,7 +12,7 @@ public:
 
 	String(string &x) : Elem(STRING) { elem = x; }		// Parameterized constructor 1.
 
-	String(string &x, int rep) : Elem(STRING) { elem = x.substr(1, x.size() - 1); }	// Construct a string object using its rep.
+	String(string &x, int rep) : Elem(STRING) { elem = x.substr(1, x.size() - 2); }	// Construct a string object using its rep.
 
 	String(const char* x) : Elem(STRING) { elem = x; }	// Parameterized constructor 2.
 
@@ -44,6 +44,7 @@ public:
 			{
 				if (elem[i + 1] == 't') { rep += '\t'; i++; }
 				else if (elem[i + 1] == 'v') { rep += '\v'; i++; }
+				else if (elem[i + 1] == '\\') { rep += '\\'; i++; }
 				else if (elem[i + 1] == 'n') { rep += '\n'; i++; }
 				else if (elem[i + 1] == 'b') { rep += '\b'; i++; }
 				else if (elem[i + 1] == 'r') { rep += '\r'; i++; }
