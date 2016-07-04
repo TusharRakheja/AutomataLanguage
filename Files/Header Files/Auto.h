@@ -15,7 +15,8 @@ public:
 	shared_ptr<Map> delta;			 // The transition function from sigma to states.
 	shared_ptr<Elem> start;			 // The label of (or tuples of labels for) the starting state.
 	shared_ptr<Set> accepting;		 // The set of accepting states (labels thereof).
-										    
+					
+	Auto() : Elem(AUTO) { delta = nullptr; sigma = states = accepting = nullptr; start = nullptr; }
 	Auto(shared_ptr<Set>, shared_ptr<Set>, shared_ptr<Elem>, shared_ptr<Map>, shared_ptr<Set>);		// Constructor (Copy elements).
 	Auto(shared_ptr<Set>, shared_ptr<Set>, shared_ptr<Elem>, shared_ptr<Map>, shared_ptr<Set>, int);	// Constructor (Direct assign).
 

@@ -1,0 +1,326 @@
+# NOTE - Anywhere in this grammar, a '=' can be replaced with ':=', which signifies a deep_copy instead of a simple assignment.
+# Anywhere except in attribute functions and predicates.
+
+<Program> --> <statements>
+
+<statements> -->   <statement> 
+		 | <statement> <statements>					# COVERED
+
+<statement> -->   <assignment> 									
+		| <initialization>						# COVERED
+		| <declaration>							# COVERED
+		| <input>							# COVERED
+		| <print>							# COVERED
+		| <if> 								# COVERED
+		| <loop>							# COVERED
+
+<assignment> -->   <identifier> = <expr>
+
+<expr> -->   (<expr>) 
+           | <elem>
+
+<declaration> -->   string <identifier>[1] 					# COVERED
+		  | set <identifier>[2] 					# COVERED
+		  | char <identifier>[3] 					# COVERED
+		  | int <identifier>[4] 					# COVERED
+		  | tuple <identifier>[5]					# COVERED
+		  | logical <identifier>[6]					# COVERED
+		  | auto <identifier>[7] 					# COVERED
+		  | map <identifier> : <set> --> <set> [8]			# COVERED
+
+	AF:       <identifier>[1].type = string, 
+		  <identifier>[2].type = set, 
+		  <identifier>[3].type = char, 
+		  <identifier>[4].type = int, 
+		  <identifier>[5].type = tuple, 
+		  <identifier>[6].type = logical,
+		  <identifier>[7].type = automaton, 
+		  <identifier>[8].type = map
+
+<initialization> -->      string <identifier>[1] = <expr>[1]	     						 # COVERED
+			| set <identifier>[2] = <expr>[2]							 # COVERED
+			| char <identifier>[3] = <expr>[3] 							 # COVERED
+			| int <identifier>[4] = <expr>[4]							 # COVERED
+			| tuple <identifier>[5] = <expr>[5]							 # COVERED
+			| logical <identifier>[6] = <expr>[6]							 # COVERED
+			| auto <identifier>[7] = (<expr>[7], <expr>[8], <expr>[9], <map>, <expr>[10]) 		 # COVERED  				
+			| map <identifier>[8] : <map>								 # COVERED
+
+	 P:		<expr>[1].type = string, <expr>[2].type  = set
+			<expr>[3].type = char,   <expr>[4].type  = int
+			<expr>[5].type = tuple,  <expr>[6].type  = logical
+			<expr>[7].type = set,    <expr>[8].type  = set
+			<expr>[9].type = string, <expr>[10].type = set 
+
+			<expr>[7] is a homoset of chars, and <expr>[8] is a homoset of strings. 
+			<expr>[10] is a subset of <expr>[8].
+			
+	AF:		<identifier>[7].type = automaton
+			<identifier>[8].type = map
+			# Other attribute evaluations are obvious.	
+
+
+<elem_list> -->  <elem> | <elem>, <elem_list>
+
+<elem> -->   <string>
+	   | <set>
+	   | <char>
+	   | <int>
+	   | <tuple>
+	   | <logical>
+	   | <map>
+	   | <access>
+
+<equality> --> <elem> == <elem>
+
+<auto_query> --> <identifier>.accepts(<string>)
+
+	P:	<identifier>.type == automaton
+
+<input> --> input(<identifier>)
+	
+<output> --> print(<string>)
+
+################################################### MAP OPERATIONS ###############################################
+
+<map> -->   <identifier>
+	  | <compose>
+	  | <set> --> <set> { <mappings> }
+
+<map_sets> --> <map_domain> | <map_range>
+
+<map_domain> --> <map>.domain
+
+<map_range> --> <map>.range
+
+<map_compose> --> <map> o <map>
+	
+<mappings> --> <mapping> | <mapping><mappings>
+	       		
+<mapping> --> <elem> --> <elem>
+
+
+#################################################### SET OPERATIONS ###############################################
+
+<set> -->      <union>
+	     | <intersection>
+	     | <cartesian_product>
+             | <exclusion>
+	     | <get_subset>
+	     | <set_identity>
+	     | <elem>
+	     | <map_sets>
+
+	P:	<elem>.type == set
+
+
+<set_identity> -->   { <elem_list> } 
+	           | <indentifier>
+
+	P:	<indentifier>.type == set
+
+
+<union> -->  <set> <union_tail>
+
+	  
+<union_tail> -->   U <set>
+		 | U <set> <union_tail>
+
+
+<intersection> -->   <set> <intersection_tail>
+	
+
+<intersection_tail> -->   & <set>
+			| & <set> <inteection_tail>
+
+
+<cartesian_product> -->  <set> <cartesian_tail>
+
+
+<cartesian_tail> -->   x <set>
+		     | x <set> <cartesian_tail>
+
+
+<exclusion> --> <set> <exclusion_tail>
+
+
+<exclusion_tail> -->   \ <set>
+		     | \ <set> <exclusion_tail>
+
+
+<get_subset> --> <set>.subset[<int>, <int>]
+
+
+<subset> --> <set> c <set>
+
+
+##################################################### TUPLE OPERATIONS #######################################
+
+<tuple> -->   <tuple_identity>
+	    | <elem>
+	    | <map_return>
+
+<tuple_identity> -->   ( <elem_list> )
+	             | <identifier>
+	
+	P:	<identifier>.type == tuple
+
+	# Single-element tuples must be made this way --> (<elem>,) The comma is important.
+
+
+
+###################################### SET / TUPLE / STRING COMMONS (AND A MAP) #############################
+
+
+<membership> -->   <elem> in <set>
+		 | <elem> in <tuple>
+	         | <elem> in <string>			
+
+
+<access> -->   <set>[<int>]
+	     | <tuple>[<int>]
+	     | <string>[<int>]
+	     | <map>[<elem>]
+
+
+<cardinality> -->   |<set>|
+		  | |<tuple>|
+                  | |<string>|
+
+
+################################################### CHAR OPERATIONS #########################################
+
+
+<char> -->   <char_identity>
+	   | <char_add>
+	   | <elem>
+
+	P:	<elem>.type == char
+
+<char_identity> -->   '<character>'
+	   	     | <identifier>
+
+	P:	<identifier>.type == char
+
+
+<char_add> -->  <char> <addc_tail>
+
+<addc_tail> -->    + <char> 
+		 | + <int>
+		 | + <char> <addc_tail>
+		 | + <int> <addc_tail>
+
+
+<character> --> a | b | c | .... | z | A | B | ... | Z | _ | `epsilon`
+
+
+################################################## STRING OPERATIONS ######################################
+
+<string> -->   <string_identitiy>
+	     | <elem>
+	     | <get_substring>
+	     | <append>
+
+	P:	<elem>.type == string
+ 
+<string_identity> -->   "<term>"
+	              | <identifier>
+
+	P:	<identifier>.type == string
+
+
+<get_substring> --> <string>.substring[<int>, <int>]
+
+
+<substring> --> <string> in <string>
+
+
+<append> --> <string> <append_tail>
+
+
+<append_tail> -->   + <string>
+		  | + <string> <append_tail>
+
+
+<term> -->   <character> 
+           | <character><term>
+
+
+##################################################### INT OPERATIONS ######################################
+
+<int> -->   <int_identity>
+	  | <add>
+	  | <sub>
+	  | <mult>
+	  | <div>
+	  | <cardinality>
+	  | <elem>
+	  | <mod>
+
+<int_identity> -->   <literal>
+		    | <identifier>
+
+	P:	<identifier>.type == int
+
+<literal> -->   <digit>
+	      | <digit><literal>
+
+<digit> --> 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10
+
+<add> --> <int> <addi_tail>
+
+<addi_tail> -->   + <int>
+		| + <int> <addi_tail>
+
+<sub> -->   <int> <sub_tail>
+
+<subi_tail> -->   - <int>
+		| - <int> <subi_tail>
+
+<mult> -->   <int> <mult_tail>
+
+<mult_tail> -->   * <int>
+		| * <int> <mult_tail>
+
+<div> -->   <int> <div_tail>
+
+<div_tail> -->    / <int>
+	        | / <int> <div_tail>
+
+<mod> --> <int> <mod_tail>
+
+<mod_tail> -->    % <int>
+		| % <int> <mod_tail>
+
+#################################################### LOGICAL ###############################################
+
+<logical> -->   <logical_identity>
+	      | <membership>
+              | <subset>
+	      | <substring>
+	      | <autoquery>
+	      | <negation>
+	      | <conjunction>
+	      | <disjunction>
+	      | <elem>
+	      | <equality>
+
+<logical_identity> -->   True
+	      	       | False
+	               | <identifier>
+
+	P:	<identifier>.type == logical
+
+<negation> --> !<logical>
+
+<disjunction> --> <logical> V <logical>
+
+<conjunction> --> <logical> & <logical>
+
+<if> -->   if (<logical>) { <statements> } <elseif> <else>
+
+<elsif> --> elseif (<logical>) { <statements> } <elseif> | `epsilon`	     
+
+<else> --> else { <statements> }
+
+<loop> --> while(<logical>) { <statements> }
