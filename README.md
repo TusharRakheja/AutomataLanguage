@@ -1,8 +1,8 @@
-# Autolang [![Build Status](https://travis-ci.org/TusharRakheja/Autolang.svg?branch=master)](https://travis-ci.org/TusharRakheja/Autolang)
+# Autolang &nbsp;[![Build Status](https://travis-ci.org/TusharRakheja/Autolang.svg?branch=master)](https://travis-ci.org/TusharRakheja/Autolang)
 
 **Autolang** is a high-level programming language supporting multiple paradigms, with syntax rooted in mathematical notation.
 
-It supports primitive data types (`int`, `char`, and `logical`), containers (`sets`, `tuples`,`maps`, and `strings`), and abstract containers (`abstract sets`, `abstract maps`).
+It supports primitive data types (`int`, `char`, and `logical`), containers (`sets`, `tuples`,`maps`, and `strings`), and abstract containers (`abstract sets`, `abstract maps`). It has in-built support for automata (`auto`), which are the inspiration behind the name. 
 
 ## Building
 
@@ -44,8 +44,10 @@ The real joy of Autolang is its very math-oriented syntax. Here are some cool ex
  * [Abstract Containers](https://github.com/TusharRakheja/Autolang#3-abstract-containers)
    * [Abstract Sets](https://github.com/TusharRakheja/Autolang#a-abstract-sets)
    * [Abstract Maps (&lambda;)](https://github.com/TusharRakheja/Autolang#b-abstract-maps-λ)
- * [Loops and Conditionals](https://github.com/TusharRakheja/Autolang#4-loops-and-conditionals)
- * [Notes](https://github.com/TusharRakheja/Autolang#5-notes)
+ * [Automata](https://github.com/TusharRakheja/Autolang#4-automata)
+   * [DFA](https://github.com/TusharRakheja/Autolang#a-dfa) 
+ * [Loops and Conditionals](https://github.com/TusharRakheja/Autolang#5-loops-and-conditionals)
+ * [Notes](https://github.com/TusharRakheja/Autolang#6-notes)
  
 ### 1. Primitives
 
@@ -408,7 +410,6 @@ Autolang supports a certain *flavor* of lambda expressions in the form of **abst
 
 **Basic Syntax**
 
-**Factorial**
 ```perl
 >>> declare abstract map fact                       # An abstract map to compute the factorial.
 >>> under fact : x --> ((x) == 0) ? (1) : ((x) * fact[(x) - 1])
@@ -438,11 +439,72 @@ x --> (((x) ^ 2) ^ 2) ^ 2
 256
 ```
 
-### 4. Loops and Conditionals
+### 4. Automata
+
+Automata are the inspiration behind Autolang - both, the name as well as the language itself (at least the initial decision to make it). For now, Autolang supports only Deterministic Finite Automata (DFA), but NFA will be coming soon. (_and then some more!_)
+
+#### a) DFA
+
+The keyword for **DFA** is **`auto`**. Since (discrete finite) automata are formally describes as quintuples, the syntax reflects that. 
+
+**Basic Syntax**
+
+Typically before initializing an automaton, a lot of work needs to be done. An automaton M = (S, &Sigma;, s<sub>0</sub>, &delta;, A), where S is the set of states, &Sigma; is the input alphabet, s<sub>0</sub> is the starting state, &delta; is the transition function, and A is the set of accepting states.
+
+Let's write code to implement this automaton. 
+
+<img align="center" src="https://github.com/TusharRakheja/Autolang/tree/master/Files/Other/Bineven.png" />
+
+```perl
+>>> declare auto binall                                # We'll use it later.
+>>> set states = { "S", "1", "0" }                     # The set of states for the automaton.
+>>> set sigma = { '1', '0' }                           # The input alphabet.
+>>> map delta : states x sigma --> states              # The transition map for the automaton.
+>>> under delta : ("S", '0') --> "0"                   # The mappings are such that ...
+>>> under delta : ("S", '1') --> "1"                   # ... the resulting automaton ...
+>>> under delta : ("0", '0') --> "0"                   # ... will accept all strings ...
+>>> under delta : ("0", '1') --> "1"                   # ... that are binary representations ...
+>>> under delta : ("1", '0') --> "0"                   # ... of even integers, and ...
+>>> under delta : ("1", '1') --> "1"                   # ... will reject all others.
+>>> auto bineven = (states, sigma, states[0], delta, states[(2, 3)]) 
+```
+
+**Operators and Updates**
+
+Automata can be queried using the **`[]`** operator. Standard set operations, like **`U, &`** and **`\`** can also be used to generate automata that accept strings accepted by _either_, _strictly both_, or _strictly one_ of the two automata.
+
+```perl
+>>> print bineven["100"]                               # Automata can be queried using the [] operator.
+True
+>>> print bineven["101"]                               # If a string is accepted, the result is True. Else False.
+False
+>>> auto binodd = (states, sigma, states[0], delta, states[(1, 2)]) 
+>>> let binall = bineven U binodd                      # Let binall accept L(bineven) U L(binodd).
+>>> print binall["100"]
+True
+>>> print binall["101"]
+True
+```
+
+The corresponding updates will also work, but it's hard to imagine when they'll ever be useful. 
+
+**Languages of Automata**
+
+The language of an automaton M, L(M), is defined as the set of all strings accepted by M. A simple abstract set ought to be enough to implement this idea.
+
+```perl
+>>> abstract set l_even = { elem | (bineven[elem]) == True }
+>>> print "100" in l_even
+True
+>>> print "101" in l_even
+False
+```
+
+### 5. Loops and Conditionals
 
 To see an example of how the while loop (the only looping construct in the language, right now) and the if statements work, check `Examples/Example7.al` out. A language specification is coming soon.
 
-### 5. Notes
+### 6. Notes
 
 Operators in Autolang are *always* right-associative by default. There is no concept of operator precedence currently. Hence, ***parentheses are important*** to get the results you need.
 
