@@ -1071,6 +1071,7 @@ void parse_declaration()	// Parse a declaration.
 		else if (data_type.lexeme ==   "char" ) (*identify)[new_identifier.lexeme] = shared_ptr<  Char >{new Char()};
 		else if (data_type.lexeme ==  "string") (*identify)[new_identifier.lexeme] = shared_ptr< String>{new String()};
 		else if (data_type.lexeme == "logical") (*identify)[new_identifier.lexeme] = shared_ptr<Logical>{new Logical()};
+		else if (data_type.lexeme ==   "auto" ) (*identify)[new_identifier.lexeme] = shared_ptr<  Auto >{new Auto()};
 	}
 	else if (data_type.types[0] == ABSTRACT)
 	{
