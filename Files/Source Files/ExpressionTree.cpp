@@ -1071,7 +1071,8 @@ shared_ptr<Elem> ExpressionTree::evaluate()
 					shared_ptr<Tuple> q = _tuple(query);
 					shared_ptr<Int> start = integer((*q)[0]);
 					shared_ptr<Int> end = integer((*q)[1]);
-					node->value = shared_ptr<String>{new String(s->elem.substr(start->elem, end->elem - start->elem))};
+					string ss = s->elem.substr(start->elem, end->elem - start->elem);
+					node->value = shared_ptr<String>{new String(ss)};
 				}
 				else raise_error("Expected a suitable data type for a \"[]\" operation.");
 			}
