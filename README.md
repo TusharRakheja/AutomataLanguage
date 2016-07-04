@@ -53,7 +53,7 @@ Autolang has three primitve data types, `int, char,` and `logical`.
 
 ##### a) Integers
 
-Standard 32-bit. They type keyword is `int`, as you've already probably seen. characters.
+Standard 32-bit. The type keyword is `int`, as you've already probably seen.
 
 **`Basic Syntax`**
 
