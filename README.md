@@ -32,20 +32,20 @@ Autolang can be used either with a file, or interactively. The filename argument
 
 The real joy of Autolang is its very math-oriented syntax. Here are some cool examples you can try. 
 
- - [Primitives]()
-   * [Integers]()
-   * [Characters]()
-   * [Logicals]()
- * [Containers]()
-   * [Sets]()
-   * [Tuples]()
-   * [Strings]()
-   * [Maps]()
- * [Abstract Containers]()
-   * [Abstract Sets]()
-   * [Abstract Maps (&lambda;)]()
- * [Loops and Conditionals]()
- * [Notes]()
+ - [Primitives](https://github.com/TusharRakheja/Autolang#1-primitives)
+   * [Integers](https://github.com/TusharRakheja/Autolang#a-integers)
+   * [Characters](https://github.com/TusharRakheja/Autolang#b-characters)
+   * [Logicals](https://github.com/TusharRakheja/Autolang#c-logicals)
+ * [Containers](https://github.com/TusharRakheja/Autolang#2-containers)
+   * [Sets](https://github.com/TusharRakheja/Autolang#a-sets)
+   * [Tuples](https://github.com/TusharRakheja/Autolang#b-tuples)
+   * [Strings](https://github.com/TusharRakheja/Autolang#c-strings)
+   * [Maps](https://github.com/TusharRakheja/Autolang#d-maps)
+ * [Abstract Containers](https://github.com/TusharRakheja/Autolang#3-abstract-containers)
+   * [Abstract Sets](https://github.com/TusharRakheja/Autolang#a-abstract-sets)
+   * [Abstract Maps (&lambda;)](https://github.com/TusharRakheja/Autolang#b-abstract-maps-λ)
+ * [Loops and Conditionals](https://github.com/TusharRakheja/Autolang#4-loops-and-conditionals)
+ * [Notes](https://github.com/TusharRakheja/Autolang#5-notes)
  
 #### 1. Primitives
 
