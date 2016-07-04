@@ -193,6 +193,7 @@ Token get_next_token()						// The lexer.
 	else if (lexeme == "/=")	return{ lexeme, { UPDATE_OP } };
 	else if (lexeme == "^=")	return{ lexeme, { UPDATE_OP } };
 	else if (lexeme == "%=")	return{ lexeme, { UPDATE_OP } };
+	else if (lexeme == "o=")        return{ lexeme, { UPDATE_OP } };
 	else if (lexeme == "-->")	return{ lexeme, { MAPPING_SYMBOL } };
 	else if (lexeme == "let")	return{ lexeme, { LET } };
 	else if (lexeme == "under")	return{ lexeme, { UNDER } };
@@ -321,7 +322,7 @@ void parse_assignment()
 		}
 		else if (update->type == TUPLE)
 		{
-			if (new_value->type == SET)							   // Gon' A = B right here.
+			if (new_value->type == TUPLE)							   // Gon' A = B right here.
 			{
 				delete _tuple(update)->elems;						   // Get rid of A's vector.
 				_tuple(update)->elems = new vector<shared_ptr<Elem>>(*_tuple(new_value)->elems);
@@ -586,11 +587,11 @@ void parse_assignment()
 			{
 				if (new_value->type == ABSTRACT_SET)
 				{
-					shared_ptr<AbstractSet> updating = aset(update), unifywith = aset(new_value);	// We need A = A U B
+					shared_ptr<AbstractSet> updating = aset(update), exclude = aset(new_value);	// We need A = A U B
 
-					shared_ptr<AbstractSet> unified = updating->_union(*unifywith);	// Let C = A U B.
+					shared_ptr<AbstractSet> exclusive = updating->exclusion(*exclude);	// Let C = A U B.
 
-					updating->criteria = unified->criteria;				// Now just replace A's criteria by that of C.
+					updating->criteria = exclusive->criteria;				// Now just replace A's criteria by that of C.
 				}
 				else raise_error("Expected an abstract set on the RHS for a \"\\=\" operation with an abstract set on the LHS.");
 			}
@@ -598,14 +599,14 @@ void parse_assignment()
 			{
 				if (new_value->type == AUTO)
 				{
-					shared_ptr<Auto> updating = automaton(update), unifywith = automaton(new_value);
+					shared_ptr<Auto> updating = automaton(update), exclude = automaton(new_value);
 
-					shared_ptr<Auto> unified = updating->accepts_union(unifywith);
+					shared_ptr<Auto> exclusive = updating->accepts_exclusively(exclude);
 
-					updating->states = unified->states;		// Simple assignments, no pressure.
-					updating->start = unified->start;
-					updating->delta = unified->delta;
-					updating->accepting = unified->accepting;
+					updating->states = exclusive->states;		// Simple assignments, no pressure.
+					updating->start = exclusive->start;
+					updating->delta = exclusive->delta;
+					updating->accepting = exclusive->accepting;
 				}
 				else raise_error("Expected an automaton on the RHS for a \"\\=\" operation with an automaton on the LHS.");
 			}
@@ -1006,8 +1007,9 @@ void parse_assignment()
 					shared_ptr<Map> raised_map = map(update)->composed_with(*map(new_value));
 					delete map(update)->pi_indices;
 					delete map(update)->_map;
+					map(update)->domain_s = map(new_value)->domain_s;
 					map(update)->pi_indices = new vector<int>(*raised_map->pi_indices);
-					map(update)->_map = new unordered_map<int, int>(*raised_map->_map);
+					map(update)->_map = new unordered_map<int, int>(*raised_map->_map);					
 				}
 				else raise_error("Expected a map on the RHS for a \"o=\" operation with a map on the LHS");
 			}
@@ -1385,7 +1387,9 @@ void parse_while()
 		while (current_token.types[0] != R_BRACE)			// As long as you don't see the end of the while loop ...
 			parse_statement();					// ... keep parsing statements.
 
-		program->seekg(loop_from, ios::beg);				// Go back to the beginning of statements when you're done.
+		if (program != &cin)
+			program->seekg(loop_from, ios::beg);			// Go back to the beginning of statements when you're done.
+		
 		line_num = restore_line;
 		logical_condition = new ExpressionTree(condition.lexeme);	// Re-parse the condition ...
 		do_or_not = logical_condition->evaluate();			// ... and re-evaluate it.

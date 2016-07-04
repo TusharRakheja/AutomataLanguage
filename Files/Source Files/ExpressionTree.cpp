@@ -244,7 +244,7 @@ shared_ptr<Elem> ExpressionTree::evaluate()
 					shared_ptr<Auto> r_auto = automaton(right);
 					node->value = l_auto->accepts_intersection(r_auto);
 				}
-				if (left->type == INT)
+				else if (left->type == INT)
 				{
 					shared_ptr<Int> l_int = integer(left);
 					if (right->type == INT)
@@ -1058,6 +1058,20 @@ shared_ptr<Elem> ExpressionTree::evaluate()
 					shared_ptr<Auto> auto_ = automaton(elem);
 					shared_ptr<String> q = str(query);
 					node->value = (*auto_)[*q];
+				}
+				else if (elem->type == STRING && query->type == INT)
+				{
+					shared_ptr<String> s = str(elem);
+					shared_ptr<Int> q = integer(query);
+					node->value = shared_ptr<Char>{new Char((s->elem)[q->elem])};
+				}
+				else if (elem->type == STRING && query->type == TUPLE)
+				{
+					shared_ptr<String> s = str(elem);
+					shared_ptr<Tuple> q = _tuple(query);
+					shared_ptr<Int> start = integer((*q)[0]);
+					shared_ptr<Int> end = integer((*q)[1]);
+					node->value = shared_ptr<String>{new String(s->elem.substr(start->elem, end->elem - start->elem))};
 				}
 				else raise_error("Expected a suitable data type for a \"[]\" operation.");
 			}

@@ -12,7 +12,7 @@ public:
 
 	String(string &x) : Elem(STRING) { elem = x; }		// Parameterized constructor 1.
 
-	String(string &x, int rep) : Elem(STRING) { elem = x.substr(1, x.size() - 2); }	// Construct a string object using its rep.
+	String(string &x, int rep) : Elem(STRING) { elem = x.substr(1, x.size() - 1); }	// Construct a string object using its rep.
 
 	String(const char* x) : Elem(STRING) { elem = x; }	// Parameterized constructor 2.
 
