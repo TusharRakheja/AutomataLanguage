@@ -203,7 +203,7 @@ An element of a set accessed via the **`[]`** operator can be used exactly like 
 
 ```perl
 >>> set A = {{1, 2}, {3, 4}}                        # A set of sets. 
->>> let A[1] \= {5}                                 # Directly update the set at index 1 of A.
+>>> let A[1] \= {4}                                 # Directly update the set at index 1 of A.
 >>> print A
 {{1, 2}, {3}}
 ```
