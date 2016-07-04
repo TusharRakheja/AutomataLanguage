@@ -48,7 +48,7 @@ shared_ptr<Elem> Node::parse_literal()		// Parses the token.lexeme to get a valu
 									// (as opposed to its value).
 	if (this->token.types[1] == SET_LIT)
 		return shared_ptr<Elem>{new Set(token.lexeme)};
-
+	
 	if (this->token.types[1] == TUPLE_LIT)
 		return shared_ptr<Elem>{new Tuple(token.lexeme)};
 
@@ -1713,12 +1713,12 @@ Token ExpressionTree::get_next_token()				// The limited lexical analyzer to par
 				break;
 			}
 			if (((expr[i] == '"' && !in_string) || expr[i] == '{' || expr[i] == '(' || expr[i] == '[')
-				&& (i == 0 || expr[i - 1] != '\\')) {
+				&& (i == 0 || (expr[i - 1] != '\\' || (expr[i - 1] == '\\' && i - 2 >= 0 && expr[i - 2] == '\\')))) {
 				level++;
 				if (expr[i] == '"' && !in_string) in_string = true;
 			}
 			else if (((expr[i] == '"' && in_string) || expr[i] == '}' || expr[i] == ')' || expr[i] == ']')
-				&& (i == 0 || expr[i - 1] != '\\')) {
+				&& (i == 0 || (expr[i - 1] != '\\' || (expr[i - 1] == '\\' && i - 2 >= 0 && expr[i - 2] == '\\')))) {
 				level--;
 				if (expr[i] == '"' && in_string) in_string = false;
 			}
@@ -1738,12 +1738,12 @@ Token ExpressionTree::get_next_token()				// The limited lexical analyzer to par
 		for (i = current_index + 1; i < expr.size(); i++)
 		{
 			if (((expr[i] == '"' && !in_string) || expr[i] == '{' || expr[i] == '(' || expr[i] == '[')
-				&& (i == 0 || expr[i - 1] != '\\')) {
+				&& (i == 0 || (expr[i - 1] != '\\' || (expr[i - 1] == '\\' && i - 2 >= 0 && expr[i - 2] == '\\')))) {
 				level++;
 				if (expr[i] == '"' && !in_string) in_string = true;
 			}
 			else if (((expr[i] == '"' && in_string) || expr[i] == '}' || expr[i] == ')' || expr[i] == ']')
-				&& (i == 0 || expr[i - 1] != '\\')) {
+				&& (i == 0 || (expr[i - 1] != '\\' || (expr[i - 1] == '\\' && i - 2 >= 0 && expr[i - 2] == '\\')))) {
 				level--;
 				if (expr[i] == '"' && in_string) in_string = false;
 			}
@@ -1763,12 +1763,12 @@ Token ExpressionTree::get_next_token()				// The limited lexical analyzer to par
 				break;
 			}
 			if (((expr[i] == '"' && !in_string) || expr[i] == '{' || expr[i] == '(' || expr[i] == '[')
-				&& (i == 0 || expr[i - 1] != '\\')) {
+				&& (i == 0 || (expr[i - 1] != '\\' || (expr[i - 1] == '\\' && i - 2 >= 0 && expr[i - 2] == '\\')))) {
 				level++;
 				if (expr[i] == '"' && !in_string) in_string = true;
 			}
 			else if (((expr[i] == '"' && in_string) || expr[i] == '}' || expr[i] == ')' || expr[i] == ']')
-				&& (i == 0 || expr[i - 1] != '\\')) {
+				&& (i == 0 || (expr[i - 1] != '\\' || (expr[i - 1] == '\\' && i - 2 >= 0 && expr[i - 2] == '\\')))) {
 				level--;
 				if (expr[i] == '"' && in_string) in_string = false;
 			}
@@ -1801,12 +1801,12 @@ Token ExpressionTree::get_next_token()				// The limited lexical analyzer to par
 				break;
 			}
 			if (((expr[i] == '"' && !in_string) || expr[i] == '{' || expr[i] == '(' || expr[i] == '[')
-				&& (i == 0 || expr[i - 1] != '\\')) {
+				&& (i == 0 || (expr[i - 1] != '\\' || (expr[i - 1] == '\\' && i - 2 >= 0 && expr[i - 2] == '\\')))) {
 				level++;
 				if (expr[i] == '"' && !in_string) in_string = true;
 			}
 			else if (((expr[i] == '"' && in_string) || expr[i] == '}' || expr[i] == ')' || expr[i] == ']')
-				&& (i == 0 || expr[i - 1] != '\\')) {
+				&& (i == 0 || (expr[i - 1] != '\\' || (expr[i - 1] == '\\' && i - 2 >= 0 && expr[i - 2] == '\\')))) {
 				level--;
 				if (expr[i] == '"' && in_string) in_string = false;
 			}

@@ -34,12 +34,12 @@ Tuple::Tuple(string &x) : Elem(TUPLE)				// Construct a set using a string repre
 			break;
 		}
 		if (((x[i] == '"' && !in_string) || x[i] == '{' || x[i] == '(' || x[i] == '[')
-			&& (i == 0 || x[i - 1] != '\\')) {
+			&& (i == 0 || (x[i - 1] != '\\' || (x[i - 1] == '\\' && i - 2 >= 0 && x[i - 2] == '\\')))) {
 			level++;
 			if (x[i] == '"' && !in_string) in_string = true;
 		}
 		else if (((x[i] == '"' && in_string) || x[i] == '}' || x[i] == ')' || x[i] == ']')
-			&& (i == 0 || x[i - 1] != '\\')) {
+			&& (i == 0 || (x[i - 1] != '\\' || (x[i - 1] == '\\' && i - 2 >= 0 && x[i - 2] == '\\')))) {
 			level--;
 			if (x[i] == '"' && in_string) in_string = false;
 		}

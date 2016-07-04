@@ -1550,12 +1550,12 @@ void remove_comment(string &s)
 	for (i = 0; i < s.size(); i++)
 	{
 		if (((s[i] == '"' && !in_string) || s[i] == '{' || s[i] == '(' || s[i] == '[')
-			&& (i == 0 || s[i - 1] != '\\')) {
+			&& (i == 0 || (s[i - 1] != '\\' || (s[i - 1] == '\\' && i - 2 >= 0 && s[i - 2] == '\\')))) {
 			level++;
 			if (s[i] == '"' && !in_string) in_string = true;
 		}
 		else if (((s[i] == '"' && in_string) || s[i] == '}' || s[i] == ')' || s[i] == ']')
-			&& (i == 0 || s[i - 1] != '\\')) {
+			&& (i == 0 || (s[i - 1] != '\\' || (s[i - 1] == '\\' && i - 2 >= 0 && s[i - 2] == '\\')))) {
 			level--;
 			if (s[i] == '"' && in_string) in_string = false;
 		}
