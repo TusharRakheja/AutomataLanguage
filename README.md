@@ -453,7 +453,8 @@ Typically before initializing an automaton, a lot of work needs to be done. An a
 
 Let's write code to implement this automaton. 
 
-<p align="center"> <img src="https://github.com/TusharRakheja/Autolang/blob/master/Files/Other/Bineven.png" /> </p>
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp;  ![Bineven](https://github.com/TusharRakheja/Autolang/blob/master/Files/Other/Bineven.png)
 
 ```perl
 >>> declare auto binall                                # We'll use it later.
