@@ -453,7 +453,9 @@ Typically before initializing an automaton, a lot of work needs to be done. An a
 
 Let's write code to implement this automaton. 
 
-<img align="center" src="https://github.com/TusharRakheja/Autolang/blob/master/Files/Other/Bineven.png" />
+<p align="center">
+![Bineven](https://github.com/TusharRakheja/Autolang/blob/master/Files/Other/Bineven.png)
+</p>
 
 ```perl
 >>> declare auto binall                                # We'll use it later.
