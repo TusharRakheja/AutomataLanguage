@@ -349,14 +349,14 @@ Autolang also supports the notion of __functional powers__. Maps are kind of a t
 For instance, for a map F, F<sup>3</sup> is equivalent to F o F o F ( i.e, F composed with itself twice).
 
 ```perl
->>> map f : {1, 2, 3} --> {1, 2, 3}                  # Will be used for illustration.
+>>> declare map fcube                                # Will be used for illustration.
+>>> map f : {1, 2, 3} --> {1, 2, 3}                  
 >>> under f : 1 --> 2
 >>> under f : 2 --> 3
 >>> under f : 3 --> 1
 >>> print f
 {(1, 2), (2, 3), (3, 1)}
->>> declare map fCube                   
->>> let fCube = f ^ 2                                # `fCube` is the map `f` composed with itself once.
+>>> let fcube = f ^ 2                                # `fcube` is the map `f` composed with itself once.
 >>> print fCube
 {(1, 1), (2, 2), (3, 3)} 
 >>> let f ^= 2                                       # The power update also works on maps. 
