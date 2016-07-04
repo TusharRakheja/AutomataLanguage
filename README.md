@@ -1,4 +1,4 @@
-# Autolang [![Build Status](https://travis-ci.org/TusharRakheja/Autolang.svg?branch=master)](https://travis-ci.org/TusharRakheja/Autolang)
+# Autolang &nbsp;[![Build Status](https://travis-ci.org/TusharRakheja/Autolang.svg?branch=master)](https://travis-ci.org/TusharRakheja/Autolang)
 
 **Autolang** is a high-level programming language supporting multiple paradigms, with syntax rooted in mathematical notation.
 
@@ -450,6 +450,10 @@ The keyword for **DFA** is **`auto`**. Since (discrete finite) automata are form
 **Basic Syntax**
 
 Typically before initializing an automaton, a lot of work needs to be done. An automaton M = (S, &Sigma;, s<sub>0</sub>, &delta;, A), where S is the set of states, &Sigma; is the input alphabet, s<sub>0</sub> is the starting state, &delta; is the transition function, and A is the set of accepting states.
+
+Let's write code to implement this automaton. 
+
+<img align="center" src="https://github.com/TusharRakheja/Autolang/tree/master/Files/Other/Bineven.png" />
 
 ```perl
 >>> declare auto binall                                # We'll use it later.
