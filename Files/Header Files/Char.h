@@ -44,17 +44,17 @@ public:
 
 	string to_string_raw()
 	{
-		if (elem == '\r') return (string)"'\\\\" + "r'";
-		if (elem == '\\') return (string)"'\\\\" + "\\";
-		if (elem == '\'') return (string)"'\\\\" + "\'";
-		if (elem == '\n') return (string)"'\\\\" + "n'";
-		if (elem == '\t') return (string)"'\\\\" + "t'";
-		if (elem == '\b') return (string)"'\\\\" + "b'";
-		if (elem == '\f') return (string)"'\\\\" + "f'";
-		if (elem == '\v') return (string)"'\\\\" + "v'";
-		if (elem == '\0') return (string)"'\\\\" + "0'";
+		if (elem == '\r') return (string)"'\\" + "r'";
+		if (elem == '\\') return (string)"'\\" + "\\'";
+		if (elem == '\'') return (string)"'\\" + "\'";
+		if (elem == '\n') return (string)"'\\" + "n'";
+		if (elem == '\t') return (string)"'\\" + "t'";
+		if (elem == '\b') return (string)"'\\" + "b'";
+		if (elem == '\f') return (string)"'\\" + "f'";
+		if (elem == '\v') return (string)"'\\" + "v'";
+		if (elem == '\0') return (string)"'\\" + "0'";
 		if (elem == '{' || elem == '(' || elem == '['
-			|| elem == '}' || elem == ')' || elem == ']') return (string)"'\\\\" + string(1, elem) + "'" ;
+			|| elem == '}' || elem == ')' || elem == ']') return (string)"'\\" + string(1, elem) + "'" ;
 
 		return (string)"'" + string(1, elem) + "'";
 	}
