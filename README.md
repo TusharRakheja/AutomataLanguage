@@ -92,13 +92,13 @@ They are declared and initialized like so:
 
 ```perl
 >>> declare char null                                 # All characters are initialized to '\0' by default.
->>> print null == '\\0'                               # To define an escape character, use two backslashes. So '\\\' is (\), and '\\'' is (').
+>>> print null == '\0'                                # To define an escape character, use a backslash.
 True
->>> char brace = '\\}'                                # All braces, parentheses, and brackets also need to be preceded by the backslashes.
+>>> char brace = '\}'                                 # All braces, parentheses, and brackets also need to be preceded by the backslashes.
 >>> print brace                                       # This is to make sure the parser doesn't confuse if for a closing brace of a set or something.
 }
 >>> printr brace                                      # To print a char in its 'raw' form, with quotes and all, use the printr command.
-'\\}'
+'\}'
 ```
 **Operations and Updates**
 
@@ -272,12 +272,12 @@ Container for a sequence of characters.
 >>> declare string null                              # By default strings are initialized to "".
 >>> print null == ""
 True
->>> string str = "\\(\\n\\)"                         # Just like in the case of characters, escape sequences are identified by two \\.
+>>> string str = "\(\n\)"                            # Just like in the case of characters, escape sequences are identified by \.
 >>> print str
 (
 )
 >>> printr str                                       # Raw printng. 
-"\\(\\n\\)"
+"\(\n\)"
 ```
 
 **Operations and Updates**
