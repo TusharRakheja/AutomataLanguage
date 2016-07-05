@@ -17,21 +17,21 @@ public:
 	Char(string &c) : Elem(CHAR) 
 	{
 		if (c.size() == 3) { this->elem = c[1]; return; }
-		if (c[2] == '\\')							// Construct a char object using a string rep of it.
+		if (c[1] == '\\')							// Construct a char object using a string rep of it.
 		{
-			if (c[3] == 'r') this->elem = '\r';
-			else if (c[3] == '\\') this->elem = '\\';
-			else if (c[3] == '\'') this->elem = '\'';
-			else if (c[3] == 'n') this->elem = '\n';
-			else if (c[3] == 't') this->elem = '\t';
-			else if (c[3] == 'b') this->elem = '\b';
-			else if (c[3] == 'f') this->elem = '\f';
-			else if (c[3] == 'v') this->elem = '\v';
-			else if (c[3] == '0') this->elem = '\0';
-			else if (c[3] == '{' || c[3] == '(' || c[3] == '[') this->elem = c[3];
-			else if (c[3] == '}' || c[3] == ')' || c[3] == ']') this->elem = c[3];
+			if (c[2] == 'r') this->elem = '\r';
+			else if (c[2] == '\\') this->elem = '\\';
+			else if (c[2] == '\'') this->elem = '\'';
+			else if (c[2] == 'n') this->elem = '\n';
+			else if (c[2] == 't') this->elem = '\t';
+			else if (c[2] == 'b') this->elem = '\b';
+			else if (c[2] == 'f') this->elem = '\f';
+			else if (c[2] == 'v') this->elem = '\v';
+			else if (c[2] == '0') this->elem = '\0';
+			else if (c[2] == '{' || c[2] == '(' || c[2] == '[') this->elem = c[2];
+			else if (c[2] == '}' || c[2] == ')' || c[2] == ']') this->elem = c[2];
 		}
-		else this->elem = c[2];
+		else this->elem = c[1];
 	}
 
 	bool operator==(Elem &e)

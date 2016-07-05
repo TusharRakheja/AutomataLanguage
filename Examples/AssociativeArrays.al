@@ -17,10 +17,10 @@ while (i < |arrays|) & (i < |keys|)			# As long as we're within limits.
 
 printr names["First"]					# Print 'raw', with the quotes in every string element etc.
 
-print  '\\n'						# We need the newline, not quotes, so normal print.
+print  '\n'						# We need the newline, not quotes, so normal print.
 
 printr names["Last"]					# Print the other array.
 
-print  '\\n'						# Prettify.
+print  '\n'						# Prettify.
 
 quit							# Booyeah.

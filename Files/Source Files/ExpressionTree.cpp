@@ -1683,11 +1683,11 @@ Token ExpressionTree::get_next_token()				// The limited lexical analyzer to par
 			current_index += 3;
 			return{ expr.substr(j, 3), { LITERAL, CHAR_LIT } };
 		}
-		else if (current_index + 4 < expr.size() && expr[current_index + 1] == '\\' && expr[current_index + 4] == '\'')
+		else if (current_index + 3 < expr.size() && expr[current_index + 1] == '\\' && expr[current_index + 3] == '\'')
 		{
 			int j = current_index;		
-			current_index += 5;	
-			return{ expr.substr(j, 5), { LITERAL, CHAR_LIT } };
+			current_index += 4;	
+			return{ expr.substr(j, 4), { LITERAL, CHAR_LIT } };
 		}
 		else return{ "", {ERROR} };
 	}

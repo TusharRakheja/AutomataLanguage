@@ -2,7 +2,7 @@
 
 map testmap : {1} --> {True}		 # Initialize a map with the given domain and range.
 
-set A = {testmap, "\\(\\"Foo\\"\\)", 3}  # Initialize a set (all braces, parentheses, brackets, quotes, backslashes, and escape characters, must have '\\' as prefix.
+set A = {testmap, "\(\"Foo\"\)", 3}      # Initialize a set (all braces, parentheses, brackets, quotes, backslashes, and escape characters, must have '\\' as prefix.
 
 declare int i				 # Primitves don't have to be explicitly initialized (default 0 for int).
  
@@ -11,11 +11,11 @@ while i < |A|				 # "While i < cardinality of set A" (Note: The opening brace 'm
 	if (i == 1)			 # Parentheses are optional. This would work without them also 
 	{				 # Here too, the brace HAS to open on a new line.
 		print A[i]		 # Print the i'th element of A.
-		print '\\n'		 # Print (processed) character (two delimiting '\' needed).
+		print '\n'		 # Print (processed) character (two delimiting '\' needed).
 	}				 # If preceded by an expression (not a command, like 'quit' or 'declare'), the closing brace must also be on a new line. 
 	else { } 			 # The else opening braces are versatile and are okay anywhere, since we don't have a conditional expression to parse.
 					 # The closing brace can also be kept on the same line since it is not preceded by an expression.
-	let i = i + 1			 # This is an assignment. Still haven't been able to get assigments of the form `let a[b] = c` to work. Hmm.
+	let i += 1
 }
 
 set B = . A				 # Make a 'deep_copy' of A
@@ -26,11 +26,11 @@ under A[0] : 1 --> True			 # Add a mapping to the map in set A, at index 0 (test
 
 print B					 # So if B still shows an empty map at index 0, deep_copy successful!
 
-print '\\n'				 # Again print a newline.
+print '\n'				 # Again print a newline.
 
 print C					 # But C 'should' have a non-empty map!
 
-print '\\n'				 # Again print a newline.
+print '\n'				 # Again print a newline.
 
 quit					 # That's all for now, folks!
 
