@@ -1,6 +1,6 @@
 # Autolang &nbsp;[![Build Status](https://travis-ci.org/TusharRakheja/Autolang.svg?branch=master)](https://travis-ci.org/TusharRakheja/Autolang)
 
-![Autolang Interactive.](http://i.imgur.com/ETZ7lEp.gif)
+![Autolang Interactive.](http://i.imgur.com/hPJTyrh.gif)
 
 **Autolang** is a high-level programming language supporting multiple paradigms, with syntax rooted in mathematical notation.
 
