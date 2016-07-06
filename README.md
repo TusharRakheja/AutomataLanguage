@@ -309,7 +309,7 @@ BC
 True
 ```
 
-A think to keep in mind is that the **`[]`** operator in strings follows _value semantics_, unlike in the case of sets and tuples. It does not return references to characters of the string, but instead, returns new copies of those characters.  
+A thing to keep in mind is that the **`[]`** operator for strings follows _value semantics_, unlike in the case of sets and tuples. It does not return references to characters of the string, but instead, returns new copies of those characters.  
 
 #### d) Maps
 
