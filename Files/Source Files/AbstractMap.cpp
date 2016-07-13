@@ -8,14 +8,14 @@ AbstractMap::AbstractMap(string &mapping_scheme_full) : Elem(ABSTRACT_MAP)
 {
 	this->domain = nullptr;
 	this->codomain = nullptr;
-	int start = mapping_scheme_full.find("-->") + 3;
+	int start = mapping_scheme_full.find("->") + 3;
 	while (isspace(mapping_scheme_full[start])) start++;
 	this->mapping_scheme = mapping_scheme_full.substr(start, mapping_scheme_full.size() - start);
 }
 
 void AbstractMap::add_scheme(string &mapping_scheme_full)
 {
-	int start = mapping_scheme_full.find("-->") + 3;
+	int start = mapping_scheme_full.find("->") + 3;
 	while (isspace(mapping_scheme_full[start])) start++;
 	this->mapping_scheme = mapping_scheme_full.substr(start, mapping_scheme_full.size() - start);	
 }
@@ -30,7 +30,7 @@ AbstractMap::AbstractMap(shared_ptr<AbstractSet> domain, shared_ptr<AbstractSet>
 {	
 	this->domain = domain; 
 	this->codomain = codomain;
-	int start = mapping_scheme_full.find("-->") + 3;
+	int start = mapping_scheme_full.find("->") + 3;
 	while (isspace(mapping_scheme_full[start])) start++;
 	this->mapping_scheme = mapping_scheme.substr(start, mapping_scheme.size() - start);
 }
@@ -39,9 +39,9 @@ shared_ptr<AbstractMap> AbstractMap::composed_with(shared_ptr<AbstractMap> g)	//
 {
 	// For the comments that follow, this == f. Just for convenience, really.
 	
-	// under f : elem -->  f[elem], where f[elem] represents some transformation.
-	// under g : elem -->  g[elem], where g[elem] represents some other transformation.
-	// We need to return f o g. under f o g : elem --> f[g[elem]]
+	// under f : elem ->  f[elem], where f[elem] represents some transformation.
+	// under g : elem ->  g[elem], where g[elem] represents some other transformation.
+	// We need to return f o g. under f o g : elem -> f[g[elem]]
 
 	string scheme_fog = this->mapping_scheme;
 

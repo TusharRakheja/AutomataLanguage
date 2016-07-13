@@ -1,4 +1,4 @@
-# Autolang &nbsp;[![Build Status](https://travis-ci.org/TusharRakheja/Autolang.svg?branch=master)](https://travis-ci.org/TusharRakheja/Autolang)
+﻿# Autolang &nbsp;[![Build Status](https://travis-ci.org/TusharRakheja/Autolang.svg?branch=master)](https://travis-ci.org/TusharRakheja/Autolang)
 
 ![Autolang Interactive.](http://i.imgur.com/hPJTyrh.gif)
 
@@ -289,7 +289,7 @@ True
 >>> string world = "World"
 >>> print hello + " " + world                         # Strings can be concatenated with the + operator.
 >>> string hellow = hello           
->>> let hellow += " " + world.                        # The += updater will work as expected. 
+>>> let hellow += " " + world                         # The += updater will work as expected. 
 >>> let hellow += '!'                                 # One can also append characters with it.
 >>> print hellow
 Hello World!
@@ -319,9 +319,9 @@ Containers that store mappings between two sets of elements are called **maps**.
 
 ```perl
 >>> declare map fog                                  # Declare a map fog
->>> map f : {"One", "Zero"} --> {True, False}		 # Initialize a map with a given domain and codomain.
->>> under f : "One"  --> True					     # `Under f, "One" goes to True.`
->>> under f : "Zero" --> False		                 
+>>> map f : {"One", "Zero"} -> {True, False}		 # Initialize a map with a given domain and codomain.
+>>> under f : "One"  -> True					     # `Under f, "One" goes to True.`
+>>> under f : "Zero" -> False		                 
 >>> print f
 {(One, True), (Zero, False)}
 ```
@@ -333,9 +333,9 @@ Maps can be queried for their mappings using the **`[]`** operator, and just lik
 ```perl
 >>> print f["One"]					                 # Maps can be queried this way.	
 True
->>> map g : {1, 0} --> {"One", "Zero"}				
->>> under g : 1 --> "One"
->>> under g : 0 --> "Zero"
+>>> map g : {1, 0} -> {"One", "Zero"}				
+>>> under g : 1 -> "One"
+>>> under g : 0 -> "Zero"
 >>> print |g|                                        # Prints the number of mappings in the map.
 2
 >>> let fog = f o g					                 # Let fog = the composition of maps f and g.
@@ -352,14 +352,14 @@ For instance, for a map F, F<sup>3</sup> is equivalent to F o F o F ( i.e, F com
 
 ```perl
 >>> declare map fcube                                # Will be used for illustration.
->>> map f : {1, 2, 3} --> {1, 2, 3}                  
->>> under f : 1 --> 2
->>> under f : 2 --> 3
->>> under f : 3 --> 1
+>>> map f : {1, 2, 3} -> {1, 2, 3}                  
+>>> under f : 1 -> 2
+>>> under f : 2 -> 3
+>>> under f : 3 -> 1
 >>> print f
 {(1, 2), (2, 3), (3, 1)}
->>> let fcube = f ^ 2                                # `fcube` is the map `f` composed with itself once.
->>> print fCube
+>>> let fcube = f ^ 3                                # `fcube` is the map `f` composed with itself once.
+>>> print fcube
 {(1, 1), (2, 2), (3, 3)} 
 >>> let f ^= 2                                       # The power update also works on maps. 
 >>> print f
@@ -416,14 +416,14 @@ Autolang supports a certain *flavor* of lambda expressions in the form of **abst
 
 ```perl
 >>> declare abstract map fact                       # An abstract map to compute the factorial.
->>> under fact : x --> ((x) == 0) ? (1) : ((x) * fact[(x) - 1])
+>>> under fact : x -> ((x) == 0) ? (1) : ((x) * fact[(x) - 1])
 >>> print fact[5]
 120
 ```
 
 We used a *conditional operator* **`?`** in the `fact` map, which is the only ternary operator in Autolang. Abstract maps can be composed too, but for now, they don't have domains and codomains restricting their input, so any composition between two abstract maps is possible. However, a composition between an abstract and a normal map is not possible (again, for now).
 
-Again, like abstract sets, abstract maps work by replacing a certain keyword with the value of the query. This *keyword*, which is more like a key-expression, is in the mapping scheme (the part to the right of the mapping operator `-->`), exclusively represented by **`(x)`**. This combination of these characters, **`(x)`**, does not occur in Autolang anywhere else.
+Again, like abstract sets, abstract maps work by replacing a certain keyword with the value of the query. This *keyword*, which is more like a key-expression, is in the mapping scheme (the part to the right of the mapping operator `->`), exclusively represented by **`(x)`**. This combination of these characters, **`(x)`**, does not occur in Autolang anywhere else.
 
 It's a good time to remember that a abstract maps are also objects, just like regular maps, and hence can be part of sets and tuples. 
 
@@ -433,12 +433,12 @@ It's a good time to remember that a abstract maps are also objects, just like re
 >>> declare abstract map square
 >>> declare abstract map octa
 >>> set pmaps = { square, octa }                       # Make a set of abstract maps.
->>> under pmaps[0] : x --> (x) ^ 2                     # Assign a mapping scheme to pmaps[0], which is the map `square`.
+>>> under pmaps[0] : x -> (x) ^ 2                      # Assign a mapping scheme to pmaps[0], which is the map `square`.
 >>> print (pmaps[0])[3]                                # Print the square of 3.
 9
 >>> let pmaps[1] = (pmaps[0]) ^ 3                      # Let the map `octa` be the cube of the map `square`.
 >>> print octa                                         # Abstract maps can be printed.
-x --> (((x) ^ 2) ^ 2) ^ 2 
+x -> (((x) ^ 2) ^ 2) ^ 2 
 >>> print octa[2]                                      # Query the abstract map.
 256
 ```
@@ -464,13 +464,13 @@ Let's write code to implement this automaton.
 >>> declare auto binall                                # We'll use it later.
 >>> set states = { "S", "1", "0" }                     # The set of states for the automaton.
 >>> set sigma = { '1', '0' }                           # The input alphabet.
->>> map delta : states x sigma --> states              # The transition map for the automaton.
->>> under delta : ("S", '0') --> "0"                   # The mappings are such that ...
->>> under delta : ("S", '1') --> "1"                   # ... the resulting automaton ...
->>> under delta : ("0", '0') --> "0"                   # ... will accept all strings ...
->>> under delta : ("0", '1') --> "1"                   # ... that are binary representations ...
->>> under delta : ("1", '0') --> "0"                   # ... of even integers, and ...
->>> under delta : ("1", '1') --> "1"                   # ... will reject all others.
+>>> map delta : states x sigma -> states               # The transition map for the automaton.
+>>> under delta : ("S", '0') -> "0"                    # The mappings are such that ...
+>>> under delta : ("S", '1') -> "1"                    # ... the resulting automaton ...
+>>> under delta : ("0", '0') -> "0"                    # ... will accept all strings ...
+>>> under delta : ("0", '1') -> "1"                    # ... that are binary representations ...
+>>> under delta : ("1", '0') -> "0"                    # ... of even integers, and ...
+>>> under delta : ("1", '1') -> "1"                    # ... will reject all others.
 >>> auto bineven = (states, sigma, states[0], delta, states[(2, 3)]) 
 ```
 

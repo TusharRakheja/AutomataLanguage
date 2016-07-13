@@ -27,7 +27,7 @@ istream * program;		// The stream of text constituting the program.
 bool read_right_expr = false;	// Notes whether or not you're reading an expression on the right side of an '=' sign.
 bool read_map_expr = false;     // Notes whether or not you're reading an expression that represents a map.
 bool read_left_expr = false;	// Notes whether or not you're reading an expression on the left side of an '=' sign.
-bool read_mapdom_expr = false;	// Notes whether or not you're reading an expression in the domain of the map (left of '-->' sign).
+bool read_mapdom_expr = false;	// Notes whether or not you're reading an expression in the domain of the map (left of '->' sign).
 
 Token get_next_token();		// Lexer.
 void parse_program();		// Parse the program.
@@ -58,8 +58,8 @@ void program_vars::raise_error(const char *message)
 
 int main(int argc, char **argv) 
 {
-	if (argc == 1) { print_info(); program = &cin; }
-	else program = new std::ifstream(argv[1]);
+	/*if (argc == 1) { print_info(); program = &cin; }
+	else*/ program = new std::ifstream(/*argv[1]*/"../Examples/MapTest.al");
 	parse_program();
 }
 
@@ -111,7 +111,7 @@ Token get_next_token()						// The lexer.
 	else if (read_mapdom_expr)
 	{
 		lexeme = "";
-		char a, b, c;
+		char a, b;
 		program->get(a);
 		while (isspace(a)) 
 		{
@@ -122,26 +122,25 @@ Token get_next_token()						// The lexer.
 		{
 			if (a == '-')
 			{
-				program->get(b); program->get(c);
-				if (b == '-' && c == '>') 
+				program->get(b);
+				if (b == '>') 
 				{
 					if (program == &cin) 
 					{
-						program->unget();
 						program->unget();
 						program->unget();
 						break;
 					}
 					else 
 					{
-						program->seekg(-3L * (int)sizeof(char), ios::cur);
+						program->seekg(-2L * (int)sizeof(char), ios::cur);
 						break;
 					}
 				}
 				else 
 				{
-					if (program == &cin) { program->unget(); program->unget(); }
-					else program->seekg(-2L * (int)sizeof(char), ios::cur);
+					if (program == &cin) program->unget();
+					else program->seekg(-1L * (int)sizeof(char), ios::cur);
 				}
 			}
 			else 
@@ -194,7 +193,7 @@ Token get_next_token()						// The lexer.
 	else if (lexeme == "^=")	return{ lexeme, { UPDATE_OP } };
 	else if (lexeme == "%=")	return{ lexeme, { UPDATE_OP } };
 	else if (lexeme == "o=")        return{ lexeme, { UPDATE_OP } };
-	else if (lexeme == "-->")	return{ lexeme, { MAPPING_SYMBOL } };
+	else if (lexeme == "->")	return{ lexeme, { MAPPING_SYMBOL } };
 	else if (lexeme == "let")	return{ lexeme, { LET } };
 	else if (lexeme == "under")	return{ lexeme, { UNDER } };
 	else if (lexeme == ":")		return{ lexeme, { COLON } };
@@ -263,7 +262,7 @@ void parse_mapping()
 
 		Token mapsymb = get_next_token();
 
-		if (mapsymb.types[0] != MAPPING_SYMBOL) raise_error("Missing operator \"-->\".");
+		if (mapsymb.types[0] != MAPPING_SYMBOL) raise_error("Missing operator \"->\".");
 
 		read_right_expr = true;
 
@@ -1156,7 +1155,7 @@ void parse_initialization()
 
 			shared_ptr<Elem> map_domain = nullptr, map_codomain = nullptr;	// Actual pointers that will be used in the map's constructor.
 
-			if (mapsymb.types[0] != MAPPING_SYMBOL) raise_error("Missing mapping operator \"-->\".");
+			if (mapsymb.types[0] != MAPPING_SYMBOL) raise_error("Missing mapping operator \"->\".");
 
 			if (domain.types[0] == IDENTIFIER)
 				if ((*identify)[domain.lexeme] == nullptr)
@@ -1335,7 +1334,7 @@ void parse_initialization()
 
 			Token mapssymb = get_next_token();
 
-			if (mapssymb.types[0] == MAPPING_SYMBOL) raise_error("Missing operator \"-->\".");
+			if (mapssymb.types[0] == MAPPING_SYMBOL) raise_error("Missing operator \"->\".");
 
 			read_right_expr = true;
 

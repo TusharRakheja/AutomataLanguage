@@ -1,7 +1,7 @@
-map f : {1, 2, 3} --> {1, 2, 3}
-under f : 1 --> 2
-under f : 2 --> 3
-under f : 3 --> 1
+map f : {1, 2, 3} -> {1, 2, 3}
+under f : 1 -> 2
+under f : 2 -> 3
+under f : 3 -> 1
 
 print "Map f: "
 print f

@@ -1,6 +1,6 @@
 # Sample Prog.
 
-map testmap : {1} --> {True}		 # Initialize a map with the given domain and range.
+map testmap : {1} -> {True}		 # Initialize a map with the given domain and range.
 
 set A = {testmap, "\(\"Foo\"\)", 3}      # Initialize a set (all braces, parentheses, brackets, quotes, backslashes, and escape characters, must have '\\' as prefix.
 
@@ -22,7 +22,7 @@ set B = . A				 # Make a 'deep_copy' of A
 
 set C = A				 # Make a shallow copy(?) of A (simple assignment)
 
-under A[0] : 1 --> True			 # Add a mapping to the map in set A, at index 0 (testmap). Note that this mapping should 'not' be present in B now. 
+under A[0] : 1 -> True			 # Add a mapping to the map in set A, at index 0 (testmap). Note that this mapping should 'not' be present in B now. 
 
 print B					 # So if B still shows an empty map at index 0, deep_copy successful!
 

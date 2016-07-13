@@ -7,8 +7,8 @@ namespace AbstractMap_test
 {
 	void test_all()
 	{
-		shared_ptr<AbstractMap> f = shared_ptr<AbstractMap>{new AbstractMap((string)"x --> (x) + 2")},
-		g = shared_ptr<AbstractMap>{new AbstractMap((string)"x --> (x) * 3")};
+		shared_ptr<AbstractMap> f = shared_ptr<AbstractMap>{new AbstractMap((string)"x -> (x) + 2")},
+		g = shared_ptr<AbstractMap>{new AbstractMap((string)"x -> (x) * 3")};
 
 		Int x(3); Char a('a'), excl('!');
 
