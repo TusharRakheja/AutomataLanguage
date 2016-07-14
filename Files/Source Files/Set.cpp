@@ -3,6 +3,12 @@
 
 /* Implementations for methods in the class Set. */
 
+vector<char> op_signs_set = { // These characters will signify the presence of an operator.
+	'+', '-', '*', '/', '^', '%', '\\', '.', 'U', 'i', '|',
+	'?', 'V', '&', '=', '!', '<', '>', 'o', 'c', 'x', '[', '!'
+}; // Just the first (often the only) characters in the operators. 
+
+
 Set::Set() : Elem(SET)								// Default constructor.
 {
 	elems = new vector < shared_ptr<Elem> >;				// A blank vector.
@@ -22,14 +28,14 @@ Set::Set(string &x) : Elem(SET)					// Construct a set using a string representa
 {
 	this->elems = new vector<shared_ptr<Elem>>;
 	int level = 0, start = 0;
-	bool in_string = false;
+	bool in_string = false, in_char = false;
 	vector<string> elements;			// We're going to extract e1, e2 ... out of x = "{ e1, e2, ... }".	
 	while (x[start] != '{')	start++;		// Look for the set's opening brace.	
 	start++;
 	while (isspace(x[start])) start++;		// Once we've found the opening brace, remove the extra space before the first element.
 	for (int i = start; i < x.size(); i++)
 	{
-		if (x[i] == '}' && (i <= 0 || x[i] != '\\') && level == 0) // Usually the closing ')' will be the last character in the string, but, just in case.
+		if (x[i] == '}' && level == 0)		// Usually the closing ')' will be the last character in the string, but, just in case.
 		{
 			int j = i;					// Store the position of the comma.
 			while (isspace(x[j - 1])) j--;			// Work back from there, to get a trimmed representation.
@@ -37,15 +43,21 @@ Set::Set(string &x) : Elem(SET)					// Construct a set using a string representa
 				elements.push_back(x.substr(start, j - start));	// Push it to the vector of representations
 			break;
 		}
-		if (((x[i] == '"' && !in_string) || x[i] == '{' || x[i] == '(' || x[i] == '[')
-			&& (i == 0 || (x[i - 1] != '\\' || (x[i - 1] == '\\' && i - 2 >= 0 && x[i - 2] == '\\')))) {
+		if (((x[i] == '"' && !in_string && !in_char) || (x[i] == '\'' && !in_char && !in_string) ||
+			x[i] == '{' || x[i] == '(' || x[i] == '[')
+			&&                                                                 // ... and is not escaped.
+			(i == 0 || (x[i - 1] != '\\' || (x[i - 1] == '\\' && i - 2 >= 0 && x[i - 2] == '\\'))))
+		{
 			level++;
-			if (x[i] == '"' && !in_string) in_string = true;
+			if (x[i] == '"' && !in_string && !in_char) in_string = true;
+			if (x[i] == '\'' && !in_char && !in_string) in_char = true;
 		}
-		else if (((x[i] == '"' && in_string) || x[i] == '}' || x[i] == ')' || x[i] == ']')
+		else if (((x[i] == '"' && in_string) || (x[i] == '\'' && in_char) ||
+			x[i] == '}' || x[i] == ')' || x[i] == ']')
 			&& (i == 0 || (x[i - 1] != '\\' || (x[i - 1] == '\\' && i - 2 >= 0 && x[i - 2] == '\\')))) {
 			level--;
 			if (x[i] == '"' && in_string) in_string = false;
+			if (x[i] == '\'' && in_char) in_char = false;
 		}
 		else if (x[i] == ',' && level == 0)		// If we find a comma that delimits an elements representation ...
 		{
@@ -58,24 +70,65 @@ Set::Set(string &x) : Elem(SET)					// Construct a set using a string representa
 			if (x[start] == '}') break;
 		}
 	}
-	for (auto &rep : elements)
-	{
-		if (rep[0] == '{')				// If the element to be parsed is a set ...
-			this->elems->push_back(shared_ptr<Elem>{new Set(rep)});	// ... recursively parse that too.
-		else if (rep[0] == '(')				
-			this->elems->push_back(shared_ptr<Elem>{new Tuple(rep)});
-		else if (isdigit(rep[0]))
-			this->elems->push_back(shared_ptr<Elem>{new Int(rep)});
-		else if (rep[0] == '\'')
-			this->elems->push_back(shared_ptr<Elem>{new Char(rep)});
-		else if (rep[0] == '"')
-			this->elems->push_back(shared_ptr<Elem>{new String(rep, 0)});
-		else if (rep == "True" || rep == "False")
-			this->elems->push_back(shared_ptr<Elem>{new Logical(rep)});
-		else
+	for (auto &rep : elements) // An important thing to remember is that, the elements can still be expressions.
+	{	
+		// So first of all, we'll check if the element we're looking at (or rep. thereof) is an expression or not.
+
+		int level = 0;		  // An operator sign found at level 0 will tell us that we're looking at an expression.
+		bool seeing_expr = false; // Will hold the result of our investigation with regards the above comment.
+		bool in_string = false;	  // Helps us keep track of the level when strings are involved.
+		bool in_char = false;     // Helps us keep track of the level when chars are involved.
+
+		for (int i = 0; i < rep.size(); i++)
+		{
+			// If, it's level 0, and the character that we're looking at right now in the rep. is the sign of an operator.
+			if (level == 0 && std::find(op_signs_set.begin(), op_signs_set.end(), rep[i]) != op_signs_set.end())
+			{  
+				seeing_expr = true;
+				break;
+			}		
+			if (((rep[i] == '"' && !in_string && !in_char) || (rep[i] == '\'' && !in_char && !in_string) ||
+				rep[i] == '{' || rep[i] == '(' || rep[i] == '[')
+				&&                                                                 // ... and is not escaped.
+				(i == 0 || (rep[i - 1] != '\\' || (rep[i - 1] == '\\' && i - 2 >= 0 && rep[i - 2] == '\\'))))
+			{
+				level++;
+				if (rep[i] == '"' && !in_string && !in_char) in_string = true;
+				if (rep[i] == '\'' && !in_char && !in_string) in_char = true;
+			}
+			else if (((rep[i] == '"' && in_string) || (rep[i] == '\'' && in_char) ||
+				rep[i] == '}' || rep[i] == ')' || rep[i] == ']')
+				&& (i == 0 || (rep[i - 1] != '\\' || (rep[i - 1] == '\\' && i - 2 >= 0 && rep[i - 2] == '\\'))))
+			{
+				level--;
+				if (rep[i] == '"' && in_string) in_string = false;
+				if (rep[i] == '\'' && in_char) in_char = false;
+			}
+		}
+		if (seeing_expr) 
 		{
 			ExpressionTree expr(rep);
-			this->elems->push_back(expr.evaluate());
+			this->elems->push_back(expr.evaluate());			
+		}
+		else 
+		{
+			if (rep[0] == '{')						// If the element to be parsed is a set ...
+				this->elems->push_back(shared_ptr<Elem>{new Set(rep)});	// ... recursively parse that too.
+			else if (rep[0] == '(')				
+				this->elems->push_back(shared_ptr<Elem>{new Tuple(rep)});
+			else if (isdigit(rep[0]))
+				this->elems->push_back(shared_ptr<Elem>{new Int(rep)});
+			else if (rep[0] == '\'')
+				this->elems->push_back(shared_ptr<Elem>{new Char(rep)});
+			else if (rep[0] == '"')
+				this->elems->push_back(shared_ptr<Elem>{new String(rep, 0)});
+			else if (rep == "True" || rep == "False")
+				this->elems->push_back(shared_ptr<Elem>{new Logical(rep)});
+			else    	
+			{	// Surely an identifier.
+				ExpressionTree expr(rep);
+				this->elems->push_back(expr.evaluate());
+			}
 		}
 	}
 }

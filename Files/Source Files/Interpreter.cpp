@@ -1,14 +1,11 @@
-#include "../Header Files/ExpressionTree.h"
-#include <iostream>
-#include <fstream>
+#include "../Header Files/ExpressionTree.h" 
 
 using std::cout;
 using std::cin;
 using std::endl;
-using std::istream;
-using std::ios;
 using std::getline;
-using std::ifstream;
+using std::ios;
+using std::istream;
 
 unordered_map<string, shared_ptr<Elem>> * program_vars::identify = new unordered_map<string, shared_ptr<Elem>>
 { 
@@ -26,8 +23,9 @@ Token current_token;		// The current token we're looking at.
 istream * program;		// The stream of text constituting the program.
 bool read_right_expr = false;	// Notes whether or not you're reading an expression on the right side of an '=' sign.
 bool read_map_expr = false;     // Notes whether or not you're reading an expression that represents a map.
-bool read_left_expr = false;	// Notes whether or not you're reading an expression on the left side of an '=' sign.
+bool read_update_expr = false;	// Notes whether or not you're reading an expression on the left side of an '=' sign.
 bool read_mapdom_expr = false;	// Notes whether or not you're reading an expression in the domain of the map (left of '->' sign).
+bool read_getfs_expr = false;	// Notes whether or not you're reading an expression on the left side of an '<-' sign.
 
 Token get_next_token();		// Lexer.
 void parse_program();		// Parse the program.
@@ -35,7 +33,7 @@ void parse_statement();		// Parse a statement.
 void parse_declaration();	// Parse a declaration.
 void parse_initialization();	// Parse an initialization.
 void parse_assignment();	// Parse an assignment.
-void parse_input();		// Parse an input command.
+void parse_fromsource();	// Parse a `get` from source command.
 void parse_print();		// Parse a print command.
 void parse_printr();		// Parses a print raw command.
 void parse_mapping();		// Parse a single mapping.
@@ -58,18 +56,16 @@ void program_vars::raise_error(const char *message)
 
 int main(int argc, char **argv) 
 {
-	/*if (argc == 1) { print_info(); program = &cin; }
-	else*/ program = new std::ifstream(/*argv[1]*/"../Examples/MapTest.al");
+	if (argc == 1) { print_info(); program = &cin; }
+	else program = new std::ifstream(argv[1]);
 	parse_program();
 }
-
-
 
 Token get_next_token()						// The lexer.
 {
 	string lexeme;
 	if (program->eof()) return{ "", {END} };
-	if (read_left_expr) 
+	if (read_update_expr) 
 	{
 		getline(*program, lexeme, '=');			// Read the whole thing first;
 		if (program == &cin) 
@@ -90,8 +86,17 @@ Token get_next_token()						// The lexer.
 			}
 			else program->seekg(-1L*(int)sizeof(char), ios::cur);	
 		}
-		read_left_expr = false;
+		read_update_expr = false;
 	}	
+	else if (read_getfs_expr)
+	{
+		getline(*program, lexeme, '<');			// Read the whole thing first;
+		if (program == &cin)
+			program->unget();
+		else
+			program->seekg(-1L * (int)sizeof(char), ios::cur);
+		read_getfs_expr = false;
+	}
 	else if (read_map_expr)
 	{
 		getline(*program, lexeme, ':');			// Read the whole thing first;
@@ -178,8 +183,8 @@ Token get_next_token()						// The lexer.
 	else if (lexeme == "declare")	return{ lexeme, { DECLARE } };
 	else if	(lexeme == "set" || lexeme == "string" || lexeme == "int" ||	// If it's a data_type token.
 		 lexeme == "char" || lexeme == "tuple" || lexeme == "map" ||
-	       	 lexeme == "logical" || lexeme == "auto")
-		 return{ lexeme, { TYPE } };
+	       	 lexeme == "logical" || lexeme == "auto" || lexeme == "source" || 
+		 lexeme == "sink")      return{ lexeme, { TYPE } };
 	else if (lexeme == "=")		return{ lexeme, { UPDATE_OP } };
 	else if (lexeme == "&=")	return{ lexeme, { UPDATE_OP} };
 	else if (lexeme == "U=")	return{ lexeme, { UPDATE_OP } };
@@ -193,11 +198,12 @@ Token get_next_token()						// The lexer.
 	else if (lexeme == "^=")	return{ lexeme, { UPDATE_OP } };
 	else if (lexeme == "%=")	return{ lexeme, { UPDATE_OP } };
 	else if (lexeme == "o=")        return{ lexeme, { UPDATE_OP } };
+	else if (lexeme == "<-")        return{ lexeme, { SOURCE_OP } };
 	else if (lexeme == "->")	return{ lexeme, { MAPPING_SYMBOL } };
 	else if (lexeme == "let")	return{ lexeme, { LET } };
+	else if (lexeme == "get")       return{ lexeme, { GET } };
 	else if (lexeme == "under")	return{ lexeme, { UNDER } };
 	else if (lexeme == ":")		return{ lexeme, { COLON } };
-	else if (lexeme == "input")	return{ lexeme, { INPUT } };
 	else if (lexeme == "abstract")  return{ lexeme, { ABSTRACT} };
 	else if (lexeme == "print")	return{ lexeme, { PRINT } };
 	else if (lexeme == "printr")	return{ lexeme, { PRINTR} }; 
@@ -230,6 +236,7 @@ void parse_statement()
 	else if (current_token.types[0] == PRINT) parse_print();
 	else if (current_token.types[0] == PRINTR) parse_printr();
 	else if (current_token.types[0] == LET) parse_assignment();
+	else if (current_token.types[0] == GET) parse_fromsource();
 	else if (current_token.types[0] == UNDER) parse_mapping();
 	if (program == &std::cin) cout << str((*identify)["__prompt__"])->to_string();
 	current_token = get_next_token();
@@ -274,7 +281,7 @@ void parse_mapping()
 
 		m->add_maping(*pre_im_expr.evaluate(), *im_expr.evaluate());
 	}
-	else
+	else if (candidate_map->type == ABSTRACT_MAP)
 	{
 		shared_ptr<AbstractMap> absmap = amap(candidate_map);
 		
@@ -284,13 +291,113 @@ void parse_mapping()
 		
 		absmap->add_scheme(mapping_scheme.lexeme);
 	}
+	else raise_error("Expected a map or an abstract map for a \":\" operation.");
+}
+
+void parse_fromsource()
+{
+	read_getfs_expr = true;
+
+	Token get_this = get_next_token();
+
+	ExpressionTree get_expr(get_this.lexeme);
+
+	shared_ptr<Elem> get = get_expr.evaluate();
+	
+	Token op = get_next_token();
+
+	if (op.types[0] != SOURCE_OP) raise_error("Expected an input/source operator.");
+
+	read_right_expr = true;
+
+	Token expression = get_next_token();
+
+	ExpressionTree expr(expression.lexeme);
+
+	shared_ptr<Elem> new_value = expr.evaluate();
+
+	if (new_value->type == DATASOURCE)
+	{
+		if (datasource(new_value)->elem->eof())
+		{
+			cout << "WARNING: All the data from the source has already been read. ";
+			cout << "Please update the source using the \"-=\" or \"+=\" updaters before reading data again.\n\n";
+		}
+		else
+		{
+			if (get->type == INT)
+			{
+				*datasource(new_value)->elem >> integer(get)->elem;
+			}
+			else if (get->type == CHAR)
+			{
+				datasource(new_value)->elem->get(character(get)->elem);
+			}
+			else if (get->type == LOGICAL)
+			{
+				string truthval;
+				getline(*datasource(new_value)->elem, truthval, datasource(new_value)->delimiter->elem);
+				logical(get)->elem = (truthval.find("True") != string::npos);
+			}
+			else if (get->type == STRING)
+			{
+				// Read a string from the file till the delimiter, and assign it to the 'elem' attr. of the obj to be updated.
+				getline(*datasource(new_value)->elem, str(get)->elem, datasource(new_value)->delimiter->elem);
+			}
+			else raise_error("Only primitives and strings can be read in from a source using the \"<-\" operator .");
+		}
+	}
+	else if (new_value->type == STRING) // Strings can also act as sources.
+	{
+		if (get->type == INT)
+		{
+			integer(get)->elem = std::stoi(str(new_value)->elem);
+		}
+		else if (get->type == CHAR) // There's no reason to ever use this really. But well, to each their own.
+		{
+			character(get)->elem = (str(new_value)->elem)[0];
+		}
+		else if (get->type == LOGICAL)
+		{
+			logical(get)->elem = (str(new_value)->elem.find("True") != string::npos);
+		}
+		else if (get->type == SET)
+		{
+			// Make a new set passing the raw string representation of the requested set to the constructor.
+			shared_ptr<Set> tempset = shared_ptr<Set>{ new Set(str(new_value)->to_string_raw()) };
+			if (set(get)->elems != nullptr) delete set(get)->elems;
+			set(get)->elems = tempset->elems;
+		}
+		else if (get->type == TUPLE)
+		{
+			shared_ptr<Tuple> temptup = shared_ptr<Tuple>{ new Tuple(str(new_value)->to_string_raw()) };
+			if (_tuple(get)->elems != nullptr) delete _tuple(get)->elems;
+			_tuple(get)->elems = temptup->elems;
+		}
+		else if (get->type == ABSTRACT_SET)
+		{
+			// So, since the criteria for an abstract set is a ready-to-execute logical expression that doesn't ... 
+			// ... need to be parsed, but readily executed, we don't really need a raw representation of the string.
+			// (hope I'm right about this).
+			aset(get)->criteria = str(new_value)->elem;
+		}
+		else if (get->type == ABSTRACT_MAP)
+		{
+			// Same for maps.
+			amap(get)->mapping_scheme = str(new_value)->elem;
+		}
+	}
 }
 
 void parse_assignment()
 {
-	read_left_expr = true;
+	read_update_expr = true;
 		
 	Token update_this = get_next_token();
+
+	ExpressionTree update_expr(update_this.lexeme);
+
+	shared_ptr<Elem> update = update_expr.evaluate();
 
 	Token op = get_next_token();
 
@@ -299,10 +406,6 @@ void parse_assignment()
 	read_right_expr = true;
 
 	Token expression = get_next_token();
-
-	ExpressionTree update_expr(update_this.lexeme);
-
-	shared_ptr<Elem> update = update_expr.evaluate();
 
 	ExpressionTree expr(expression.lexeme);
 	
@@ -440,6 +543,52 @@ void parse_assignment()
 			}
 			else raise_error("Expected an abstract map on the RHS for a \"=\" operation with an abstract map in the LHS");
 		}
+		else if (update->type == DATASOURCE)
+		{
+			if (new_value->type == DATASOURCE)
+			{
+				datasource(update)->elem = datasource(new_value)->elem;
+				datasource(update)->delimiter = datasource(new_value)->delimiter;
+			}
+			else if (new_value->type == TUPLE)
+			{
+				if (_tuple(new_value)->size() != 2) 
+					raise_error("A source must be a 2-tuple.");
+				if ((*_tuple(new_value)->elems)[0]->type != STRING) 
+					raise_error("A source's first element must be a string (filepath).");
+				if ((*_tuple(new_value)->elems)[1]->type != CHAR)
+					raise_error("A source's second element must be a char (delimiter).");
+
+				if (datasource(update)->elem != nullptr) datasource(update)->elem->close();
+				datasource(update)->elem = shared_ptr<ifstream>{ 
+					new ifstream(str((*_tuple(new_value)->elems)[0])->elem.c_str())
+				};
+				datasource(update)->delimiter = character((*_tuple(new_value)->elems)[1]);
+			}
+		}
+		else if (update->type == DATASINK)
+		{
+			if (new_value->type == DATASINK)
+			{
+				datasink(update)->elem = datasink(new_value)->elem;
+				datasink(update)->raw = datasink(new_value)->raw;
+			}
+			else if (new_value->type == TUPLE)
+			{
+				if (_tuple(new_value)->size() != 2)
+					raise_error("A sink must be a 2-tuple.");
+				if ((*_tuple(new_value)->elems)[0]->type != STRING)
+					raise_error("A sink first element must be a string (filepath).");
+				if ((*_tuple(new_value)->elems)[1]->type != LOGICAL)
+					raise_error("A sink second element must be a logical (raw flag).");
+
+				if (datasink(update)->elem != nullptr) datasink(update)->elem->close();
+				datasink(update)->elem = shared_ptr<ofstream> {
+					new ofstream(str((*_tuple(new_value)->elems)[0])->elem.c_str())
+				};
+				datasink(update)->raw = logical((*_tuple(new_value)->elems)[1]);
+			}
+		}
 	}
 	else 
 	{
@@ -513,9 +662,7 @@ void parse_assignment()
 				if (new_value->type == AUTO)
 				{
 					shared_ptr<Auto> updating = automaton(update), intersect = automaton(new_value);
-
 					shared_ptr<Auto> intersection = updating->accepts_intersection(intersect);
-
 					updating->states = intersection->states;		// Simple assignments, no pressure.
 					updating->start = intersection->start;
 					updating->delta = intersection->delta;
@@ -736,7 +883,27 @@ void parse_assignment()
 
 				else raise_error("Expected a string or a char on the RHS for a \"+=\" operation with a string on the LHS.");
 			}
-			else raise_error("Expected a primitive or a string for a \"+=\" operation.");
+			else if (update->type == DATASINK)
+			{
+				if (datasink(update)->raw->elem) // If the raw flag for the sink is set to true, we'll print the raw string.
+					*datasink(update)->elem << new_value->to_string_raw();
+				else
+					*datasink(update)->elem << new_value->to_string();
+			}
+			else if (update->type == DATASOURCE)
+			{
+				if (new_value->type == INT)
+				{
+					if (datasource(update)->elem->eof())
+					{
+						datasource(update)->elem->clear();
+						datasource(update)->elem->seekg(0, ios::beg);
+					}
+					datasource(update)->elem->seekg(integer(new_value)->elem, ios::cur);
+				}
+				else raise_error("Expected an integer on the RHS for a \"+=\" update with a source on the LHS.");
+			}
+			else raise_error("Expected a primitive, string, source, or sink for a \"+=\" operation.");
 		}
 		else if (op.lexeme == "-=")
 		{
@@ -779,7 +946,21 @@ void parse_assignment()
 
 				else raise_error("Expected a primitive on the RHS for a \"-=\" operation with a char on the LHS.");
 			}
-			else raise_error("Expected a primitive for a \"-=\" operation.");
+			else if (update->type == DATASOURCE)
+			{
+				if (new_value->type == INT)
+				{
+					if (datasource(update)->elem->eof()) 
+					{
+						datasource(update)->elem->clear();
+						datasource(update)->elem->seekg(0, ios::end);
+					}
+					datasource(update)->elem->seekg(-integer(new_value)->elem, ios::cur);
+				}
+
+				else raise_error("Expected an integer on the RHS for a \"+=\" update with a source on the LHS.");
+			}
+			else raise_error("Expected a primitive or a source for a \"-=\" operation.");
 		}
 		else if (op.lexeme == "*=")
 		{
@@ -1063,14 +1244,16 @@ void parse_declaration()	// Parse a declaration.
 		if (new_identifier.types[0] != IDENTIFIER)	   raise_error("Please use a valid name for the identifier.");
 		if ((*identify)[new_identifier.lexeme] != nullptr) raise_error("Identifier already in use. Cannot re-declare.");
 
-		if      (data_type.lexeme ==   "set"  ) (*identify)[new_identifier.lexeme] = shared_ptr<  Set  >{new Set()};
-		else if (data_type.lexeme ==  "tuple" ) (*identify)[new_identifier.lexeme] = shared_ptr< Tuple >{new Tuple()};
-		else if (data_type.lexeme ==   "map"  ) (*identify)[new_identifier.lexeme] = shared_ptr<  Map  >{new Map(nullptr, nullptr)};
-		else if (data_type.lexeme ==   "int"  ) (*identify)[new_identifier.lexeme] = shared_ptr<  Int  >{new Int()};
-		else if (data_type.lexeme ==   "char" ) (*identify)[new_identifier.lexeme] = shared_ptr<  Char >{new Char()};
-		else if (data_type.lexeme ==  "string") (*identify)[new_identifier.lexeme] = shared_ptr< String>{new String()};
-		else if (data_type.lexeme == "logical") (*identify)[new_identifier.lexeme] = shared_ptr<Logical>{new Logical()};
-		else if (data_type.lexeme ==   "auto" ) (*identify)[new_identifier.lexeme] = shared_ptr<  Auto >{new Auto()};
+		if      (data_type.lexeme ==   "set"  ) (*identify)[new_identifier.lexeme] = shared_ptr<   Set    >{new Set()};
+		else if (data_type.lexeme ==  "tuple" ) (*identify)[new_identifier.lexeme] = shared_ptr<  Tuple   >{new Tuple()};
+		else if (data_type.lexeme ==   "map"  ) (*identify)[new_identifier.lexeme] = shared_ptr<   Map    >{new Map(nullptr, nullptr)};
+		else if (data_type.lexeme ==   "int"  ) (*identify)[new_identifier.lexeme] = shared_ptr<   Int    >{new Int()};
+		else if (data_type.lexeme ==   "char" ) (*identify)[new_identifier.lexeme] = shared_ptr<   Char   >{new Char()};
+		else if (data_type.lexeme ==  "string") (*identify)[new_identifier.lexeme] = shared_ptr<  String  >{new String()};
+		else if (data_type.lexeme == "logical") (*identify)[new_identifier.lexeme] = shared_ptr<  Logical >{new Logical()};
+		else if (data_type.lexeme ==   "auto" ) (*identify)[new_identifier.lexeme] = shared_ptr<   Auto   >{new Auto()};
+		else if (data_type.lexeme ==  "source") (*identify)[new_identifier.lexeme] = shared_ptr<DataSource>{new DataSource()};
+		else if (data_type.lexeme ==   "sink")  (*identify)[new_identifier.lexeme] = shared_ptr< DataSink >{new DataSink()};
 	}
 	else if (data_type.types[0] == ABSTRACT)
 	{
@@ -1299,6 +1482,76 @@ void parse_initialization()
 			}
 			else raise_error("Initializing an automaton needs an automaton or a tuple.");
 		}
+		else if (data_type.lexeme == "source")
+		{
+			Token equal_sign = get_next_token();
+
+			if (equal_sign.lexeme != "=") raise_error("Missing operator \"=\".");
+
+			read_right_expr = true;
+
+			Token tuple_expression = get_next_token();
+
+			ExpressionTree tuple_expr(tuple_expression.lexeme);
+
+			shared_ptr<Elem> val = tuple_expr.evaluate();
+
+			if (val->type == TUPLE)
+			{
+				shared_ptr<Tuple> val_ = _tuple(val);
+
+				if (val_->size() != 2) raise_error("Initializing a source needs a 2-tuple.");
+
+				if ((*val_)[0]->type != STRING) raise_error("Expected a 2-tuple with a string as the first element.");
+
+				if ((*val_)[1]->type != CHAR) raise_error("Expected a 2-tuple with a char as the second element.");
+
+				(*identify)[new_identifier.lexeme] = shared_ptr<DataSource> {new DataSource(	// Make a new automaton object.
+					str((*val_)[0])->elem.c_str(),					
+					character((*val_)[1])
+				)};
+			}
+			else if (val->type == DATASOURCE)
+			{
+				(*identify)[new_identifier.lexeme] = datasource(val);
+			}
+			else raise_error("Initializing a source needs a source or a tuple.");
+		}
+		else if (data_type.lexeme == "sink")
+		{
+			Token equal_sign = get_next_token();
+
+			if (equal_sign.lexeme != "=") raise_error("Missing operator \"=\".");
+
+			read_right_expr = true;
+
+			Token tuple_expression = get_next_token();
+
+			ExpressionTree tuple_expr(tuple_expression.lexeme);
+
+			shared_ptr<Elem> val = tuple_expr.evaluate();
+
+			if (val->type == TUPLE)
+			{
+				shared_ptr<Tuple> val_ = _tuple(val);
+
+				if (val_->size() != 2) raise_error("Initializing a sink needs a 2-tuple.");
+
+				if ((*val_)[0]->type != STRING) raise_error("Expected a 2-tuple with a string as the first element.");
+
+				if ((*val_)[1]->type != LOGICAL) raise_error("Expected a 2-tuple with a logical as the second element.");
+
+				(*identify)[new_identifier.lexeme] = shared_ptr<DataSink> {new DataSink(	// Make a new automaton object.
+					str((*val_)[0])->elem.c_str(),
+					logical((*val_)[1])
+				)};
+			}
+			else if (val->type == DATASINK)
+			{
+				(*identify)[new_identifier.lexeme] = datasink(val);
+			}
+			else raise_error("Initializing a sink needs a sink or a tuple.");
+		}
 	}
 	else if (data_type.types[0] == ABSTRACT)
 	{
@@ -1405,10 +1658,11 @@ void parse_while()
 	while (toss_tokens)
 	{
 		Token token = get_next_token();
-		if (token.types[0] == LET) read_left_expr = true;
+		if (token.types[0] == LET) read_update_expr = true;
+		if (token.types[0] == GET) read_getfs_expr = true;
 		if (token.types[0] == UNDER) read_map_expr = true;
 		if (token.types[0] == UPDATE_OP || token.types[0] == COLON || token.types[0] == PRINT
-		    || token.types[0] == WHILE || token.types[0] == IF) read_right_expr = true;
+		    || token.types[0] == WHILE || token.types[0] == IF || token.types[0] == SOURCE_OP) read_right_expr = true;
 		if (token.types[0] == L_BRACE) level++;
 		if (token.types[0] == R_BRACE) 
 			if (level == 0)
@@ -1460,10 +1714,11 @@ void parse_if()		// Parsing if statements.
 		while (toss_tokens)
 		{
 			Token token = get_next_token();
-			if (token.types[0] == LET) read_left_expr = true;
+			if (token.types[0] == LET) read_update_expr = true;
+			if (token.types[0] == GET) read_getfs_expr = true;
 			if (token.types[0] == UNDER) read_map_expr = true;
 			if (token.types[0] == UPDATE_OP || token.types[0] == COLON || token.types[0] == PRINT
-				|| token.types[0] == WHILE || token.types[0] == IF) read_right_expr = true;
+				|| token.types[0] == WHILE || token.types[0] == IF || token.types[0] == SOURCE_OP) read_right_expr = true;
 			if (token.types[0] == L_BRACE) level++;
 			if (token.types[0] == R_BRACE)
 				if (level == 0)
@@ -1482,10 +1737,11 @@ void parse_if()		// Parsing if statements.
 		{
 			Token token = get_next_token();
 
-			if (token.types[0] == LET) read_left_expr = true;
+			if (token.types[0] == LET) read_update_expr = true;
+			if (token.types[0] == GET) read_getfs_expr = true;
 			if (token.types[0] == UNDER) read_map_expr = true;
 			if (token.types[0] == UPDATE_OP || token.types[0] == COLON || token.types[0] == PRINT
-				|| token.types[0] == WHILE || token.types[0] == IF) read_right_expr = true;
+				|| token.types[0] == WHILE || token.types[0] == IF || token.types[0] == SOURCE_OP) read_right_expr = true;
 			if (token.types[0] == L_BRACE) level++;
 			if (token.types[0] == R_BRACE)
 				if (level == 0)
@@ -1543,28 +1799,34 @@ void print_info()
 	cout << "To change the prompt, use the env. variable \"__prompt__\"." << endl << endl;	
 }
 
-void remove_comment(string &s)
+void remove_comment(string &x)
 {
 	int level = 0, i = 0, comment_found_at = 0;
-	bool in_string = false, comment_found = false;
-	for (i = 0; i < s.size(); i++)
+	bool in_string = false, in_char = false, comment_found = false;
+	for (i = 0; i < x.size(); i++)
 	{
-		if (((s[i] == '"' && !in_string) || s[i] == '{' || s[i] == '(' || s[i] == '[')
-			&& (i == 0 || (s[i - 1] != '\\' || (s[i - 1] == '\\' && i - 2 >= 0 && s[i - 2] == '\\')))) {
+		if (((x[i] == '"' && !in_string && !in_char) || (x[i] == '\'' && !in_char && !in_string) ||
+			x[i] == '{' || x[i] == '(' || x[i] == '[')
+			&&                                                                 // ... and is not escaped.
+			(i == 0 || (x[i - 1] != '\\' || (x[i - 1] == '\\' && i - 2 >= 0 && x[i - 2] == '\\'))))
+		{
 			level++;
-			if (s[i] == '"' && !in_string) in_string = true;
+			if (x[i] == '"' && !in_string && !in_char) in_string = true;
+			if (x[i] == '\'' && !in_char && !in_string) in_char = true;
 		}
-		else if (((s[i] == '"' && in_string) || s[i] == '}' || s[i] == ')' || s[i] == ']')
-			&& (i == 0 || (s[i - 1] != '\\' || (s[i - 1] == '\\' && i - 2 >= 0 && s[i - 2] == '\\')))) {
+		else if (((x[i] == '"' && in_string) || (x[i] == '\'' && in_char) ||
+			x[i] == '}' || x[i] == ')' || x[i] == ']')
+			&& (i == 0 || (x[i - 1] != '\\' || (x[i - 1] == '\\' && i - 2 >= 0 && x[i - 2] == '\\')))) {
 			level--;
-			if (s[i] == '"' && in_string) in_string = false;
+			if (x[i] == '"' && in_string) in_string = false;
+			if (x[i] == '\'' && in_char) in_char = false;
 		}
-		else if (s[i] == '#' && level == 0)		// It's a tuple if a comma exists at level 0.
+		else if (x[i] == '#' && level == 0)		// It's a tuple if a comma exists at level 0.
 		{
 			comment_found = true;
 			comment_found_at = i;
 			break;
 		}
 	}
-	if (comment_found) s = s.substr(0, comment_found_at);
+	if (comment_found) x = x.substr(0, comment_found_at);
 } 

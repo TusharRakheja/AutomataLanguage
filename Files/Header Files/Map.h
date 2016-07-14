@@ -6,6 +6,8 @@
 #include <algorithm>
 #include <unordered_map>
 
+#define map static_pointer_cast<Map>
+
 using std::unordered_map;
 
 class Map : public Elem
@@ -31,7 +33,5 @@ public:
 	string to_string_raw();				// Returns a raw_string representation of the map.
 	~Map();						// Destructor.
 };
-
-#define map static_pointer_cast<Map>
 
 #endif

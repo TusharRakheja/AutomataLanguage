@@ -12,7 +12,7 @@
 using std::vector;
 using std::string;
 
-class Set;
+#define _tuple static_pointer_cast<Tuple>
 
 class Tuple : public Elem
 {
@@ -33,7 +33,5 @@ public:
 	string to_string_raw();				// Returns a raw string representation of the tuple.
 	~Tuple();					// Destructor.
 };
-
-#define _tuple static_pointer_cast<Tuple>
 
 #endif

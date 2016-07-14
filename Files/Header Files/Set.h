@@ -5,6 +5,8 @@
 
 /* Definition of a Set in Autolang. */
 
+#define set static_pointer_cast<Set>
+
 class Set : public Elem
 {
 public:
@@ -32,7 +34,5 @@ public:
 	shared_ptr<Set> _union(Set &);			// Union with a second set.
 	~Set();						// Destructor.
 };
-
-#define set static_pointer_cast<Set>
 
 #endif

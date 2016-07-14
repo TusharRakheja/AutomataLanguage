@@ -5,6 +5,8 @@
 
 #define mytuple std::tuple<shared_ptr<Set>,shared_ptr<Set>,shared_ptr<Elem>,shared_ptr<Map>> 
 
+#define automaton static_pointer_cast<Auto>
+
 class Auto : public Elem			 // DFA.
 {
 private: 
@@ -30,7 +32,5 @@ public:
 	bool operator<(Elem &e) {return false;} // This op is basically useless for Automata.
 	string to_string();			// Returns a string representation of the automaton.
 };
-
-#define automaton static_pointer_cast<Auto>
 
 #endif

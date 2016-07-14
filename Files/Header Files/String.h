@@ -3,6 +3,8 @@
 
 #include "Elem.h"
 
+#define str static_pointer_cast<String>
+
 class String : public Elem
 {
 public:
@@ -59,7 +61,5 @@ public:
 
 	~String() {  }						// Destructor - Delete the elem object.
 };
-
-#define str static_pointer_cast<String>
 
 #endif

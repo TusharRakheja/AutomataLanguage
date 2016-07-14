@@ -9,10 +9,9 @@ using program_vars::raise_error;
 string token_name[] = 
 {
 	"INT_LIT", "LOGICAL_LIT", "CHAR_LIT", "STRING_LIT", "SET_LIT", "TUPLE_LIT", "LITERAL",
-	"INDEX", "IDENTIFIER", "OP", "UNARY", "END", "ERROR", "EXPR","TYPE", "MAPPING_SYMBOL", 
-	"INPUT", "OUTPUT", "IF", "ELSEIF", "ELSE", "WHILE", "DECLARE", "L_BRACE", "UPDATE_OP",
-	"R_BRACE", "QUIT", "DELETE", "DELETE_ELEMS", "MAP_OP", "COLON", "LET", "UNDER", "ABSTRACT", "PRINTR",
-
+	"INDEX", "IDENTIFIER", "OP", "UNARY", "END", "ERROR", "EXPR", "TYPE", "MAPPING_SYMBOL", "SOURCE_OP",
+	"PRINT", "IF", "ELSEIF", "ELSE", "WHILE", "DECLARE", "L_BRACE", "UPDATE_OP", "GET",
+	"R_BRACE", "QUIT", "DELETE", "DELETE_ELEMS", "MAP_OP", "COLON", "LET", "UNDER", "ABSTRACT", "PRINTR"
 };
 
 string Token::to_string()
@@ -109,6 +108,11 @@ shared_ptr<Elem> ExpressionTree::evaluate()
 					shared_ptr<Map> get_num_of_mappings = map(get_size_of);
 					node->value = shared_ptr<Int>{new Int(get_num_of_mappings->_map->size())};
 				}
+				else if (get_size_of->type == DATASOURCE)
+				{
+					shared_ptr<DataSource> get_current_position = datasource(get_size_of);
+					node->value = shared_ptr<Int>{new Int(get_current_position->elem->tellg())};
+				}
 				else raise_error("Expected a string or a container for \"| |\" operation.");
 			}
 			else if (node->token.lexeme == "!")
@@ -124,12 +128,17 @@ shared_ptr<Elem> ExpressionTree::evaluate()
 					shared_ptr<Char> negate_this = character(negate);
 					node->value = shared_ptr<Logical>{new Logical(!negate_this->elem)};
 				}	
-				else if (negate->type != INT)
+				else if (negate->type == INT)
 				{
 					shared_ptr<Int> negate_this = integer(negate);
 					node->value = shared_ptr<Logical>{new Logical(!negate_this->elem)};
 				}
-				else raise_error("Expected a logical (or another primitive) expression for \"!\" operation.");
+				else if (negate->type == DATASOURCE)
+				{
+					shared_ptr<DataSource> endoffile = datasource(negate);
+					node->value = shared_ptr<Logical>{new Logical(endoffile->elem->eof())};
+				}
+				else raise_error("Expected a logical (or another primitive), or source for the expression for \"!\" operation.");
 			}
 		}
 		else
@@ -1074,6 +1083,18 @@ shared_ptr<Elem> ExpressionTree::evaluate()
 					string ss = s->elem.substr(start->elem, end->elem - start->elem);
 					node->value = shared_ptr<String>{new String(ss)};
 				}
+				else if (elem->type == DATASOURCE && query->type == INT)
+				{
+					shared_ptr<DataSource> source = datasource(elem);
+					shared_ptr<Int> index = integer(query);
+					node->value = (*source)[index->elem];
+				}
+				else if (elem->type == DATASINK && query->type == INT)
+				{
+					shared_ptr<DataSink> sink = datasink(elem);
+					shared_ptr<Int> index = integer(query);
+					node->value = (*sink)[index->elem];
+				}
 				else raise_error("Expected a suitable data type for a \"[]\" operation.");
 			}
 			else if (node->token.lexeme == "+")
@@ -1704,23 +1725,30 @@ Token ExpressionTree::get_next_token()				// The limited lexical analyzer to par
 	else if (expr[current_index] == '{')			// Set literals.
 	{
 		int level = 0, i;
-		bool in_string = false, closing_brace_found = false;
+		bool in_string = false, in_char = false;
+		bool closing_brace_found = false;
 		for (i = current_index + 1; i < expr.size(); i++)
 		{
-			if (expr[i] == '}' && level == 0 && (i == 0 || expr[i - 1] != '\\'))
+			if (expr[i] == '}' && level == 0)
 			{
 				closing_brace_found = true;
 				break;
-			}
-			if (((expr[i] == '"' && !in_string) || expr[i] == '{' || expr[i] == '(' || expr[i] == '[')
-				&& (i == 0 || (expr[i - 1] != '\\' || (expr[i - 1] == '\\' && i - 2 >= 0 && expr[i - 2] == '\\')))) {
+			}									// If it's something that increases the level...
+			if (((expr[i] == '"' && !in_string && !in_char) || (expr[i] == '\'' && !in_char && !in_string) ||
+		              expr[i] == '{' || expr[i] == '(' || expr[i] == '[') 
+			     &&                                                                 // ... and is not escaped.
+			    (i == 0 || (expr[i - 1] != '\\' || (expr[i - 1] == '\\' && i - 2 >= 0 && expr[i - 2] == '\\'))))
+                  	{
 				level++;
-				if (expr[i] == '"' && !in_string) in_string = true;
+				if (expr[i] == '"' && !in_string && !in_char) in_string = true;
+				if (expr[i] == '\'' && !in_char && !in_string) in_char = true;
 			}
-			else if (((expr[i] == '"' && in_string) || expr[i] == '}' || expr[i] == ')' || expr[i] == ']')
+			else if (((expr[i] == '"' && in_string) || (expr[i] == '\'' && in_char) ||
+				   expr[i] == '}' || expr[i] == ')' || expr[i] == ']')
 				&& (i == 0 || (expr[i - 1] != '\\' || (expr[i - 1] == '\\' && i - 2 >= 0 && expr[i - 2] == '\\')))) {
 				level--;
 				if (expr[i] == '"' && in_string) in_string = false;
+				if (expr[i] == '\'' && in_char) in_char = false;
 			}
 		}
 		if (!closing_brace_found) { return{ "", {ERROR} }; }
@@ -1734,18 +1762,24 @@ Token ExpressionTree::get_next_token()				// The limited lexical analyzer to par
 	else if (expr[current_index] == '(')	  		// Now depending on the current character, we return a token.
 	{					  		// It can either be (<expr>) or a tuple literal.
 		int level = 0, i;
-		bool in_string = false, is_tuple = false, closing_paren_found = false;;
+		bool in_string = false, is_tuple = false, closing_paren_found = false, in_char = false;
 		for (i = current_index + 1; i < expr.size(); i++)
 		{
-			if (((expr[i] == '"' && !in_string) || expr[i] == '{' || expr[i] == '(' || expr[i] == '[')
-				&& (i == 0 || (expr[i - 1] != '\\' || (expr[i - 1] == '\\' && i - 2 >= 0 && expr[i - 2] == '\\')))) {
+			if (((expr[i] == '"' && !in_string && !in_char) || (expr[i] == '\'' && !in_char && !in_string) ||
+				expr[i] == '{' || expr[i] == '(' || expr[i] == '[')
+				&&                                                                 // ... and is not escaped.
+				(i == 0 || (expr[i - 1] != '\\' || (expr[i - 1] == '\\' && i - 2 >= 0 && expr[i - 2] == '\\'))))
+			{
 				level++;
-				if (expr[i] == '"' && !in_string) in_string = true;
+				if (expr[i] == '"' && !in_string && !in_char) in_string = true;
+				if (expr[i] == '\'' && !in_char && !in_string) in_char = true;
 			}
-			else if (((expr[i] == '"' && in_string) || expr[i] == '}' || expr[i] == ')' || expr[i] == ']')
+			else if (((expr[i] == '"' && in_string) || (expr[i] == '\'' && in_char) ||
+				expr[i] == '}' || expr[i] == ')' || expr[i] == ']')
 				&& (i == 0 || (expr[i - 1] != '\\' || (expr[i - 1] == '\\' && i - 2 >= 0 && expr[i - 2] == '\\')))) {
 				level--;
 				if (expr[i] == '"' && in_string) in_string = false;
+				if (expr[i] == '\'' && in_char) in_char = false;
 			}
 			else if (expr[i] == ',' && level == 0)		// It's a tuple if a comma exists at level 0.
 			{
@@ -1755,22 +1789,29 @@ Token ExpressionTree::get_next_token()				// The limited lexical analyzer to par
 		}			
 		level = 0;						// We'll look for the closing ')' now.
 		in_string = false;
+		in_char = false;
 		for (i = current_index + 1; i < expr.size(); i++)
 		{
-			if (expr[i] == ')' && level == 0 && (i == 0 || expr[i - 1] != '\\'))
+			if (expr[i] == ')' && level == 0)
 			{
 				closing_paren_found = true;
 				break;
 			}
-			if (((expr[i] == '"' && !in_string) || expr[i] == '{' || expr[i] == '(' || expr[i] == '[')
-				&& (i == 0 || (expr[i - 1] != '\\' || (expr[i - 1] == '\\' && i - 2 >= 0 && expr[i - 2] == '\\')))) {
+			if (((expr[i] == '"' && !in_string && !in_char) || (expr[i] == '\'' && !in_char && !in_string) ||
+				expr[i] == '{' || expr[i] == '(' || expr[i] == '[')
+				&&                                                                 // ... and is not escaped.
+				(i == 0 || (expr[i - 1] != '\\' || (expr[i - 1] == '\\' && i - 2 >= 0 && expr[i - 2] == '\\'))))
+			{
 				level++;
-				if (expr[i] == '"' && !in_string) in_string = true;
+				if (expr[i] == '"' && !in_string && !in_char) in_string = true;
+				if (expr[i] == '\'' && !in_char && !in_string) in_char = true;
 			}
-			else if (((expr[i] == '"' && in_string) || expr[i] == '}' || expr[i] == ')' || expr[i] == ']')
+			else if (((expr[i] == '"' && in_string) || (expr[i] == '\'' && in_char) ||
+				expr[i] == '}' || expr[i] == ')' || expr[i] == ']')
 				&& (i == 0 || (expr[i - 1] != '\\' || (expr[i - 1] == '\\' && i - 2 >= 0 && expr[i - 2] == '\\')))) {
 				level--;
 				if (expr[i] == '"' && in_string) in_string = false;
+				if (expr[i] == '\'' && in_char) in_char = false;
 			}
 		}
 		if (!closing_paren_found) return{ "", {ERROR} };
@@ -1792,23 +1833,29 @@ Token ExpressionTree::get_next_token()				// The limited lexical analyzer to par
 	else if (expr[current_index] == '[')
 	{
 		int i, level = 0;				// We're going to look for closing bracket ']' at level 0.
-		bool closingbracket_found = false, in_string = false;
+		bool closingbracket_found = false, in_string = false, in_char = false;
 		for (i = current_index + 1; i < expr.size(); i++)
 		{
-			if (expr[i] == ']' && level == 0 && (i == 0 || expr[i - 1] != '\\'))
+			if (expr[i] == ']' && level == 0)
 			{
 				closingbracket_found = true;
 				break;
 			}
-			if (((expr[i] == '"' && !in_string) || expr[i] == '{' || expr[i] == '(' || expr[i] == '[')
-				&& (i == 0 || (expr[i - 1] != '\\' || (expr[i - 1] == '\\' && i - 2 >= 0 && expr[i - 2] == '\\')))) {
+			if (((expr[i] == '"' && !in_string && !in_char) || (expr[i] == '\'' && !in_char && !in_string) ||
+				expr[i] == '{' || expr[i] == '(' || expr[i] == '[')
+				&&                                                                 // ... and is not escaped.
+				(i == 0 || (expr[i - 1] != '\\' || (expr[i - 1] == '\\' && i - 2 >= 0 && expr[i - 2] == '\\'))))
+			{
 				level++;
-				if (expr[i] == '"' && !in_string) in_string = true;
+				if (expr[i] == '"' && !in_string && !in_char) in_string = true;
+				if (expr[i] == '\'' && !in_char && !in_string) in_char = true;
 			}
-			else if (((expr[i] == '"' && in_string) || expr[i] == '}' || expr[i] == ')' || expr[i] == ']')
+			else if (((expr[i] == '"' && in_string) || (expr[i] == '\'' && in_char) ||
+				expr[i] == '}' || expr[i] == ')' || expr[i] == ']')
 				&& (i == 0 || (expr[i - 1] != '\\' || (expr[i - 1] == '\\' && i - 2 >= 0 && expr[i - 2] == '\\')))) {
 				level--;
 				if (expr[i] == '"' && in_string) in_string = false;
+				if (expr[i] == '\'' && in_char) in_char = false;
 			}
 		}
 		if (!closingbracket_found) return{ "", { ERROR } };

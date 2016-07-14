@@ -39,13 +39,13 @@ shared_ptr<AbstractMap> AbstractMap::composed_with(shared_ptr<AbstractMap> g)	//
 {
 	// For the comments that follow, this == f. Just for convenience, really.
 	
-	// under f : elem ->  f[elem], where f[elem] represents some transformation.
-	// under g : elem ->  g[elem], where g[elem] represents some other transformation.
+	// under f : elem -> f[elem], where f[elem] represents some transformation.
+	// under g : elem -> g[elem], where g[elem] represents some other transformation.
 	// We need to return f o g. under f o g : elem -> f[g[elem]]
 
 	string scheme_fog = this->mapping_scheme;
 
-	// In the mapping scheme of f, wherever we see an _x_, we'll replace that with (g[_x_]).
+	// In the mapping scheme of f, wherever we see an (x), we'll replace that with (g[(x)]).
 
 	vector<string> scheme_parts;
 	int pos = scheme_fog.find("(x)");

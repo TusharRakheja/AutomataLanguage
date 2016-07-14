@@ -10,7 +10,8 @@ using std::static_pointer_cast;
 
 /* The definition of a generic Elem(ent) in Autolang. */
 
-enum Type { NULLTYPE, ABSTRACT_SET, ABSTRACT_MAP, AUTO, CHAR, INT, LOGICAL, MAP, SET, STRING, TUPLE };    // Enum for the data types.
+// Enum for the data types.
+enum Type { NULLTYPE, ABSTRACT_SET, ABSTRACT_MAP, AUTO, CHAR, INT, LOGICAL, MAP, SET, STRING, TUPLE, DATASOURCE, DATASINK };  
 
 class Elem {	                              // An element can only actively represent one of data fields at a time.
 public:
