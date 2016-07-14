@@ -364,13 +364,15 @@ void parse_fromsource()
 		else if (get->type == SET)
 		{
 			// Make a new set passing the raw string representation of the requested set to the constructor.
-			shared_ptr<Set> tempset = shared_ptr<Set>{ new Set(str(new_value)->to_string_raw()) };
+			string setrep = str(new_value)->to_string_raw();
+			shared_ptr<Set> tempset = shared_ptr<Set>{ new Set(setrep) };
 			if (set(get)->elems != nullptr) delete set(get)->elems;
 			set(get)->elems = tempset->elems;
 		}
 		else if (get->type == TUPLE)
 		{
-			shared_ptr<Tuple> temptup = shared_ptr<Tuple>{ new Tuple(str(new_value)->to_string_raw()) };
+			string tuprep = str(new_value)->to_string_raw();
+			shared_ptr<Tuple> temptup = shared_ptr<Tuple>{ new Tuple(tuprep) };
 			if (_tuple(get)->elems != nullptr) delete _tuple(get)->elems;
 			_tuple(get)->elems = temptup->elems;
 		}
