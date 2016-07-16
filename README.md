@@ -1,4 +1,4 @@
-﻿# Autolang &nbsp;[![Build Status](https://travis-ci.org/TusharRakheja/Autolang.svg?branch=master)](https://travis-ci.org/TusharRakheja/Autolang)
+# Autolang &nbsp;[![Build Status](https://travis-ci.org/TusharRakheja/Autolang.svg?branch=master)](https://travis-ci.org/TusharRakheja/Autolang)
 
 ![Autolang Interactive.](http://i.imgur.com/hPJTyrh.gif)
 
@@ -47,9 +47,14 @@ The real joy of Autolang is its very math-oriented syntax. Here are some cool ex
    * [Abstract Sets](https://github.com/TusharRakheja/Autolang#a-abstract-sets)
    * [Abstract Maps (&lambda;)](https://github.com/TusharRakheja/Autolang#b-abstract-maps-λ)
  * [Automata](https://github.com/TusharRakheja/Autolang#4-automata)
-   * [DFA](https://github.com/TusharRakheja/Autolang#a-dfa) 
- * [Loops and Conditionals](https://github.com/TusharRakheja/Autolang#5-loops-and-conditionals)
- * [Notes](https://github.com/TusharRakheja/Autolang#6-notes)
+   * [DFA](https://github.com/TusharRakheja/Autolang#a-dfa)
+ * [Sources and Sinks (I/O)](https://github.com/TusharRakheja/Autolang#5-sources-and-sinks-input-output)
+   * [Files](https://github.com/TusharRakheja/Autolang#a-files)
+   * [Console](https://github.com/TusharRakheja/Autolang#b-console)
+   * [Strings as Sources](https://github.com/TusharRakheja/Autolang#c-strings-as-sources)
+ * [Data is Code](https://github.com/TusharRakheja/Autolang#6-data-is-code)
+ * [Loops and Conditionals](https://github.com/TusharRakheja/Autolang#7-loops-and-conditionals)
+ * [Notes](https://github.com/TusharRakheja/Autolang#8-notes)
  
 ### 1. Primitives
 
@@ -503,13 +508,158 @@ The language of an automaton M, L(M), is defined as the set of all strings accep
 True
 >>> print "101" in l_even
 False
+```https://github.com/TusharRakheja/Autolang#6-data-is-code
+
+### 5. Sources and Sinks (Input/Output)
+
+Data is to computer science, what energy is to physics. Autolang calls all sources of input **`sources`**, and all those of output **`sinks`** (of data).
+
+#### a) Files
+
+A file source is a 2-tuple, where the first element is the path of the file to be treated as a source, and the second element is the delimiter for strings.
+
+**Basic Syntax: *Source***
+
+For example, consider a file `data.txt`:
+```
+1 little, 2 little, 3 little Indians.
+{4, 'l'}
+(5, 'l')
+True | story.
+```
+Now consider this piece of code that reads it. **`source`** is the type-specifying keyword.
+```perl
+>>> source data = ("data.txt", '\n')            # (filepath, delimiter)
+>>> print data                                  # Prints all the file's contents.
+1 little, 2 little, 3 little Indians.
+{4, 'l'}
+(5, 'l')
+True | story.
 ```
 
-### 5. Loops and Conditionals
+**Operators and Updates: *Source***
+
+Printing out the source exhausts it. So we need to reset it before trying to read data.
+
+```perl
+>>> print !data            # Prints True if the source is in an unreadable state.
+True
+>>> let data += 0          # The += and -= operators offset the source by the specified number of bytes, and reset it if needed.
+>>> print |data|           # The source should now ready to read, from the very top. So the number of bytes we've already is 0.                     
+0
+>>> int readone <- data    # Variables can be initialized directly with data coming from a source, using the `<-` updater.
+>>> print readone          # The delimiter is not used when reading ints and chars.
+1
+>>> let data[1] = '.'      # The delimiter is a part of the source's tuple and can be accessed intuitively.
+>>> declare string sample  # To read data into pre-existing variables,
+>>> get sample <- data     # the '<-' updater can be used with the 'get' keyword.
+>>> print sample           # The delimiter is not read into the string, and the source moves past it. 
+ little, 2 little, 3 little Indians
+>>> let data -= |sample|   # To re-read some data we just read, we can use the -= update to send the source back by some amount.
+>>> get sample <- data     # And then simply read it again.
+>>> print sample
+ little, 2 little, 3 little Indians
+>>> let data += 1          # We can just skip/move past the '\n' in the file after '.'.
+>>> let data[1] = '\n'     # The next data we read will be read till a newline.
+>>> set newsample <- data  # Sets can also be initialized with data coming in from a stream. 
+>>> print newsample
+{4, l}
+>>> tuple another <- data  # Tuples also, obviously. 
+>>> print another
+(5, l)
+>>> let data[1] = '|'      # Even though logicals 'can' be read in from sources, it's not advised. At all.
+>>> logical true <- True   # If you must, set the delimiter to something you're sure will give a clean literal.
+>>> print true             # I suggest reading integers instead of logicals and casting.
+True
+>>> print |data|           # Phew, we've read in 65 bytes of data!
+65
+>>> quit                   # Quitting is advisable. If you exit your terminal directly, the next time you source this file, it'll have weird bits. You'll need to reset it. 
+```
+
+Now, what about writing to a file? We can do that with a **`sink`**. A sink has a much simpler interface, no new updaters. It's a 3-tuple - The first element is the filepath. The second element is True if the existing data in the file needs to be preserved, and False otherwise. The third element is True if the objects to be written to the file will be in their 'raw' form, and False otherwise. 
+
+**Basic Syntax, Operators and Updates: *Sink***
+
+```perl
+>>> sink data = ("data.txt", True, False)  # (filepath, append?, raw print?)
+>>> string putdata = "See?"                # We'll append this string to the file.
+>>> let data += putdata                    # Print the string in it's processed format.
+>>> let data[2] = True                     # Set the raw flag to True.
+>>> let data += putdata                    # Now the string will be written in it's raw format. 
+>>> quit                                   # And that's it! Sinks offer only this interfact for now.
+```
+
+**NOTE**: Please *do NOT make deep copies of sources and sinks*. It won't work the way you expect, but it will work *enough* that your program won't crash right away. Not advised!
+
+#### b) Console
+
+You've seen how the **`print`** and **`printr`** commands work. That's basically how **console is used as a sink**. Nothing more to the interface!
+
+However, **console sourcing** is a new thing we haven't talked about. In interactive mode it's obviously not needed. But if you're interpreting an Autolang source file, here's how you should use console sourcing!
+
+![ConsoleSource](http://i.imgur.com/b3N7rzv.gif)
+
+#### c) Strings as Sources
+
+Strings are not sources (no mutual **`=`** updates possible), but they can be used as sources. 
+
+**Basic Syntax**
+
+```perl
+>>> string num = "123"
+>>> int getnum <- num
+>>> print getnum
+123
+>>> char getch <- num      # Semantically equivalent to char getch = num[0] 
+>>> print getch           
+1
+>>> logical g1 <- num      # True iff the source string 'contains' "True".
+>>> print g1
+False
+```
+
+### 6. Data is Code
+
+Some entities in Autolang have a way to internally call Autolang's expression parser. You guessed it, Abstract Sets and Abstract Maps. Along with sourcing, this allows us to create abstract maps and sets at runtime. 
+
+Let us say a file **`unpack.txt`** has this data.
+```
+# unpack : Unpacks tuples of the form (a, (b, c)) into (a, b, c).
+x -> ((x)[0], ((x)[1])[0], ((x)[1])[1]);
+
+# unpackall : From a set of tuples of the form (a, (b, c)), return a set of (a, b, c).
+x -> (|((x))| == 1) ? 
+{ unpack[((x))[0]] } : ({ unpack[((x))[0]] } U (unpackall[((x))[(1, |((x))|)]);
+```
+
+Clearly, the file contains mapping schemes for abstract maps. We can use these to make maps in Autolang. Here's how.
+
+```perl
+>>> source maps = ("unpack.txt", '\n')           # Open file.
+>>> string junk <- maps                          # Eat comments and blank lines.
+>>> let maps[1] = ';'                            # Now it's time to read a scheme.
+>>> abstract map unpack <- maps                  # Make an abstract map using the scheme.
+>>> let maps[1] = '\n'                           # Time to read more junk.
+>>> get junk <- maps                             # Eat the blank line.
+>>> get junk <- maps                             # Eat the comment.
+>>> let maps[1] = ';'                            # Time to read another scheme.
+>>> abstract map unpackall <- maps               # Make the map.
+>>> print unpack[(1, (2, 3))]                    # Time to test, yay!
+(1, 2, 3)
+>>> print unpackall[{1, 2} x {'A', 'B'} x {True}]
+{(1, A, True), (1, B, True), (2, A, True), (2, B, True)}
+```
+
+**Interesting**: Of course, the source can be **`console`** too! Which means, effectively, a client running an Autolang program can also write parts of the program, at run-time.
+
+
+### 7. Loops and Conditionals
 
 To see an example of how the while loop (the only looping construct in the language, right now) and the if statements work, check `Examples/Example7.al` out. A language specification is coming soon.
 
-### 6. Notes
+### 8. Notes
+
+The while loop doesn't work in interactive mode.
 
 Operators in Autolang are *always* right-associative by default. There is no concept of operator precedence currently. Hence, ***parentheses are important*** to get the results you need.
 
@@ -523,7 +673,9 @@ More generally, a thing to keep in mind is that though Autolang tries to approxi
 2
 ```
 
-Depending on your moral values and whether or not you believe there is any justice in the world, this may or may not have been what you expected. But for now, this is the result.
+Depending on your moral values and whether or not you believe there is any justice in the world, this may or may not have been what you expected. But for now, this is the result. 
+
+We can adjust this particular result using the `unpack` map mentioned in [*`Data is Code`*](https://github.com/TusharRakheja/Autolang#6-data-is-code). Likewise, we may have to come up with such 'hacks' every now and then.
 
 Autolang is imperfect. The parser is brittle, there are memory leaks etc. But perfection is the goal. And perfection, is a journey unto itself.
 
