@@ -4,8 +4,6 @@ using std::cout;
 using std::cin;
 using std::endl;
 using std::getline;
-using std::ios;
-using std::istream;
 
 unordered_map<string, shared_ptr<Elem>> * program_vars::identify = new unordered_map<string, shared_ptr<Elem>>
 { 
@@ -1722,15 +1720,18 @@ void parse_initialization()
 			{
 				shared_ptr<Tuple> val_ = _tuple(val);
 
-				if (val_->size() != 2) raise_error("Initializing a sink needs a 2-tuple.");
+				if (val_->size() != 3) raise_error("Initializing a sink needs a 3-tuple.");
 
-				if ((*val_)[0]->type != STRING) raise_error("Expected a 2-tuple with a string as the first element.");
+				if ((*val_)[0]->type != STRING) raise_error("Expected a 3-tuple with a string as the first element.");
 
-				if ((*val_)[1]->type != LOGICAL) raise_error("Expected a 2-tuple with a logical as the second element.");
+				if ((*val_)[1]->type != LOGICAL) raise_error("Expected a 3-tuple with a logical as the second element.");
+
+				if ((*val_)[2]->type != LOGICAL) raise_error("Expected a 3-tuple with a logical as the third element.");
 
 				(*identify)[new_identifier.lexeme] = shared_ptr<DataSink> {new DataSink(	// Make a new automaton object.
 					str((*val_)[0])->elem.c_str(),
-					logical((*val_)[1])
+					logical((*val_)[1]),
+					logical((*val_)[2])
 				)};
 			}
 			else if (val->type == DATASINK)

@@ -6,6 +6,7 @@
 #include <fstream>
 
 using std::ofstream;
+using std::ios;
 
 #define datasink static_pointer_cast<DataSink>
 
@@ -13,12 +14,19 @@ class DataSink : public Elem
 {
 public:
 	shared_ptr<ofstream> elem;
+	shared_ptr<Logical> append;
 	shared_ptr<Logical> raw;
 
-	DataSink(const char * filepath, shared_ptr<Logical> raw) : Elem(DATASINK)
+	DataSink(const char * filepath, shared_ptr<Logical> append, shared_ptr<Logical> raw) : Elem(DATASINK)
 	{
-		elem = shared_ptr<ofstream>{new ofstream(filepath)};
+		if (append->elem)
+			elem = shared_ptr<ofstream>{new ofstream(filepath, ios::app)};
+		else
+			elem = shared_ptr<ofstream>{new ofstream(filepath)};
+			
 		if (!*elem) program_vars::raise_error("Failed to open file.");
+
+		this->append = append; 
 		this->raw = raw;
 	}
 
@@ -28,6 +36,7 @@ public:
 	{
 		shared_ptr<DataSink> copy = shared_ptr<DataSink>{new DataSink()};
 		copy->elem = this->elem;
+		copy->append = logical(this->append->deep_copy());
 		copy->raw = logical(this->raw->deep_copy());
 		return copy;
 	}
