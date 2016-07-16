@@ -518,7 +518,7 @@ Data is to computer science, what energy is to physics. Autolang calls all sourc
 
 A file source is a 2-tuple, where the first element is the path of the file to be treated as a source, and the second element is the delimiter for strings.
 
-**Basic Syntax: *Source***
+**Basic Syntax: Source**
 
 For example, consider a file `data.txt`:
 ```
@@ -537,7 +537,7 @@ Now consider this piece of code that reads it. **`source`** is the type-specifyi
 True | story.
 ```
 
-**Operators and Updates: *Source***
+**Operators and Updates: Source**
 
 Printing out the source exhausts it. So we need to reset it before trying to read data.
 
@@ -578,7 +578,7 @@ True
 
 Now, what about writing to a file? We can do that with a **`sink`**. A sink has a much simpler interface, no new updaters. It's a 3-tuple - The first element is the filepath. The second element is True if the existing data in the file needs to be preserved, and False otherwise. The third element is True if the objects to be written to the file will be in their 'raw' form, and False otherwise. 
 
-**Basic Syntax, Operators and Updates: *Sink***
+**Basic Syntax, Operators and Updates: Sink**
 
 ```perl
 >>> sink data = ("data.txt", True, False)  # (filepath, append?, raw print?)
