@@ -9,7 +9,8 @@ using std::istream;
 
 unordered_map<string, shared_ptr<Elem>> * program_vars::identify = new unordered_map<string, shared_ptr<Elem>>
 { 
-	{ "__prompt__", shared_ptr<String>{new String(">>> ")} } 
+	{ "__prompt__", shared_ptr<String>{new String(">>> ")}},
+	{ "console", shared_ptr<DataSource>{new DataSource(0, shared_ptr<Char>{ new Char('\n') } ) } }  // Console input source.
 };
 // Identifiers mapped to their objects.
 
@@ -294,103 +295,6 @@ void parse_mapping()
 	else raise_error("Expected a map or an abstract map for a \":\" operation.");
 }
 
-void parse_fromsource()
-{
-	read_getfs_expr = true;
-
-	Token get_this = get_next_token();
-
-	ExpressionTree get_expr(get_this.lexeme);
-
-	shared_ptr<Elem> get = get_expr.evaluate();
-	
-	Token op = get_next_token();
-
-	if (op.types[0] != SOURCE_OP) raise_error("Expected an input/source operator.");
-
-	read_right_expr = true;
-
-	Token expression = get_next_token();
-
-	ExpressionTree expr(expression.lexeme);
-
-	shared_ptr<Elem> new_value = expr.evaluate();
-
-	if (new_value->type == DATASOURCE)
-	{
-		if (datasource(new_value)->elem->eof())
-		{
-			cout << "WARNING: All the data from the source has already been read. ";
-			cout << "Please update the source using the \"-=\" or \"+=\" updaters before reading data again.\n\n";
-		}
-		else
-		{
-			if (get->type == INT)
-			{
-				*datasource(new_value)->elem >> integer(get)->elem;
-			}
-			else if (get->type == CHAR)
-			{
-				datasource(new_value)->elem->get(character(get)->elem);
-			}
-			else if (get->type == LOGICAL)
-			{
-				string truthval;
-				getline(*datasource(new_value)->elem, truthval, datasource(new_value)->delimiter->elem);
-				logical(get)->elem = (truthval.find("True") != string::npos);
-			}
-			else if (get->type == STRING)
-			{
-				// Read a string from the file till the delimiter, and assign it to the 'elem' attr. of the obj to be updated.
-				getline(*datasource(new_value)->elem, str(get)->elem, datasource(new_value)->delimiter->elem);
-			}
-			else raise_error("Only primitives and strings can be read in from a source using the \"<-\" operator .");
-		}
-	}
-	else if (new_value->type == STRING) // Strings can also act as sources.
-	{
-		if (get->type == INT)
-		{
-			integer(get)->elem = std::stoi(str(new_value)->elem);
-		}
-		else if (get->type == CHAR) // There's no reason to ever use this really. But well, to each their own.
-		{
-			character(get)->elem = (str(new_value)->elem)[0];
-		}
-		else if (get->type == LOGICAL)
-		{
-			logical(get)->elem = (str(new_value)->elem.find("True") != string::npos);
-		}
-		else if (get->type == SET)
-		{
-			// Make a new set passing the raw string representation of the requested set to the constructor.
-			string setrep = str(new_value)->to_string_raw();
-			shared_ptr<Set> tempset = shared_ptr<Set>{ new Set(setrep) };
-			if (set(get)->elems != nullptr) delete set(get)->elems;
-			set(get)->elems = tempset->elems;
-		}
-		else if (get->type == TUPLE)
-		{
-			string tuprep = str(new_value)->to_string_raw();
-			shared_ptr<Tuple> temptup = shared_ptr<Tuple>{ new Tuple(tuprep) };
-			if (_tuple(get)->elems != nullptr) delete _tuple(get)->elems;
-			_tuple(get)->elems = temptup->elems;
-		}
-		else if (get->type == ABSTRACT_SET)
-		{
-			// So, since the criteria for an abstract set is a ready-to-execute logical expression that doesn't ... 
-			// ... need to be parsed, but readily executed, we don't really need a raw representation of the string.
-			// (hope I'm right about this).
-			aset(get)->criteria = str(new_value)->elem;
-		}
-		else if (get->type == ABSTRACT_MAP)
-		{
-			// Same for maps.
-			amap(get)->mapping_scheme = str(new_value)->elem;
-		}
-	}
-}
-
 void parse_assignment()
 {
 	read_update_expr = true;
@@ -561,7 +465,7 @@ void parse_assignment()
 				if ((*_tuple(new_value)->elems)[1]->type != CHAR)
 					raise_error("A source's second element must be a char (delimiter).");
 
-				if (datasource(update)->elem != nullptr) datasource(update)->elem->close();
+				if (datasource(update)->elem != nullptr) filesource(datasource(update)->elem)->close();
 				datasource(update)->elem = shared_ptr<ifstream>{ 
 					new ifstream(str((*_tuple(new_value)->elems)[0])->elem.c_str())
 				};
@@ -1273,6 +1177,137 @@ void parse_declaration()	// Parse a declaration.
 			(*identify)[new_identifier.lexeme] = shared_ptr<AbstractMap>{new AbstractMap()};
 	}
 }
+
+void parse_fromsource()
+{
+	read_getfs_expr = true;
+
+	Token get_this = get_next_token();
+
+	ExpressionTree get_expr(get_this.lexeme);
+
+	shared_ptr<Elem> get = get_expr.evaluate();
+
+	Token op = get_next_token();
+
+	if (op.types[0] != SOURCE_OP) raise_error("Expected an input/source operator.");
+
+	read_right_expr = true;
+
+	Token expression = get_next_token();
+
+	ExpressionTree expr(expression.lexeme);
+
+	shared_ptr<Elem> new_value = expr.evaluate();
+
+	if (new_value->type == DATASOURCE)
+	{
+		if (datasource(new_value)->elem->eof())
+		{
+			cout << "WARNING: All the data from the source has already been read. ";
+			cout << "Please update the source using the \"-=\" or \"+=\" updaters before reading data again.\n\n";
+		}
+		else
+		{
+			if (get->type == INT)
+			{
+				*datasource(new_value)->elem >> integer(get)->elem;
+			}
+			else if (get->type == CHAR)
+			{
+				datasource(new_value)->elem->get(character(get)->elem);
+			}
+			else if (get->type == LOGICAL)
+			{
+				string truthval;
+				getline(*datasource(new_value)->elem, truthval, datasource(new_value)->delimiter->elem);
+				logical(get)->elem = (truthval.find("True") != string::npos);
+			}
+			else if (get->type == STRING)
+			{
+				// Read a string from the file till the delimiter, and assign it to the 'elem' attr. of the obj to be updated.
+				getline(*datasource(new_value)->elem, str(get)->elem, datasource(new_value)->delimiter->elem);
+			}
+			else if (get->type == SET)
+			{
+				string setrep;
+				// Read a string from the file till the delimiter.
+				getline(*datasource(new_value)->elem, setrep, datasource(new_value)->delimiter->elem);
+				// Make a new set using the string.
+				shared_ptr<Set> tempset = shared_ptr<Set>{ new Set(setrep) };
+				if (set(get)->elems != nullptr) delete set(get)->elems;
+				set(get)->elems = tempset->elems;
+			}
+			else if (get->type == TUPLE)
+			{
+				string tuprep;
+				// Read a string from the file till the delimiter.	
+				getline(*datasource(new_value)->elem, tuprep, datasource(new_value)->delimiter->elem);
+				// Make a new tuple using the string.
+				shared_ptr<Tuple> temptup = shared_ptr<Tuple>{ new Tuple(tuprep) };
+				if (_tuple(get)->elems != nullptr) delete _tuple(get)->elems;
+				_tuple(get)->elems = temptup->elems;
+			}
+			else if (get->type == ABSTRACT_SET)
+			{
+				// So, since the criteria for an abstract set is a ready-to-execute logical expression that doesn't ... 
+				// ... need to be parsed, but readily executed, we don't really need a raw representation of the string.
+				// (hope I'm right about this).
+				getline(*datasource(new_value)->elem, aset(get)->criteria, datasource(new_value)->delimiter->elem);
+			}
+			else if (get->type == ABSTRACT_MAP)
+			{
+				// Same for maps.
+				getline(*datasource(new_value)->elem, amap(get)->mapping_scheme, datasource(new_value)->delimiter->elem);
+			}
+			else raise_error("Expected a non-source/sink type for reading via a source.");
+		}
+	}
+	else if (new_value->type == STRING) // Strings can also act as sources.
+	{
+		if (get->type == INT)
+		{
+			integer(get)->elem = std::stoi(str(new_value)->elem);
+		}
+		else if (get->type == CHAR) // There's no reason to ever use this really. But well, to each their own.
+		{
+			character(get)->elem = (str(new_value)->elem)[0];
+		}
+		else if (get->type == LOGICAL)
+		{
+			logical(get)->elem = (str(new_value)->elem.find("True") != string::npos);
+		}
+		else if (get->type == SET)
+		{
+			// Make a new set passing the raw string representation of the requested set to the constructor.
+			string setrep = str(new_value)->to_string_raw();
+			shared_ptr<Set> tempset = shared_ptr<Set>{ new Set(setrep) };
+			if (set(get)->elems != nullptr) delete set(get)->elems;
+			set(get)->elems = tempset->elems;
+		}
+		else if (get->type == TUPLE)
+		{
+			string tuprep = str(new_value)->to_string_raw();
+			shared_ptr<Tuple> temptup = shared_ptr<Tuple>{ new Tuple(tuprep) };
+			if (_tuple(get)->elems != nullptr) delete _tuple(get)->elems;
+			_tuple(get)->elems = temptup->elems;
+		}
+		else if (get->type == ABSTRACT_SET)
+		{
+			// So, since the criteria for an abstract set is a ready-to-execute logical expression that doesn't ... 
+			// ... need to be parsed, but readily executed, we don't really need a raw representation of the string.
+			// (hope I'm right about this).
+			aset(get)->criteria = str(new_value)->elem;
+		}
+		else if (get->type == ABSTRACT_MAP)
+		{
+			// Same for maps.
+			amap(get)->mapping_scheme = str(new_value)->elem;
+		}
+	}
+}
+
+
 void parse_initialization()
 {
 	Token & data_type = current_token;
@@ -1288,39 +1323,91 @@ void parse_initialization()
 
 		if (data_type.lexeme == "set")  
 		{
-			Token equal_sign = get_next_token();
-
-			if (equal_sign.lexeme != "=") raise_error("Missing operator \"=\".");
+			Token init_op = get_next_token();
 
 			read_right_expr = true;
 
-			Token value = get_next_token();			// The value to be assigned to the identifier.
+			if (init_op.lexeme == "=") 
+			{
+				Token value = get_next_token();			// The value to be assigned to the identifier.
 
-			ExpressionTree value_expr(value.lexeme);
+				ExpressionTree value_expr(value.lexeme);
 
-			shared_ptr<Elem> val = value_expr.evaluate();
+				shared_ptr<Elem> val = value_expr.evaluate();
 
-			if (val->type != SET) raise_error("Cannot assign a non-set object to a set identifier.");
+				if (val->type != SET) raise_error("Cannot assign a non-set object to a set identifier.");
 
-			(*identify)[new_identifier.lexeme] = val;
+				(*identify)[new_identifier.lexeme] = val;
+			}
+			else if (init_op.lexeme == "<-")
+			{
+				Token source = get_next_token();		// The source from which the set is to be read.
+
+				ExpressionTree source_expr(source.lexeme);
+
+				shared_ptr<Elem> src = source_expr.evaluate();
+
+				string setrep;
+
+				if (src->type == DATASOURCE)
+				{
+					getline(*datasource(src)->elem, setrep, datasource(src)->delimiter->elem);
+
+					(*identify)[new_identifier.lexeme] = shared_ptr<Set>{ new Set(setrep) };
+				}
+				else if (src->type == STRING)
+				{
+					setrep = str(src)->elem;
+
+					(*identify)[new_identifier.lexeme] = shared_ptr<Set>{ new Set(setrep) };
+				}
+				else raise_error("Expected a source or a string for a \"<-\" operation.");
+			}
+			else raise_error("Expected operator \"=\" or \"<-\".");
 		}
 		else if (data_type.lexeme == "tuple")
 		{
-			Token equal_sign = get_next_token();
-
-			if (equal_sign.lexeme != "=") raise_error("Missing operator \"=\".");
+			Token init_op = get_next_token();
 
 			read_right_expr = true;
 
-			Token value = get_next_token();			// The value to be assigned to the identifier.
-		
-			ExpressionTree value_expr(value.lexeme);
+			if (init_op.lexeme == "=")
+			{
+				Token value = get_next_token();			// The value to be assigned to the identifier.
 
-			shared_ptr<Elem> val = value_expr.evaluate();
+				ExpressionTree value_expr(value.lexeme);
 
-			if (val->type != TUPLE) raise_error("Cannot assign a non-tuple object to a tuple identifier.");
+				shared_ptr<Elem> val = value_expr.evaluate();
 
-			(*identify)[new_identifier.lexeme] = val;
+				if (val->type != TUPLE) raise_error("Cannot assign a non-tuple object to a tuple identifier.");
+
+				(*identify)[new_identifier.lexeme] = val;
+			}
+			else if (init_op.lexeme == "<-")
+			{
+				Token source = get_next_token();		// The source from which the tuple is to be read.
+
+				ExpressionTree source_expr(source.lexeme);
+
+				shared_ptr<Elem> src = source_expr.evaluate();
+
+				string tuprep;
+
+				if (src->type == DATASOURCE)
+				{
+					getline(*datasource(src)->elem, tuprep, datasource(src)->delimiter->elem);
+
+					(*identify)[new_identifier.lexeme] = shared_ptr<Tuple>{ new Tuple(tuprep) };
+				}
+				else if (src->type == STRING)
+				{
+					tuprep = str(src)->elem;
+						
+					(*identify)[new_identifier.lexeme] = shared_ptr<Tuple>{ new Tuple(tuprep) };
+				}
+				else raise_error("Expected a source or a string for a \"<-\" operation.");
+			}
+			else raise_error("Expected operator \"=\" or \"<-\".");
 		}
 		else if (data_type.lexeme == "map")
 		{
@@ -1379,75 +1466,173 @@ void parse_initialization()
 		}
 		else if (data_type.lexeme == "int") 
 		{
-			Token equal_sign = get_next_token();
-		
-			if (equal_sign.lexeme != "=") raise_error("Missing operator \"=\".");
+			Token init_op = get_next_token();
 
 			read_right_expr = true;
 
-			Token int_expression = get_next_token();
+			if (init_op.lexeme == "=")
+			{
+				Token int_expression = get_next_token();
 
-			ExpressionTree int_expr(int_expression.lexeme);
+				ExpressionTree int_expr(int_expression.lexeme);
 
-			shared_ptr<Elem> val = int_expr.evaluate();
+				shared_ptr<Elem> val = int_expr.evaluate();
 
-			if (val->type != INT) raise_error("Cannot assign a non-int value to an int identifier.");
+				if (val->type != INT) raise_error("Cannot assign a non-int value to an int identifier.");
 
-			(*identify)[new_identifier.lexeme] = integer(val);
+				(*identify)[new_identifier.lexeme] = integer(val);
+			}
+			else if (init_op.lexeme == "<-")
+			{
+				Token src_expression = get_next_token();
+
+				ExpressionTree src_expr(src_expression.lexeme);
+
+				shared_ptr<Elem> src = src_expr.evaluate();
+
+				if (src->type == DATASOURCE)
+				{
+					int val;
+					*datasource(src)->elem >> val;
+					(*identify)[new_identifier.lexeme] = shared_ptr<Int>{ new Int(val) };
+				}
+				else if (src->type == STRING)
+				{
+					string val;
+					getline(*datasource(src)->elem, val, datasource(src)->delimiter->elem);
+					(*identify)[new_identifier.lexeme] = shared_ptr<Int>{ new Int(std::stoi(val)) };
+				}
+				else raise_error("Expected a source or a string for a \"<-\" operation.");
+			}
+			else raise_error("Expected operators \"=\" or \"<-\".");
 		}
 		else if (data_type.lexeme == "char")
 		{
-			Token equal_sign = get_next_token();
-
-			if (equal_sign.lexeme != "=") raise_error("Missing operator \"=\".");
+			Token init_op = get_next_token();
 
 			read_right_expr = true;
 
-			Token char_expression = get_next_token();
+			if (init_op.lexeme == "=")
+			{
+				Token char_expression = get_next_token();
 
-			ExpressionTree char_expr(char_expression.lexeme);
+				ExpressionTree char_expr(char_expression.lexeme);
 
-			shared_ptr<Elem> val = char_expr.evaluate();
+				shared_ptr<Elem> val = char_expr.evaluate();
 
-			if (val->type != CHAR) raise_error("Cannot assign a non-char value to a char identifier.");
+				if (val->type != CHAR) raise_error("Cannot assign a non-char value to a char identifier.");
 
-			(*identify)[new_identifier.lexeme] = character(val);
+				(*identify)[new_identifier.lexeme] = character(val);
+			}
+			else if (init_op.lexeme == "<-")
+			{
+				Token src_expression = get_next_token();
+
+				ExpressionTree src_expr(src_expression.lexeme);
+
+				shared_ptr<Elem> src = src_expr.evaluate();
+
+				if (src->type == DATASOURCE)
+				{
+					char val;
+					datasource(src)->elem->get(val);
+					(*identify)[new_identifier.lexeme] = shared_ptr<Char>{ new Char(val) };
+				}
+				else if (src->type == STRING)
+				{
+					string val;
+					getline(*datasource(src)->elem, val, datasource(src)->delimiter->elem);
+					(*identify)[new_identifier.lexeme] = shared_ptr<Char>{ new Char(val[0]) };
+				}
+				else raise_error("Expected a source or a string for a \"<-\" operation.");
+			}
+			else raise_error("Expected operators \"=\" or \"<-\".");
 		}
 		else if (data_type.lexeme == "string") 
 		{
-			Token equal_sign = get_next_token();
-
-			if (equal_sign.lexeme != "=") raise_error("Missing operator \"=\".");
+			Token init_op = get_next_token();
 
 			read_right_expr = true;
 
-			Token str_expression = get_next_token();
+			if (init_op.lexeme == "=")
+			{
+				Token string_expression = get_next_token();
 
-			ExpressionTree str_expr(str_expression.lexeme);
+				ExpressionTree string_expr(string_expression.lexeme);
 
-			shared_ptr<Elem> val = str_expr.evaluate();
+				shared_ptr<Elem> val = string_expr.evaluate();
 
-			if (val->type != STRING) raise_error("Cannot assign a non-string value to a string identifier.");
+				if (val->type != STRING) raise_error("Cannot assign a non-string value to a string identifier.");
 
-			(*identify)[new_identifier.lexeme] = str(val);
+				(*identify)[new_identifier.lexeme] = str(val);
+			}
+			else if (init_op.lexeme == "<-")
+			{
+				Token src_expression = get_next_token();
+
+				ExpressionTree src_expr(src_expression.lexeme);
+
+				shared_ptr<Elem> src = src_expr.evaluate();
+
+				if (src->type == DATASOURCE)
+				{
+					string val;
+					getline(*datasource(src)->elem, val, datasource(src)->delimiter->elem);
+					(*identify)[new_identifier.lexeme] = shared_ptr<String>{ new String(val) };
+				}
+				else if (src->type == STRING)
+				{
+					string val = str(src)->elem;
+					(*identify)[new_identifier.lexeme] = shared_ptr<String>{ new String(val) };
+				}
+				else raise_error("Expected a source or a string for a \"<-\" operation.");
+			}
+			else raise_error("Expected operators \"=\" or \"<-\".");
 		}
 		else if (data_type.lexeme == "logical")
 		{
-			Token equal_sign = get_next_token();
-
-			if (equal_sign.lexeme != "=") raise_error("Missing operator \"=\".");
+			Token init_op = get_next_token();
 
 			read_right_expr = true;
 
-			Token logic_expression = get_next_token();
+			if (init_op.lexeme == "=")
+			{
+				Token logical_expression = get_next_token();
 
-			ExpressionTree logic_expr(logic_expression.lexeme);
+				ExpressionTree logical_expr(logical_expression.lexeme);
 
-			shared_ptr<Elem> val = logic_expr.evaluate();
+				shared_ptr<Elem> val = logical_expr.evaluate();
 
-			if (val->type != LOGICAL) raise_error("Cannot assign a non-logical value to a logical identifier.");
+				if (val->type != LOGICAL) raise_error("Cannot assign a non-logical value to a logical identifier.");
 
-			(*identify)[new_identifier.lexeme] = logical(val);
+				(*identify)[new_identifier.lexeme] = logical(val);
+			}
+			else if (init_op.lexeme == "<-")
+			{
+				Token src_expression = get_next_token();
+
+				ExpressionTree src_expr(src_expression.lexeme);
+
+				shared_ptr<Elem> src = src_expr.evaluate();
+
+				if (src->type == DATASOURCE)
+				{
+					string val;
+					getline(*datasource(src)->elem, val, datasource(src)->delimiter->elem);
+					(*identify)[new_identifier.lexeme] = shared_ptr<Logical>{
+						 new Logical(val.find("True") != string::npos) 
+					};
+				}
+				else if (src->type == STRING)
+				{
+					string val = str(src)->elem;
+					(*identify)[new_identifier.lexeme] = shared_ptr<Logical>{
+						new Logical(val.find("True") != string::npos)
+					};
+				}
+				else raise_error("Expected a source or a string for a \"<-\" operation.");
+			}
+			else raise_error("Expected operators \"=\" or \"<-\".");
 		}
 		else if (data_type.lexeme == "auto")
 		{
@@ -1567,46 +1752,93 @@ void parse_initialization()
 
 		if (type.lexeme == "set")
 		{ 
-			Token eq_sign = get_next_token();
-
-			if (eq_sign.lexeme != "=") raise_error("Missing operator \"=\".");
+			Token init_op = get_next_token();
 
 			read_right_expr = true;
 
-			Token abstract_set = get_next_token();
+			if (init_op.lexeme == "=") 
+			{
+				Token abstract_set = get_next_token();
 
-			(*identify)[new_identifier.lexeme] = shared_ptr<AbstractSet>{new AbstractSet(abstract_set.lexeme)};
+				(*identify)[new_identifier.lexeme] = shared_ptr<AbstractSet>{new AbstractSet(abstract_set.lexeme)};
+			}
+			else if (init_op.lexeme == "<-")
+			{
+				Token src_expression = get_next_token();
+
+				ExpressionTree src_expr(src_expression.lexeme);
+
+				shared_ptr<Elem> src = src_expr.evaluate();
+
+				if (src->type == DATASOURCE)
+				{
+					string val;
+					getline(*datasource(src)->elem, val, datasource(src)->delimiter->elem);
+					(*identify)[new_identifier.lexeme] = shared_ptr<AbstractSet>{new AbstractSet(val)};					
+				}
+				else if (src->type == STRING)
+				{
+					string val = str(src)->elem;
+					(*identify)[new_identifier.lexeme] = shared_ptr<AbstractSet>{new AbstractSet(val)};
+				}
+			}
+			else raise_error("Missing operator \"=\" or \"<-\".");
 		}
 		else if (type.lexeme == "map")
 		{
-			Token colon = get_next_token();
+			Token init_op = get_next_token();
 
-			if (colon.types[0] != COLON) raise_error("Missing operator \":\".");
+			if (init_op.types[0] == COLON) 
+			{
+				read_mapdom_expr = true;
 
-			read_mapdom_expr = true;
+				Token abstract_map_domain = get_next_token();
 
-			Token abstract_map_domain = get_next_token();
+				Token mapssymb = get_next_token();
 
-			Token mapssymb = get_next_token();
+				if (mapssymb.types[0] == MAPPING_SYMBOL) raise_error("Missing operator \"->\".");
 
-			if (mapssymb.types[0] == MAPPING_SYMBOL) raise_error("Missing operator \"->\".");
+				read_right_expr = true;
 
-			read_right_expr = true;
-
-			Token abstract_map_codomain = get_next_token();
+				Token abstract_map_codomain = get_next_token();
  
-			ExpressionTree abstract_mapdom_expr(abstract_map_domain.lexeme);
+				ExpressionTree abstract_mapdom_expr(abstract_map_domain.lexeme);
 
-			ExpressionTree abstract_mapcodom_expr(abstract_map_codomain.lexeme);
+				ExpressionTree abstract_mapcodom_expr(abstract_map_codomain.lexeme);
 
-			shared_ptr<Elem> domain = abstract_mapdom_expr.evaluate(), codomain = abstract_mapcodom_expr.evaluate();
+				shared_ptr<Elem> domain = abstract_mapdom_expr.evaluate(), codomain = abstract_mapcodom_expr.evaluate();
 
-			if (domain->type != ABSTRACT_SET || codomain->type != ABSTRACT_SET) raise_error("Abstract sets expected.");
+				if (domain->type != ABSTRACT_SET || codomain->type != ABSTRACT_SET) raise_error("Abstract sets expected.");
 
-			(*identify)[new_identifier.lexeme] = shared_ptr<AbstractMap> { new AbstractMap (
-				aset(domain), 
-				aset(codomain)
-			)};
+				(*identify)[new_identifier.lexeme] = shared_ptr<AbstractMap> { new AbstractMap (
+					aset(domain), 
+					aset(codomain)
+				)};
+			}
+			else if (init_op.lexeme == "<-")
+			{
+				Token src_expression = get_next_token();
+
+				ExpressionTree src_expr(src_expression.lexeme);
+
+				shared_ptr<Elem> src = src_expr.evaluate();
+
+				if (src->type == DATASOURCE)
+				{
+					string val1 = "x -> ", val2;
+					getline(*datasource(src)->elem, val2, datasource(src)->delimiter->elem);
+					val1 += val2;
+					(*identify)[new_identifier.lexeme] = shared_ptr<AbstractMap>{new AbstractMap(val1)};
+				}
+				else if (src->type == STRING)
+				{
+					string val1 = "x -> ", val2 = str(src)->elem;
+					val1 += val2;
+					(*identify)[new_identifier.lexeme] = shared_ptr<AbstractMap>{new AbstractMap(val1)};
+				}
+				else raise_error("Expected a source or a string for a \"<-\" operation.");
+			}
+			else raise_error("Missing operator \":\" or \"<-\".");
 		}
 		else raise_error("Only sets and maps can be abstract.");
 	}

@@ -7,19 +7,27 @@
 #include <iterator>
 
 using std::ifstream;
+using std::istream;
 
 #define datasource static_pointer_cast<DataSource>
+#define filesource static_pointer_cast<ifstream>
 
 class DataSource : public Elem
 {
 public:
-	shared_ptr<ifstream> elem;
+	shared_ptr<istream> elem;
 	shared_ptr<Char> delimiter;
 
 	DataSource(const char * filepath, shared_ptr<Char> delimiter) : Elem(DATASOURCE)
 	{
 		elem = shared_ptr<ifstream>{new ifstream(filepath)};
 		if (!*elem) program_vars::raise_error("Failed to open file.");
+		this->delimiter = delimiter;
+	}
+
+	DataSource(int console, shared_ptr<Char> delimiter) : Elem(DATASOURCE) 
+	{
+		elem = shared_ptr<istream>{&std::cin};
 		this->delimiter = delimiter;
 	}
 
@@ -50,7 +58,11 @@ public:
 	}
 	~DataSource()
 	{
-		if (elem != nullptr) elem->close();
+		if (elem != nullptr && elem != shared_ptr < istream > {&std::cin})
+		{
+			ifstream &e = static_cast<ifstream &>(*elem);
+			e.close();
+		}
 	}
 };
 
