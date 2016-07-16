@@ -48,7 +48,7 @@ The real joy of Autolang is its very math-oriented syntax. Here are some cool ex
    * [Abstract Maps (&lambda;)](https://github.com/TusharRakheja/Autolang#b-abstract-maps-λ)
  * [Automata](https://github.com/TusharRakheja/Autolang#4-automata)
    * [DFA](https://github.com/TusharRakheja/Autolang#a-dfa)
- * [Sources and Sinks (I/O)](https://github.com/TusharRakheja/Autolang#5-sources-and-sinks-input-output)
+ * [Sources and Sinks (I/O)](https://github.com/TusharRakheja/Autolang#5-sources-and-sinks-inputoutput)
    * [Files](https://github.com/TusharRakheja/Autolang#a-files)
    * [Console](https://github.com/TusharRakheja/Autolang#b-console)
    * [Strings as Sources](https://github.com/TusharRakheja/Autolang#c-strings-as-sources)
