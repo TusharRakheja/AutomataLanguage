@@ -40,15 +40,19 @@ public:
 		copy->raw = logical(this->raw->deep_copy());
 		return copy;
 	}
-	shared_ptr<Logical> operator[](int always1)
+	shared_ptr<Logical> operator[](int always1or2)
 	{
-		if (always1 != 1) program_vars::raise_error("The sink's only accessible member is the 'raw' flag, at index 1.");
-		return raw;
+		if (always1or2 != 1 && always1or2 != 2) 
+			program_vars::raise_error("The sink's only accessible members are the 'append' and 'raw' flags, at indices 1 and 2 respectively.");
+		if (always1or2 == 1) return append;
+		else return raw;
 	}
-	const shared_ptr<Logical> operator[](int always1) const
+	const shared_ptr<Logical> operator[](int always1or2) const
 	{
-		if (always1 != 1) program_vars::raise_error("The sink's only accessible member is the 'raw' flag, at index 1.");
-		return raw;
+		if (always1or2 != 1 && always1or2 != 2)
+			program_vars::raise_error("The sink's only accessible members are the 'append' and 'raw' flags, at indices 1 and 2 respectively.");
+		if (always1or2 == 1) return append;
+		else return raw;
 	}
 	string to_string()
 	{
