@@ -605,7 +605,7 @@ See?"\nSee?"
 
 You've seen how the **`print`** and **`printr`** commands work. That's basically how **console is used as a sink**. Nothing more to the interface!
 
-However, **console sourcing** is a new thing we haven't talked about. In interactive mode it's obviously not needed. But if you're interpreting an Autolang source file, here's how you should use console sourcing!
+However, **console sourcing** is a new thing we haven't talked about. In interactive mode it's obviously not needed. But if you're interpreting an Autolang source file, here's how you should use console sourcing.
 
 ![ConsoleSource](http://i.imgur.com/b3N7rzv.gif)
 
