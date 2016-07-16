@@ -1251,12 +1251,24 @@ void parse_fromsource()
 				// So, since the criteria for an abstract set is a ready-to-execute logical expression that doesn't ... 
 				// ... need to be parsed, but readily executed, we don't really need a raw representation of the string.
 				// (hope I'm right about this).
-				getline(*datasource(new_value)->elem, aset(get)->criteria, datasource(new_value)->delimiter->elem);
+				string abs_set_lit;				
+				getline(*datasource(new_value)->elem, abs_set_lit, datasource(new_value)->delimiter->elem); 
+				int start = 0, end = abs_set_lit.size() - 1;
+				while (abs_set_lit[start] != '|') start++;
+				start++;
+				while (abs_set_lit[end] != '}') end--;
+				end--;
+				while (isspace(abs_set_lit[end])) end--;
+				aset(get)->criteria = abs_set_lit.substr(start, end - start + 1);
 			}
 			else if (get->type == ABSTRACT_MAP)
 			{
 				// Same for maps.
-				getline(*datasource(new_value)->elem, amap(get)->mapping_scheme, datasource(new_value)->delimiter->elem);
+				string abs_map_lit;
+				getline(*datasource(new_value)->elem, abs_map_lit, datasource(new_value)->delimiter->elem);
+				int start = abs_map_lit.find("->") + 2;
+				while (isspace(abs_map_lit[start])) start++;
+				amap(get)->mapping_scheme = abs_map_lit.substr(start, abs_map_lit.size() - start);
 			}
 			else raise_error("Expected a non-source/sink type for reading via a source.");
 		}
@@ -1295,12 +1307,23 @@ void parse_fromsource()
 			// So, since the criteria for an abstract set is a ready-to-execute logical expression that doesn't ... 
 			// ... need to be parsed, but readily executed, we don't really need a raw representation of the string.
 			// (hope I'm right about this).
-			aset(get)->criteria = str(new_value)->elem;
+			string abs_set_lit = str(new_value)->elem;
+			int start = 0, end = abs_set_lit.size() - 1;
+			while (abs_set_lit[start] != '|') start++;
+			start++;
+			while (abs_set_lit[end] != '}') end--;
+			end--;
+			while (isspace(abs_set_lit[end])) end--;
+			aset(get)->criteria = abs_set_lit.substr(start, end - start + 1);
 		}
 		else if (get->type == ABSTRACT_MAP)
 		{
 			// Same for maps.
-			amap(get)->mapping_scheme = str(new_value)->elem;
+				// Same for maps.
+			string abs_map_lit = str(new_value)->elem;
+			int start = abs_map_lit.find("->") + 2;
+			while (isspace(abs_map_lit[start])) start++;
+			amap(get)->mapping_scheme = abs_map_lit.substr(start, abs_map_lit.size() - start);
 		}
 	}
 }
@@ -1496,8 +1519,7 @@ void parse_initialization()
 				}
 				else if (src->type == STRING)
 				{
-					string val;
-					getline(*datasource(src)->elem, val, datasource(src)->delimiter->elem);
+					string val = str(src)->elem;
 					(*identify)[new_identifier.lexeme] = shared_ptr<Int>{ new Int(std::stoi(val)) };
 				}
 				else raise_error("Expected a source or a string for a \"<-\" operation.");
@@ -1538,8 +1560,7 @@ void parse_initialization()
 				}
 				else if (src->type == STRING)
 				{
-					string val;
-					getline(*datasource(src)->elem, val, datasource(src)->delimiter->elem);
+					string val = str(src)->elem;
 					(*identify)[new_identifier.lexeme] = shared_ptr<Char>{ new Char(val[0]) };
 				}
 				else raise_error("Expected a source or a string for a \"<-\" operation.");
@@ -1826,16 +1847,14 @@ void parse_initialization()
 
 				if (src->type == DATASOURCE)
 				{
-					string val1 = "x -> ", val2;
-					getline(*datasource(src)->elem, val2, datasource(src)->delimiter->elem);
-					val1 += val2;
-					(*identify)[new_identifier.lexeme] = shared_ptr<AbstractMap>{new AbstractMap(val1)};
+					string val;
+					getline(*datasource(src)->elem, val, datasource(src)->delimiter->elem);
+					(*identify)[new_identifier.lexeme] = shared_ptr<AbstractMap>{new AbstractMap(val)};
 				}
 				else if (src->type == STRING)
 				{
-					string val1 = "x -> ", val2 = str(src)->elem;
-					val1 += val2;
-					(*identify)[new_identifier.lexeme] = shared_ptr<AbstractMap>{new AbstractMap(val1)};
+					string val = str(src)->elem;
+					(*identify)[new_identifier.lexeme] = shared_ptr<AbstractMap>{new AbstractMap(val)};
 				}
 				else raise_error("Expected a source or a string for a \"<-\" operation.");
 			}
