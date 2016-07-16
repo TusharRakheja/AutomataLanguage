@@ -508,7 +508,7 @@ The language of an automaton M, L(M), is defined as the set of all strings accep
 True
 >>> print "101" in l_even
 False
-```https://github.com/TusharRakheja/Autolang#6-data-is-code
+```
 
 ### 5. Sources and Sinks (Input/Output)
 
