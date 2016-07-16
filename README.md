@@ -582,11 +582,21 @@ Now, what about writing to a file? We can do that with a **`sink`**. A sink has 
 
 ```perl
 >>> sink data = ("data.txt", True, False)  # (filepath, append?, raw print?)
->>> string putdata = "See?"                # We'll append this string to the file.
+>>> string putdata = "\nSee?"              # We'll append this string to the file.
 >>> let data += putdata                    # Print the string in it's processed format.
 >>> let data[2] = True                     # Set the raw flag to True.
 >>> let data += putdata                    # Now the string will be written in it's raw format. 
 >>> quit                                   # And that's it! Sinks offer only this interfact for now.
+```
+
+After this, the file will look like this:
+
+```
+1 little, 2 little, 3 little Indians.
+{4, 'l'}
+(5, 'l')
+True | story.
+See?"\nSee?"
 ```
 
 **NOTE**: Please *do NOT make deep copies of sources and sinks*. It won't work the way you expect, but it will work *enough* that your program won't crash right away. Not advised!
