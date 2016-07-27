@@ -542,38 +542,38 @@ True | story.
 Printing out the source exhausts it. So we need to reset it before trying to read data.
 
 ```perl
->>> print !data            # Prints True if the source is in an unreadable state.
+>>> print !data                            # Prints True if the source is in an unreadable state.
 True
->>> let data += 0          # The += and -= operators offset the source by the specified number of bytes, and reset it if needed.
->>> print |data|           # The source should now ready to read, from the very top. So the number of bytes we've already is 0.                     
+>>> let data += 0                          # The += and -= operators offset the source by the specified number of bytes, and reset it if needed.
+>>> print |data|                           # The source should now ready to read, from the very top. So the number of bytes we've already is 0.                     
 0
->>> int readone <- data    # Variables can be initialized directly with data coming from a source, using the `<-` updater.
->>> print readone          # The delimiter is not used when reading ints and chars.
+>>> int readone <- data                    # Variables can be initialized directly with data coming from a source, using the `<-` updater.
+>>> print readone                          # The delimiter is not used when reading ints and chars.
 1
->>> let data[1] = '.'      # The delimiter is a part of the source's tuple and can be accessed intuitively.
->>> declare string sample  # To read data into pre-existing variables,
->>> get sample <- data     # the '<-' updater can be used with the 'get' keyword.
->>> print sample           # The delimiter is not read into the string, and the source moves past it. 
+>>> let data[1] = '.'                      # The delimiter is a part of the source's tuple and can be accessed intuitively.
+>>> declare string sample                  # To read data into pre-existing variables,
+>>> get sample <- data                     # the '<-' updater can be used with the 'get' keyword.
+>>> print sample                           # The delimiter is not read into the string, and the source moves past it. 
  little, 2 little, 3 little Indians
->>> let data -= |sample|   # To re-read some data we just read, we can use the -= update to send the source back by some amount.
->>> get sample <- data     # And then simply read it again.
+>>> let data -= |sample|                   # To re-read some data we just read, we can use the -= update to send the source back by some amount.
+>>> get sample <- data                     # And then simply read it again.
 >>> print sample
  little, 2 little, 3 little Indians
->>> let data += 1          # We can just skip/move past the '\n' in the file after '.'.
->>> let data[1] = '\n'     # The next data we read will be read till a newline.
->>> set newsample <- data  # Sets can also be initialized with data coming in from a stream. 
+>>> let data += 1                          # We can just skip/move past the '\n' in the file after '.'.
+>>> let data[1] = '\n'                     # The next data we read will be read till a newline.
+>>> set newsample <- data                  # Sets can also be initialized with data coming in from a stream. 
 >>> print newsample
 {4, l}
->>> tuple another <- data  # Tuples also, obviously. 
+>>> tuple another <- data                  # Tuples also, obviously. 
 >>> print another
 (5, l)
->>> let data[1] = '|'      # Even though logicals 'can' be read in from sources, it's not advised. At all.
->>> logical true <- True   # If you must, set the delimiter to something you're sure will give a clean literal.
->>> print true             # I suggest reading integers instead of logicals and casting.
+>>> let data[1] = '|'                      # Even though logicals 'can' be read in from sources, it's not advised. At all.
+>>> logical true <- True                   # If you must, set the delimiter to something you're sure will give a clean literal.
+>>> print true                             # I suggest reading integers instead of logicals and casting.
 True
->>> print |data|           # Phew, we've read in 65 bytes of data!
+>>> print |data|                           # Phew, we've read in 65 bytes of data!
 65
->>> quit                   # Quitting is advisable. If you exit your terminal directly, the next time you source this file, it'll have weird bits. You'll need to reset it. 
+>>> quit                                   # Quitting is advisable. If you exit your terminal directly, the next time you source this file, it'll have weird bits. You'll need to reset it. 
 ```
 
 Now, what about writing to a file? We can do that with a **`sink`**. A sink has a much simpler interface, no new updaters. It's a 3-tuple - The first element is the filepath. The second element is True if the existing data in the file needs to be preserved, and False otherwise. The third element is True if the objects to be written to the file will be in their 'raw' form, and False otherwise. 
