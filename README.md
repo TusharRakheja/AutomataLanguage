@@ -503,7 +503,7 @@ The corresponding updates will also work, but it's hard to imagine when they'll 
 The language of an automaton M, L(M), is defined as the set of all strings accepted by M. A simple abstract set ought to be enough to implement this idea.
 
 ```perl
->>> abstract set l_even = { elem | (bineven[elem]) == True }
+>>> abstract set l_even = { elem | bineven[elem] }     # Will evaluate to true for strings accepted by bineven.
 >>> print "100" in l_even
 True
 >>> print "101" in l_even
