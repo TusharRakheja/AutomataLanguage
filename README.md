@@ -122,7 +122,7 @@ Boolean values have the keyword `logical`, and the literals are represented by `
 >>> print val
 False
 >>> logical comp = 1 < '1'                        # Custom initialization. ASCII value of '1' is used.
->>> print val
+>>> print comp
 True
 ```
 
