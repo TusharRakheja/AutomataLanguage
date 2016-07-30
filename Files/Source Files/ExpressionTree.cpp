@@ -64,7 +64,7 @@ void ExpressionTree::skip_whitespace()
 {								
 	while ((current_index < expr.size()) && (isspace(expr[current_index])))	
 	{
-		current_index++;				// The char will most definitely NOT be a '\n' character.
+		current_index++;				
 	}
 }
 
@@ -139,6 +139,22 @@ shared_ptr<Elem> ExpressionTree::evaluate()
 					node->value = shared_ptr<Logical>{new Logical(endoffile->elem->eof())};
 				}
 				else raise_error("Expected a logical (or another primitive), or source for the expression for \"!\" operation.");
+			}
+			else if (node->token.lexeme == "typeof")
+			{
+				shared_ptr<Elem> gettype = node->left->evaluate();
+				if (gettype->type == LOGICAL) node->value = shared_ptr<String>{new String("logical")};
+				if (gettype->type == INT) node->value = shared_ptr<String>{new String("int")};
+				if (gettype->type == CHAR) node->value = shared_ptr<String>{new String("char")};
+				if (gettype->type == STRING) node->value = shared_ptr<String>{new String("string")};
+				if (gettype->type == SET) node->value = shared_ptr<String>{new String("set")};
+				if (gettype->type == TUPLE) node->value = shared_ptr<String>{new String("tuple")};
+				if (gettype->type == MAP) node->value = shared_ptr<String>{new String("map")};
+				if (gettype->type == AUTO) node->value = shared_ptr<String>{new String("auto")};
+				if (gettype->type == ABSTRACT_SET) node->value = shared_ptr<String>{new String("abstract set")};
+				if (gettype->type == ABSTRACT_MAP) node->value = shared_ptr<String>{new String("abstract map")};
+				if (gettype->type == DATASOURCE) node->value = shared_ptr<String>{new String("source")};
+				if (gettype->type == DATASINK) node->value = shared_ptr<String>{new String("sink")};
 			}
 		}
 		else
@@ -1623,6 +1639,13 @@ Token ExpressionTree::get_next_token()				// The limited lexical analyzer to par
 		return{ "in", { OP } };
 	}
 
+	else if (expr[current_index] == 't' && current_index + 5 < expr.size() && expr.substr(current_index, 6) == "typeof"
+	&& (current_index + 6 >= expr.size() || (!isalnum(expr[current_index + 6]) && expr[current_index + 6] != '_')))
+	{
+		current_index += 6;
+		return{ "typeof", { OP, UNARY } };
+	}
+
 	//----------------------------------------</LOGICAL OPS>-----------------------------------------------//
 
 	//----------------------------------------------<MAP OP>-----------------------------------------------//
@@ -1945,6 +1968,8 @@ Token ExpressionTree::get_next_token()				// The limited lexical analyzer to par
 /*	<expr> -->   (<expr>)
  *		   | !<expr>			# Negation.
  *		   | |<expr>|			# Cardinality.
+ *		   | .<expr>                    # Deep copy.
+ *                 | typeof <expr>              # Type getter.
  *		   | <expr> <op> <expr>		# Every op basically.
  *		   | <expr>[<expr>]		# Set, Tuple, String, Map, Auto query/access.
  *		   | <term>			
@@ -1997,7 +2022,9 @@ ExpressionTree::ExpressionTree(string &expr)
 	if (t2.types[0] == INDEX)
 	{
 		string rest = expr.substr(current_index, expr.size() - current_index);
-		if (rest == "")
+		bool rest_empty = true;
+		for (char c : rest) if (!isspace(c)) { rest_empty = false; break; }
+		if (rest_empty)
 		{
 			node = new Node();
 			node->operator_node = true;
@@ -2015,6 +2042,7 @@ ExpressionTree::ExpressionTree(string &expr)
 			arg += (string)")[";
 			arg += t2.lexeme;
 			arg += (string)"])";
+			arg += rest;
 			node->left = new ExpressionTree(arg);
 		}
 		return;
@@ -2023,85 +2051,38 @@ ExpressionTree::ExpressionTree(string &expr)
 	/*
 	 *	<expr> --> !<expr>
 	 *	<expr> --> |<expr>|
+	 *      <expr> --> .<expr>
+	 *      <expr> --> typeof <expr>
 	 */
 	if (t1.types[0] == OP)							// If we've seen an operator.
 	{
-		if (t1.lexeme == "!")						// A NOT, so this will just precede an expression.
+		Token &unary_arg = t2;						// Generate the token you want to use the operator on.
+		if (t1.lexeme == "|") Token get_second_pipe = get_next_token();
+		string rest{
+			expr.substr(current_index, expr.size() - current_index),// Get the rest of the string.
+		};
+		bool rest_empty = true;
+		for (char c : rest) if (!isspace(c)) { rest_empty = false; break; }
+		if (rest_empty) 						
 		{
-			Token to_be_negated = t2;				// Get the expression to be negated.
-			string rest {
-				expr.substr(current_index, expr.size() - current_index),// Get the rest of the string.
-			};
-			if (rest == "") 					// rest == "" implies we're doing a primitive negation.
-			{
-				node = new Node();					
-				node->operator_node = true;
-				node->token = t1;
-				node->left = new ExpressionTree(to_be_negated.lexeme);
-			}
-			else 
-			{
-				node = new Node();					 
-				node->operator_node = true;
-				node->token = { "()", {OP, UNARY, EXPR} };
-				string arg = "(!(";
-				arg += to_be_negated.lexeme;
-				arg += (string)"))";
-				arg += rest;
-				node->left = new ExpressionTree (arg);
-			}
-			return;
+			node = new Node();
+			node->operator_node = true;
+			node->token = t1;
+			node->left = new ExpressionTree(unary_arg.lexeme);
 		}
-		if (t1.lexeme == "|")					// Okay, so we're gonna be checking the size of something.
+		else
 		{
-			Token get_size_of = t2;				// Generate the token whose size you want.
-			Token get_second_pipe = get_next_token();
-			string rest{
-				expr.substr(current_index, expr.size() - current_index),// Get the rest of the string.
-			};
-			if (rest == "") 				// rest == "" implies we're doing a primitive get_size().
-			{
-				node = new Node();
-				node->operator_node = true;
-				node->token = t1;
-				node->left = new ExpressionTree(get_size_of.lexeme);
-			}
-			else
-			{
-				node = new Node();
-				node->operator_node = true;
-				node->token = { "()", { OP, UNARY, EXPR } };
-				string arg = "(|(";
-				arg += get_size_of.lexeme;
-				arg += (string)")|)";
-				arg += rest;
-				node->left = new ExpressionTree (arg);
-			}
-		}
-		if (t1.lexeme == ".")
-		{
-			Token to_be_copied = t2;
-			string rest{
-				expr.substr(current_index, expr.size() - current_index),// Get the rest of the string.
-			};
-			if (rest == "") 						// rest == "" implies we're doing basic deep_copy().
-			{
-				node = new Node();
-				node->operator_node = true;
-				node->token = t1;
-				node->left = new ExpressionTree(to_be_copied.lexeme);
-			}
-			else
-			{
-				node = new Node();
-				node->operator_node = true;
-				node->token = { "()", { OP, UNARY, EXPR } };
-				string arg = "(.(";
-				arg += to_be_copied.lexeme;
-				arg += (string)"))";
-				arg += rest;
-				node->left = new ExpressionTree(arg);
-			}
+			node = new Node();
+			node->operator_node = true;
+			node->token = { "()", { OP, UNARY, EXPR } };
+			string arg = "(";
+			arg += t1.lexeme;
+			arg += " ";
+			arg += unary_arg.lexeme;
+			if (t1.lexeme == "|") arg += (string)"|";
+			arg += (string)")";
+			arg += rest;
+			node->left = new ExpressionTree (arg);
 		}
 		return;
 	}
