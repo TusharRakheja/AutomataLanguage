@@ -638,8 +638,7 @@ Let us say a file **`unpack.txt`** has this data.
 x -> ((x)[0], ((x)[1])[0], ((x)[1])[1]);
 
 # unpackall : From a set of tuples of the form (a, (b, c)), return a set of (a, b, c).
-x -> (|((x))| == 1) ? 
-{ unpack[((x))[0]] } : ({ unpack[((x))[0]] } U (unpackall[((x))[(1, |((x))|)]);
+x -> (|((x))| == 1) ? { unpack[((x))[0]] } : ({ unpack[((x))[0]] } U (unpackall[((x))[(1, |((x))|)]);
 ```
 
 Clearly, the file contains mapping schemes for abstract maps. We can use these to make maps in Autolang. Here's how.
