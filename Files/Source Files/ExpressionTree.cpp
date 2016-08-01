@@ -1,6 +1,9 @@
 #include "../Header Files/ExpressionTree.h"
-
 using program_vars::raise_error;
+
+//#include <iostream>
+//using std::cout;
+//using std::endl;
 
 /* Implementations for methods in the classes Token, Node, and ExpressionTree. */
 
@@ -8,10 +11,11 @@ using program_vars::raise_error;
 
 string token_name[] = 
 {
-	"INT_LIT", "LOGICAL_LIT", "CHAR_LIT", "STRING_LIT", "SET_LIT", "TUPLE_LIT", "LITERAL",
-	"INDEX", "IDENTIFIER", "OP", "UNARY", "END", "ERROR", "EXPR", "TYPE", "MAPPING_SYMBOL", "SOURCE_OP",
-	"PRINT", "IF", "ELSEIF", "ELSE", "WHILE", "DECLARE", "L_BRACE", "UPDATE_OP", "GET",
-	"R_BRACE", "QUIT", "DELETE", "DELETE_ELEMS", "MAP_OP", "COLON", "LET", "UNDER", "ABSTRACT", "PRINTR"
+	"INT_LIT", "LOGICAL_LIT", "CHAR_LIT", "STRING_LIT", "SET_LIT", "ABSTRACT_SET_LIT", "TUPLE_LIT", 
+	"ABSTRACT_MAP_LIT", "LITERAL", "INDEX", "IDENTIFIER", "OP", "UNARY", "END", "ERROR", "EXPR", 
+	"TYPE", "MAPPING_SYMBOL", "SOURCE_OP", "PRINT", "IF", "ELSEIF", "ELSE", "WHILE", "DECLARE", 
+	"L_BRACE", "UPDATE_OP", "GET", "R_BRACE", "QUIT", "DELETE", "DELETE_ELEMS", "MAP_OP", 
+	"COLON", "LET", "UNDER", "ABSTRACT", "PRINTR"
 };
 
 string Token::to_string()
@@ -51,6 +55,12 @@ shared_ptr<Elem> Node::parse_literal()		// Parses the token.lexeme to get a valu
 	if (this->token.types[1] == TUPLE_LIT)
 		return shared_ptr<Elem>{new Tuple(token.lexeme)};
 
+	if (this->token.types[1] == ABSTRACT_SET_LIT)
+		return shared_ptr<Elem>{new AbstractSet(token.lexeme)};
+
+	if (this->token.types[1] == ABSTRACT_MAP_LIT)
+		return shared_ptr<Elem>{new AbstractMap(token.lexeme.substr(1, token.lexeme.size() - 2))};
+	
 	return nullptr;
 }
 
@@ -1671,6 +1681,7 @@ Token ExpressionTree::get_next_token()				// The limited lexical analyzer to par
 	{
 		current_index++; return{ "x", { OP } };
 	}
+
 	else if (expr[current_index] == 'U' && ((current_index + 1) < expr.size())
 		&& !isalnum(expr[current_index + 1]) && expr[current_index + 1] != '_')			// Union op.
 	{
@@ -1718,7 +1729,7 @@ Token ExpressionTree::get_next_token()				// The limited lexical analyzer to par
 				return{ "False", { LITERAL, LOGICAL_LIT} };
 			}
 		}									
-	}
+	}  
 	else if (expr[current_index] == '\'')			// Char literals.
 	{
 		if (current_index + 2 < expr.size() && expr[current_index + 2] == '\'')
@@ -1745,29 +1756,28 @@ Token ExpressionTree::get_next_token()				// The limited lexical analyzer to par
 		current_index = i + 1;
 		return{ expr.substr(j, current_index - j), { LITERAL, STRING_LIT } };
 	}
-	else if (expr[current_index] == '{')			// Set literals.
+	else if (expr[current_index] == '{')			// Abstract Set and Set literals.
 	{
-		int level = 0, i;
-		bool in_string = false, in_char = false;
-		bool closing_brace_found = false;
+		int level = 0, i;						// We'll look for the closing '}' now.
+		bool in_string = false, in_char = false, closing_brace_found = false;
 		for (i = current_index + 1; i < expr.size(); i++)
 		{
 			if (expr[i] == '}' && level == 0)
 			{
 				closing_brace_found = true;
 				break;
-			}									// If it's something that increases the level...
+			}
 			if (((expr[i] == '"' && !in_string && !in_char) || (expr[i] == '\'' && !in_char && !in_string) ||
-		              expr[i] == '{' || expr[i] == '(' || expr[i] == '[') 
-			     &&                                                                 // ... and is not escaped.
-			    (i == 0 || (expr[i - 1] != '\\' || (expr[i - 1] == '\\' && i - 2 >= 0 && expr[i - 2] == '\\'))))
-                  	{
+				expr[i] == '{' || expr[i] == '(' || expr[i] == '[')
+				&&                                                                 // ... and is not escaped.
+				(i == 0 || (expr[i - 1] != '\\' || (expr[i - 1] == '\\' && i - 2 >= 0 && expr[i - 2] == '\\'))))
+			{
 				level++;
 				if (expr[i] == '"' && !in_string && !in_char) in_string = true;
 				if (expr[i] == '\'' && !in_char && !in_string) in_char = true;
 			}
 			else if (((expr[i] == '"' && in_string) || (expr[i] == '\'' && in_char) ||
-				   expr[i] == '}' || expr[i] == ')' || expr[i] == ']')
+				expr[i] == '}' || expr[i] == ')' || expr[i] == ']')
 				&& (i == 0 || (expr[i - 1] != '\\' || (expr[i - 1] == '\\' && i - 2 >= 0 && expr[i - 2] == '\\')))) {
 				level--;
 				if (expr[i] == '"' && in_string) in_string = false;
@@ -1779,7 +1789,21 @@ Token ExpressionTree::get_next_token()				// The limited lexical analyzer to par
 		{
 			int j = current_index;
 			current_index = i + 1;
-			return{ expr.substr(j, i - j + 1), {LITERAL, SET_LIT} };
+			string &candidate_lit = expr.substr(j, i - j + 1);
+			if (candidate_lit.find('|') == string::npos) // If a '|' doesn't exist in the candidate_lit ... 
+				return{ candidate_lit, { LITERAL, SET_LIT } };
+			
+			// Get the part between '{' and '|', and see if the only non-whitespace in it is the string 'elem'.	
+			string &last_check = candidate_lit.substr(j + 1, candidate_lit.find('|') - j - 1);
+			int e_pos = 0, m_pos = last_check.size() - 1;	// The positions of the first 'e' and 'm' in elem.
+			while (isspace(last_check[m_pos])) m_pos--;
+			while (isspace(last_check[e_pos])) e_pos++;
+			
+			if (e_pos + 3 == m_pos && last_check.substr(e_pos, 4) == "elem") // Abstract set!
+			{
+				return{ candidate_lit, { LITERAL, ABSTRACT_SET_LIT } };
+			}
+			return{ candidate_lit, { LITERAL, SET_LIT } };                   // Otherwise, normal.
 		}
 	}
 	else if (expr[current_index] == '(')	  		// Now depending on the current character, we return a token.
