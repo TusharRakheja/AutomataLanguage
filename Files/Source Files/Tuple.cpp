@@ -212,11 +212,12 @@ string Tuple::to_string_raw()				// Returns a string representation of the tuple
 
 string Tuple::to_string_eval()				// Returns a string representation of the tuple.
 {
+	if (identifier != "") return identifier;
 	string representation{ "(" };
 	int i{ 0 };
 	for (auto &elem_p : *elems)
 	{
-		representation += (elem_p->identifier == "") ? elem_p->to_string_raw() : elem_p->identifier;  // Recursive, awesome representations. ;)
+		representation += elem_p->to_string_eval();  // Recursive, awesome representations. ;)
 		if (i != elems->size() - 1)
 			representation += ", ";
 		i++;

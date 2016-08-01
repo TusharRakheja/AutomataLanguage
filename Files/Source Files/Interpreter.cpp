@@ -7,9 +7,31 @@ using std::getline;
 
 unordered_map<string, shared_ptr<Elem>> * program_vars::identify = new unordered_map<string, shared_ptr<Elem>>
 { 
-	{ "__prompt__", shared_ptr<String>{new String(">>> ")}},
-	{ "console", shared_ptr<DataSource>{new DataSource(0, shared_ptr<Char>{ new Char('\n') } ) } }  // Console input source.
+	{ "__prompt__", shared_ptr<String>{ new String(">>> ") } },
+	{ "console", shared_ptr<DataSource>{ new DataSource(0, shared_ptr<Char>{ new Char('\n') } ) } },
+	{ "apply", shared_ptr<AbstractMap>{ new AbstractMap(
+		(string)"x -> (| (((x)[1])) | == 1) ? { (x)[0][(((x)[1]))[0]] } :" +
+		(string)"({ (x)[0][(((x)[1]))[0]] } U apply[( (x)[0], (((x)[1]))[(1, | (((x)[1])) |)] )] )"
+	) } },
+	{ "fold", shared_ptr < AbstractMap > { new AbstractMap(
+		(string)"x -> (|((x)[1])| == 1) ? ((x)[1][0]) : ((x)[0][((x)[1][0], fold[((x)[0], (x)[1][(1, |((x)[1])|)])])]);"
+	) } },
+	{ "All", shared_ptr<AbstractSet>{ new AbstractSet((string)"{ elem | True }") } },
+	{ "Set", shared_ptr<AbstractSet>{ new AbstractSet((string)"{ elem | typeof elem == \"set\" }") } },
+	{ "Int", shared_ptr<AbstractSet>{ new AbstractSet((string)"{ elem | typeof elem == \"int\" }") } },
+	{ "Map", shared_ptr<AbstractSet>{ new AbstractSet((string)"{ elem | typeof elem == \"map\" }") } },
+	{ "Tuple", shared_ptr<AbstractSet>{ new AbstractSet((string)"{ elem | typeof elem == \"tuple\" }") } },
+	{ "String", shared_ptr<AbstractSet>{ new AbstractSet((string)"{ elem | typeof elem == \"string\" }") } },
+	{ "Source", shared_ptr<AbstractSet>{ new AbstractSet((string)"{ elem | typeof elem == \"source\" }") } },
+	{ "Sink", shared_ptr<AbstractSet>{ new AbstractSet((string)"{ elem | typeof elem == \"sink\" }") } },
+	{ "AMap", shared_ptr<AbstractSet>{ new AbstractSet((string)"{ elem | typeof elem == \"abstract map\" }") } },
+	{ "ASet", shared_ptr<AbstractSet>{ new AbstractSet((string)"{ elem | typeof elem == \"abstract set\" }") } },
+	{ "Sets", shared_ptr<AbstractSet>{ new AbstractSet((string)"{ elem | \"set\" in typeof elem }") } },
+	{ "Auto", shared_ptr<AbstractSet>{ new AbstractSet((string)"{ elem | typeof elem == \"auto\" }") } },
+	{ "Char", shared_ptr<AbstractSet>{ new AbstractSet((string)"{ elem | typeof elem == \"char\" }") } },
+	{ "Logical", shared_ptr<AbstractSet>{ new AbstractSet((string)"{ elem | typeof elem == \"logical\" }") } },
 };
+
 // Identifiers mapped to their objects.
 
 int program_vars::line_num = 1;
@@ -55,8 +77,10 @@ void program_vars::raise_error(const char *message)
 
 int main(int argc, char **argv) 
 {
-	if (argc == 1) { print_info(); program = &cin; }
-	else program = new std::ifstream(argv[1]);
+	for (auto pair : *program_vars::identify) pair.second->identifier = pair.first;
+	
+	/*if (argc == 1) { print_info(); program = &cin; }
+	else*/ program = new std::ifstream(/*argv[1]*/"../Examples/NiceTest.al");
 	parse_program();
 }
 
@@ -1118,7 +1142,7 @@ void parse_print()
 
 	ExpressionTree expr(print.lexeme);	 
 	shared_ptr<Elem> to_be_printed = expr.evaluate();
-	
+
 	cout << to_be_printed->to_string();
 	if (program == &cin) cout << endl << endl;
 }
@@ -1785,9 +1809,18 @@ void parse_initialization()
 
 			if (init_op.lexeme == "=") 
 			{
-				Token abstract_set = get_next_token();
+				read_right_expr = true;
 
-				(*identify)[new_identifier.lexeme] = shared_ptr<AbstractSet>{new AbstractSet(abstract_set.lexeme)};
+				Token abstract_set_expression = get_next_token();
+
+				ExpressionTree abstract_set_expr(abstract_set_expression.lexeme);
+
+				shared_ptr<Elem> abstract_set = abstract_set_expr.evaluate();
+
+				if (abstract_set->type != ABSTRACT_SET) 
+					raise_error("Cannot assign non-abstract set value to an abstract set identifier.");
+
+				(*identify)[new_identifier.lexeme] = aset(abstract_set);
 			}
 			else if (init_op.lexeme == "<-")
 			{

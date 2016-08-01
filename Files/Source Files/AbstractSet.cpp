@@ -146,9 +146,9 @@ bool AbstractSet::has(Elem &elem)				// Returns true if the argument elem fulfil
 	}
 	criteriaparts.push_back(x.substr(start, x.size() - start));
 
-	string to_be_evaluated = criteriaparts[0] + ((elem.identifier == "") ? elem.to_string_eval() : elem.identifier);
+	string to_be_evaluated = criteriaparts[0] + elem.to_string_eval();
 	for (int i = 1; i < criteriaparts.size() - 1; i++)
-		to_be_evaluated += criteriaparts[i] + ((elem.identifier == "") ? elem.to_string_eval() : elem.identifier);
+		to_be_evaluated += criteriaparts[i] + elem.to_string_eval();
 	to_be_evaluated += criteriaparts[criteriaparts.size() - 1];
 
 	ExpressionTree eval(to_be_evaluated);

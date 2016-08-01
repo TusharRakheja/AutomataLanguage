@@ -1,9 +1,9 @@
 #include "../Header Files/ExpressionTree.h"
 using program_vars::raise_error;
 
-//#include <iostream>
-//using std::cout;
-//using std::endl;
+#include <iostream>
+using std::cout;
+using std::endl;
 
 /* Implementations for methods in the classes Token, Node, and ExpressionTree. */
 
@@ -166,29 +166,7 @@ shared_ptr<Elem> ExpressionTree::evaluate()
 		}
 		else
 		{
-			if (node->token.lexeme == "?")
-			{
-				shared_ptr<Elem> cond = node->left->evaluate();				
-				if (cond->type == LOGICAL)
-				{
-					if (logical(cond)->elem) node->value = node->center->evaluate();
-					else node->value = node->right->evaluate();
-				}
-				else if (cond->type == CHAR)
-				{
-					if (character(cond)->elem) node->value = node->center->evaluate();
-					else node->value = node->right->evaluate();
-				}
-				else if (cond->type == INT)
-				{
-					if (integer(cond)->elem) node->value = node->center->evaluate();
-					else node->value = node->right->evaluate();
-				}
-				else raise_error("Expected a logical (or another primitive) expression for the \"?\" operation.");
-
-			}
-
-			else if (node->token.lexeme == "V")
+			if (node->token.lexeme == "V")
 			{
 				shared_ptr<Elem> left = node->left->evaluate();
 				shared_ptr<Elem> right = node->right->evaluate();
@@ -520,6 +498,7 @@ shared_ptr<Elem> ExpressionTree::evaluate()
 					else node->value = shared_ptr<Logical>{new Logical(false)};
 				}
 				else node->value = shared_ptr<Logical>{new Logical(false)};
+				//cout << "\tResult==: " << node->value->to_string_eval() << endl;
 			}
 			else if (node->token.lexeme == "!=")
 			{
@@ -1119,6 +1098,7 @@ shared_ptr<Elem> ExpressionTree::evaluate()
 					node->value = (*sink)[index->elem];
 				}
 				else raise_error("Expected a suitable data type for a \"[]\" operation.");
+				//cout << "\tResult[]: " << node->value->to_string_eval() << endl;
 			}
 			else if (node->token.lexeme == "+")
 			{
@@ -1708,25 +1688,20 @@ Token ExpressionTree::get_next_token()				// The limited lexical analyzer to par
 		return{ expr.substr(j, i-j), { LITERAL, INT_LIT} };     // Return a token initializer list with the int_literal lexeme.
 	} 		                          
 	
-	else if (expr[current_index] == 'T' || expr[current_index] == 'F') // Logical Literals
+	else if (expr[current_index] == 'T' && current_index + 3 < expr.size() && expr.substr(current_index, 4) == "True"
+		&& (current_index + 4 >= expr.size() || (!isalnum(expr[current_index + 4]) && expr[current_index + 4] != '_'))
+	)
 	{
-		if (expr[current_index] == 'T') {
-			if (current_index + 3 < expr.size() &&	// Because if expr[i] == 'T', expr[i + 3] == 'e' for a True logical literal.
-		           (expr.substr(current_index, 4) == "True"))
-			{
-				current_index += 4;
-				return{ "True", { LITERAL, LOGICAL_LIT} };
-			}
-		}
-		else if (expr[current_index] == 'F') {
-			if (current_index + 4 < expr.size() &&  // Because if expr[i] == 'F', expr[i + 4] == 'e' for a False logical literal.
-				(expr.substr(current_index, 5) == "False"))
-			{
-				current_index += 5;
-				return{ "False", { LITERAL, LOGICAL_LIT} };
-			}
-		}									
+		current_index += 4;
+		return{ "True", { LITERAL, LOGICAL_LIT} };					
 	}  
+	else if (expr[current_index] == 'F' && current_index + 4 < expr.size() && expr.substr(current_index, 5) == "False"
+		&& (current_index + 5 >= expr.size() || (!isalnum(expr[current_index + 5]) && expr[current_index + 5] != '_'))
+	)
+	{
+		current_index += 5;
+		return{ "False", { LITERAL, LOGICAL_LIT } };
+	}
 	else if (expr[current_index] == '\'')			// Char literals.
 	{
 		if (current_index + 2 < expr.size() && expr[current_index + 2] == '\'')
@@ -2018,15 +1993,20 @@ ExpressionTree::ExpressionTree(string &expr)
 		{
 			node = new Node();
 			node->operator_node = true;
-			node->token = t2;
-			node->left = new ExpressionTree(t1.lexeme);		// The condition.
+			node->token = Token{ "()", { OP, UNARY, EXPR } };
 			Token t3 = get_next_token();
 			Token t4 = get_next_token();
 			if (t4.types[0] != COLON) raise_error("Missing \":\" in the conditional operator.");
 			Token t5 = get_next_token();
-			node->center = new ExpressionTree(t3.lexeme);
-			node->right = new ExpressionTree(t5.lexeme);
-			return;
+			ExpressionTree condition(t1.lexeme);		// The condition.
+			auto cond = condition.evaluate();
+			if (cond->type == LOGICAL)
+				node->left = new ExpressionTree((logical(cond)->elem) ? t3.lexeme : t5.lexeme);
+			else if (cond->type == CHAR)
+				node->left = new ExpressionTree((character(cond)->elem) ? t3.lexeme : t5.lexeme);
+			else if (cond->type == INT)
+				node->left = new ExpressionTree((integer(cond)->elem) ? t3.lexeme : t5.lexeme);
+			else raise_error("Expected a logical (or another primitive) expression for the \"?\" operation.");
 		}
 		else
 		{
@@ -2034,10 +2014,11 @@ ExpressionTree::ExpressionTree(string &expr)
 			node = new Node();
 			node->operator_node = true;
 			node->token = t2;
+			//cout << "ComputingO: " << t1.lexeme << " " << t2.lexeme << " " << rest << endl;
 			node->left = new ExpressionTree(t1.lexeme);
 			node->right = new ExpressionTree(rest);
-			return;
 		}
+		return;
 	}
 
 	if (t2.types[0] == INDEX)
@@ -2050,6 +2031,7 @@ ExpressionTree::ExpressionTree(string &expr)
 			node = new Node();
 			node->operator_node = true;
 			node->token = { "[]", { OP, INDEX } };
+			//cout << "Computing[: " << t1.lexeme << "[" << t2.lexeme << "]" << endl;
 			node->left = new ExpressionTree(t1.lexeme);
 			node->right = new ExpressionTree(t2.lexeme);
 		}
@@ -2064,6 +2046,7 @@ ExpressionTree::ExpressionTree(string &expr)
 			arg += t2.lexeme;
 			arg += (string)"])";
 			arg += rest;
+			//cout << "ComputingE: " << arg << endl;
 			node->left = new ExpressionTree(arg);
 		}
 		return;
@@ -2078,7 +2061,10 @@ ExpressionTree::ExpressionTree(string &expr)
 	if (t1.types[0] == OP)							// If we've seen an operator.
 	{
 		Token &unary_arg = t2;						// Generate the token you want to use the operator on.
-		if (t1.lexeme == "|") Token get_second_pipe = get_next_token();
+		if (t1.lexeme == "|")
+		{
+			Token get_second_pipe = get_next_token();
+		}
 		string rest{
 			expr.substr(current_index, expr.size() - current_index),// Get the rest of the string.
 		};
@@ -2089,6 +2075,7 @@ ExpressionTree::ExpressionTree(string &expr)
 			node = new Node();
 			node->operator_node = true;
 			node->token = t1;
+			//cout << "Computing|: " << t1.lexeme << unary_arg.lexeme << ((t1.lexeme == "|") ? "|" : "") << endl;
 			node->left = new ExpressionTree(unary_arg.lexeme);
 		}
 		else
@@ -2098,11 +2085,12 @@ ExpressionTree::ExpressionTree(string &expr)
 			node->token = { "()", { OP, UNARY, EXPR } };
 			string arg = "(";
 			arg += t1.lexeme;
-			arg += " ";
+			arg += " (";
 			arg += unary_arg.lexeme;
-			if (t1.lexeme == "|") arg += (string)"|";
+			arg += (t1.lexeme == "|") ? (string)") |" : (string)") ";
 			arg += (string)")";
 			arg += rest;
+			//cout << "ComputingE: " << arg << endl;
 			node->left = new ExpressionTree (arg);
 		}
 		return;
@@ -2115,6 +2103,7 @@ ExpressionTree::ExpressionTree(string &expr)
 		node = new Node();				// Make a node node to hold the operator.
 		node->operator_node = true;			// Mark it as an operator node.
 		node->token = Token{ "()", {OP, UNARY, EXPR} }; // Let it hold the token. 
+		//cout << "ComputingE: " << t1.lexeme << endl; 
 		node->left = new ExpressionTree(t1.lexeme);	// Let the left parse the <expr> in (<expr>).
 		return;
 	}
@@ -2124,6 +2113,7 @@ ExpressionTree::ExpressionTree(string &expr)
 		node = new Node();
 		node->operator_node = false;
 		node->token = t1;
+		//cout << "ComputingI: " << t1.lexeme << endl;
 		node->value = (*program_vars::identify)[t1.lexeme];
 		return;
 	}
@@ -2133,10 +2123,11 @@ ExpressionTree::ExpressionTree(string &expr)
 		node = new Node();
 		node->operator_node = false;
 		node->token = t1;
+		//cout << "ComputingL: " << t1.lexeme << endl;
 		node->value = node->parse_literal();
 		return;
 	}
-	
+
 	// By now we've exhausted all the cases where a check was necessary on the first token.
 }
 

@@ -2,9 +2,9 @@
 #include "../Header Files/ExpressionTree.h"
 #include "../Header Files/ProgramVars.h"
 
-//#include <iostream>
-//using std::cout;
-//using std::endl;
+#include <iostream>
+using std::cout;
+using std::endl;
 
 /* Implementations for methods in AbstractMap. */
 
@@ -14,14 +14,14 @@ AbstractMap::AbstractMap(string &mapping_scheme_full) : Elem(ABSTRACT_MAP)
 	this->codomain = nullptr;
 	int start = mapping_scheme_full.find("->") + 2;
 	while (isspace(mapping_scheme_full[start])) start++;
-	this->mapping_scheme = mapping_scheme_full.substr(start, mapping_scheme_full.size() - start);
+	this->mapping_scheme = mapping_scheme_full.substr(start);
 }
 
 void AbstractMap::add_scheme(string &mapping_scheme_full)
 {
 	int start = mapping_scheme_full.find("->") + 2;
 	while (isspace(mapping_scheme_full[start])) start++;
-	this->mapping_scheme = mapping_scheme_full.substr(start, mapping_scheme_full.size() - start);	
+	this->mapping_scheme = mapping_scheme_full.substr(start);	
 }
 
 AbstractMap::AbstractMap(shared_ptr<AbstractSet> domain, shared_ptr<AbstractSet> codomain) : Elem(ABSTRACT_MAP)
@@ -101,9 +101,9 @@ shared_ptr<Elem> AbstractMap::operator[](Elem & pre_image)
 	}
 	schemeparts.push_back(x.substr(start, x.size() - start));
 
-	string to_be_evaluated = schemeparts[0] + ((pre_image.identifier == "") ? pre_image.to_string_eval() : pre_image.identifier);
+	string to_be_evaluated = schemeparts[0] + pre_image.to_string_eval();
 	for (int i = 1; i <schemeparts.size() - 1; i++)
-		to_be_evaluated += schemeparts[i] + ((pre_image.identifier == "") ? pre_image.to_string_eval() : pre_image.identifier);
+		to_be_evaluated += schemeparts[i] + pre_image.to_string_eval();
 	to_be_evaluated += schemeparts[schemeparts.size() - 1];
 
 	ExpressionTree eval(to_be_evaluated);
