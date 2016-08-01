@@ -19,6 +19,7 @@ public:
 	Elem(Type type)                       // Generic type-setting constructor.
 	{
 		this->type = type;
+		identifier = "";
 	}
 	virtual bool operator==(Elem &e)
 	{
@@ -27,7 +28,9 @@ public:
 	}
 	virtual string to_string() = 0;					// Virtual to_string method for display.
 	virtual string to_string_raw() { return this->to_string(); }	// Only ever makes sense to use this for characters and strings.
+	virtual string to_string_eval() { return this->to_string_raw(); }   // To use whenever we're using the object inside an abstract set or map.
 	virtual shared_ptr<Elem> deep_copy() = 0;			// Virtual deep_copy method for making a 'deep clone' of the object.
+	string identifier;						// An identifier for this object (used for replacing in abstracts).
 };
 
 #endif
