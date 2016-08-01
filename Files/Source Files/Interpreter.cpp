@@ -47,7 +47,7 @@ void print_info();		// Prints the license and other info.
 void program_vars::raise_error(const char *message)
 {
 	cout << "ERROR: ";
-	if (program != &cin) cout << " Line" << (line_num - 1) << ": ";
+	if (program != &cin) cout << "Line " << (line_num - 1) << ": ";
 	cout << message << endl;
 	delete program_vars::identify;
 	exit(0);
@@ -1158,6 +1158,8 @@ void parse_declaration()	// Parse a declaration.
 		else if (data_type.lexeme ==   "auto" ) (*identify)[new_identifier.lexeme] = shared_ptr<   Auto   >{new Auto()};
 		else if (data_type.lexeme ==  "source") (*identify)[new_identifier.lexeme] = shared_ptr<DataSource>{new DataSource()};
 		else if (data_type.lexeme ==   "sink")  (*identify)[new_identifier.lexeme] = shared_ptr< DataSink >{new DataSink()};
+
+		(*identify)[new_identifier.lexeme]->identifier = new_identifier.lexeme; // Assign the identifier to the elem's identifier attr.
 	}
 	else if (data_type.types[0] == ABSTRACT)
 	{
@@ -1173,6 +1175,8 @@ void parse_declaration()	// Parse a declaration.
 			(*identify)[new_identifier.lexeme] = shared_ptr<AbstractSet>{new AbstractSet()};
 		else                     
 			(*identify)[new_identifier.lexeme] = shared_ptr<AbstractMap>{new AbstractMap()};
+
+		(*identify)[new_identifier.lexeme]->identifier = new_identifier.lexeme; // Assign the identifier to the elem's identifier attr.
 	}
 }
 
@@ -1761,6 +1765,7 @@ void parse_initialization()
 			}
 			else raise_error("Initializing a sink needs a sink or a tuple.");
 		}
+		(*identify)[new_identifier.lexeme]->identifier = new_identifier.lexeme;	// Assign the identifier to the elem's identifier attr.
 	}
 	else if (data_type.types[0] == ABSTRACT)
 	{
@@ -1818,7 +1823,7 @@ void parse_initialization()
 
 				Token mapssymb = get_next_token();
 
-				if (mapssymb.types[0] == MAPPING_SYMBOL) raise_error("Missing operator \"->\".");
+				if (mapssymb.types[0] != MAPPING_SYMBOL) raise_error("Missing operator \"->\".");
 
 				read_right_expr = true;
 
@@ -1860,7 +1865,9 @@ void parse_initialization()
 			}
 			else raise_error("Missing operator \":\" or \"<-\".");
 		}
-		else raise_error("Only sets and maps can be abstract.");
+		else raise_error("Only sets and maps can be abstract.");		
+		
+		(*identify)[new_identifier.lexeme]->identifier = new_identifier.lexeme;	// Assign the identifier to the elem's identifier attr.
 	}
 }
 

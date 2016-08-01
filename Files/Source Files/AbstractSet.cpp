@@ -1,6 +1,11 @@
 #include "../Header Files/AbstractSet.h"
 #include "../Header Files/ExpressionTree.h"
 
+#include <iostream>
+
+using std::cout;
+using std::endl;
+
 /* Implementations for the methods in the AbstractSet class. */
 
 AbstractSet::AbstractSet(string &setbuilder) : Elem(ABSTRACT_SET)	// Construct with a string representing the criteria.
@@ -19,35 +24,80 @@ AbstractSet::AbstractSet(string &setbuilder) : Elem(ABSTRACT_SET)	// Construct w
 
 shared_ptr<AbstractSet> AbstractSet::cartesian_product(AbstractSet &other)	// Returns the cartesian product of this set and the other set.
 {
-	string criteria_e1 = this->criteria;			// Will replace all instances of elem in this criteria with (elem[0]).
-	string criteria_e2 = other.criteria;			// Will replace all instances of elem in this criteria with (elem[1]).
-
-	vector<string> criteria1;
-	int pos = criteria_e1.find("elem");
-	while (pos != string::npos)
+	string x = this->criteria;				// We'll replace all instances of 'elem' at level 0 with elem->to_string().
+	int start = 0;
+	bool in_string = false, in_char = false;
+	vector<string> criteria1parts;				// The parts of the criteria without 'elem'
+	for (int i = 0; i < x.size(); i++)
 	{
-		criteria1.push_back(criteria_e1.substr(0, pos));
-		criteria1.push_back("(elem[0])");
-		criteria_e1 = criteria_e1.substr(pos + 4, criteria_e1.size() - (pos + 4));
-		pos = criteria_e1.find("elem");
+		if ((x[i] == '"' && !in_string && !in_char) || (x[i] == '\'' && !in_char && !in_string)
+			&& (i == 0 || (x[i - 1] != '\\' || (x[i - 1] == '\\' && i - 2 >= 0 && x[i - 2] == '\\'))))
+		{
+			if (x[i] == '"' && !in_string && !in_char) in_string = true;
+			if (x[i] == '\'' && !in_char && !in_string) in_char = true;
+		}
+		else if ((x[i] == '"' && in_string) || (x[i] == '\'' && in_char)
+			&& (i == 0 || (x[i - 1] != '\\' || (x[i - 1] == '\\' && i - 2 >= 0 && x[i - 2] == '\\'))))
+		{
+			if (x[i] == '"' && in_string) in_string = false;
+			if (x[i] == '\'' && in_char) in_char = false;
+		}
+		else if (x[i] == 'e'
+			&& (i == 0 || (!isalnum(x[i - 1]) && x[i - 1] != '_'))
+			&& i + 3 < x.size()
+			&& x.substr(i, 4) == "elem"
+			&& !in_string
+			&& (i + 4 >= x.size() || (!isalnum(x[i + 4]) && x[i + 4] != '_')))
+		{
+			criteria1parts.push_back(x.substr(start, i - start));
+			i += 4;
+			start = i;
+		}
 	}
-	criteria1.push_back(criteria_e1);
+	criteria1parts.push_back(x.substr(start, x.size() - start));
 
-	vector<string> criteria2;
-	pos = criteria_e2.find("elem");
-	while (pos != string::npos)
+	string criteria_e1 = criteria1parts[0] + "((elem[0]))";
+	for (int i = 1; i < criteria1parts.size() - 1; i++)
+		criteria_e1 += criteria1parts[i] + "((elem)[0]))";
+	criteria_e1 += criteria1parts[criteria1parts.size() - 1];
+
+	x = other.criteria;
+	start = 0;
+	in_string = false; in_char = false;
+
+	vector<string> criteria2parts;
+	for (int i = 0; i < x.size(); i++)
 	{
-		criteria2.push_back(criteria_e2.substr(0, pos));
-		criteria2.push_back("(elem[1])");
-		criteria_e2 = criteria_e2.substr(pos + 4, criteria_e2.size() - (pos + 4));
-		pos = criteria_e2.find("elem");
+		if ((x[i] == '"' && !in_string && !in_char) || (x[i] == '\'' && !in_char && !in_string)
+			&& (i == 0 || (x[i - 1] != '\\' || (x[i - 1] == '\\' && i - 2 >= 0 && x[i - 2] == '\\'))))
+		{
+			if (x[i] == '"' && !in_string && !in_char) in_string = true;
+			if (x[i] == '\'' && !in_char && !in_string) in_char = true;
+		}
+		else if ((x[i] == '"' && in_string) || (x[i] == '\'' && in_char)
+			&& (i == 0 || (x[i - 1] != '\\' || (x[i - 1] == '\\' && i - 2 >= 0 && x[i - 2] == '\\'))))
+		{
+			if (x[i] == '"' && in_string) in_string = false;
+			if (x[i] == '\'' && in_char) in_char = false;
+		}
+		else if (x[i] == 'e'
+			&& (i == 0 || (!isalnum(x[i - 1]) && x[i - 1] != '_'))
+			&& i + 3 < x.size()
+			&& x.substr(i, 4) == "elem"
+			&& !in_string
+			&& (i + 4 >= x.size() || (!isalnum(x[i + 4]) && x[i + 4] != '_')))
+		{
+			criteria2parts.push_back(x.substr(start, i - start));
+			i += 4;
+			start = i;
+		}
 	}
-	criteria2.push_back(criteria_e2);
+	criteria2parts.push_back(x.substr(start, x.size() - start));
 
-	criteria_e1 = "", criteria_e2 = "";
-
-	for (auto part : criteria1) criteria_e1 += part;
-	for (auto part : criteria2) criteria_e2 += part;
+	string criteria_e2 = criteria2parts[0] + "((elem[1]))";
+	for (int i = 1; i < criteria2parts.size() - 1; i++)
+		criteria_e2 += criteria2parts[i] + "((elem[1]))";
+	criteria_e2 += criteria2parts[criteria2parts.size() - 1];
 
 	shared_ptr<AbstractSet> cartesian = shared_ptr<AbstractSet>{new AbstractSet};
 	cartesian->criteria = "(" + criteria_e1 + ") & (" + criteria_e2 + ")";
@@ -64,15 +114,43 @@ shared_ptr<AbstractSet> AbstractSet::exclusion(AbstractSet &exclude)	// Returns 
 
 bool AbstractSet::has(Elem &elem)				// Returns true if the argument elem fulfils the membership criteria.
 {
-	string to_be_evaluated = this->criteria;		// We'll replace all instances of 'elem' with elem->to_string().
-	while (to_be_evaluated.find("elem") != string::npos)	// Iteratively replace the instances in to_be_evaluated.
+	string x = this->criteria;				// We'll replace all instances of 'elem' at level 0 with elem->to_string().
+	int start = 0;
+	bool in_string = false, in_char = false;
+	vector<string> criteriaparts;				// The parts of the criteria without 'elem'
+	for (int i = 0; i < x.size(); i++)
 	{
-		int elem_pos = to_be_evaluated.find("elem");
-		string part1 = to_be_evaluated.substr(0, elem_pos);
-		string part2 = elem.to_string_raw();
-		string part3 = to_be_evaluated.substr(elem_pos + 4, to_be_evaluated.size() - (elem_pos + 4));
-		to_be_evaluated = part1 + part2 + part3;
+		if ((x[i] == '"' && !in_string && !in_char) || (x[i] == '\'' && !in_char && !in_string) 
+			&& (i == 0 || (x[i - 1] != '\\' || (x[i - 1] == '\\' && i - 2 >= 0 && x[i - 2] == '\\'))))
+		{
+			if (x[i] == '"' && !in_string && !in_char) in_string = true;
+			if (x[i] == '\'' && !in_char && !in_string) in_char = true;
+		}
+		else if ((x[i] == '"' && in_string) || (x[i] == '\'' && in_char)
+			&& (i == 0 || (x[i - 1] != '\\' || (x[i - 1] == '\\' && i - 2 >= 0 && x[i - 2] == '\\')))) 
+		{
+			if (x[i] == '"' && in_string) in_string = false;
+			if (x[i] == '\'' && in_char) in_char = false;
+		}
+		else if (x[i] == 'e'
+			 && (i == 0 || (!isalnum(x[i - 1]) && x[i - 1] != '_')) 
+			 && i + 3 < x.size()
+			 && x.substr(i, 4) == "elem" 
+			 && !in_string 
+			 && (i + 4 >= x.size() || (!isalnum(x[i + 4]) && x[i + 4] != '_')))
+		{
+			criteriaparts.push_back(x.substr(start, i - start)); 
+			i += 4;
+			start = i;		     
+		}
 	}
+	criteriaparts.push_back(x.substr(start, x.size() - start));
+
+	string to_be_evaluated = criteriaparts[0] + ((elem.identifier == "") ? elem.to_string_eval() : elem.identifier);
+	for (int i = 1; i < criteriaparts.size() - 1; i++)
+		to_be_evaluated += criteriaparts[i] + ((elem.identifier == "") ? elem.to_string_eval() : elem.identifier);
+	to_be_evaluated += criteriaparts[criteriaparts.size() - 1];
+
 	ExpressionTree eval(to_be_evaluated);
 	bool answer = logical(eval.evaluate())->elem;
 	return answer;

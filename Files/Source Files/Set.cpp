@@ -1,6 +1,10 @@
 #include "../Header Files/Set.h"
 #include "../Header Files/ExpressionTree.h"
 
+//#include <iostream>
+//using std::cout;
+//using std::endl;
+
 /* Implementations for methods in the class Set. */
 
 vector<char> op_signs_set = { // These characters will signify the presence of an operator.
@@ -35,7 +39,7 @@ Set::Set(string &x) : Elem(SET)					// Construct a set using a string representa
 	while (isspace(x[start])) start++;		// Once we've found the opening brace, remove the extra space before the first element.
 	for (int i = start; i < x.size(); i++)
 	{
-		if (x[i] == '}' && level == 0)		// Usually the closing ')' will be the last character in the string, but, just in case.
+		if (x[i] == '}' && level == 0)		// Usually the closing '}' will be the last character in the string, but, just in case.
 		{
 			int j = i;					// Store the position of the comma.
 			while (isspace(x[j - 1])) j--;			// Work back from there, to get a trimmed representation.
@@ -45,8 +49,7 @@ Set::Set(string &x) : Elem(SET)					// Construct a set using a string representa
 		}
 		if (((x[i] == '"' && !in_string && !in_char) || (x[i] == '\'' && !in_char && !in_string) ||
 			x[i] == '{' || x[i] == '(' || x[i] == '[')
-			&&                                                                 // ... and is not escaped.
-			(i == 0 || (x[i - 1] != '\\' || (x[i - 1] == '\\' && i - 2 >= 0 && x[i - 2] == '\\'))))
+			&& (i == 0 || (x[i - 1] != '\\' || (x[i - 1] == '\\' && i - 2 >= 0 && x[i - 2] == '\\')))) 
 		{
 			level++;
 			if (x[i] == '"' && !in_string && !in_char) in_string = true;
@@ -54,7 +57,8 @@ Set::Set(string &x) : Elem(SET)					// Construct a set using a string representa
 		}
 		else if (((x[i] == '"' && in_string) || (x[i] == '\'' && in_char) ||
 			x[i] == '}' || x[i] == ')' || x[i] == ']')
-			&& (i == 0 || (x[i - 1] != '\\' || (x[i - 1] == '\\' && i - 2 >= 0 && x[i - 2] == '\\')))) {
+			&& (i == 0 || (x[i - 1] != '\\' || (x[i - 1] == '\\' && i - 2 >= 0 && x[i - 2] == '\\')))) 
+		{
 			level--;
 			if (x[i] == '"' && in_string) in_string = false;
 			if (x[i] == '\'' && in_char) in_char = false;
@@ -78,7 +82,7 @@ Set::Set(string &x) : Elem(SET)					// Construct a set using a string representa
 		bool seeing_expr = false; // Will hold the result of our investigation with regards the above comment.
 		bool in_string = false;	  // Helps us keep track of the level when strings are involved.
 		bool in_char = false;     // Helps us keep track of the level when chars are involved.
-
+		//cout << "Elem: " << rep << endl;
 		for (int i = 0; i < rep.size(); i++)
 		{
 			// If, it's level 0, and the character that we're looking at right now in the rep. is the sign of an operator.
@@ -105,6 +109,7 @@ Set::Set(string &x) : Elem(SET)					// Construct a set using a string representa
 				if (rep[i] == '\'' && in_char) in_char = false;
 			}
 		}
+		//cout << endl;
 		if (seeing_expr) 
 		{
 			ExpressionTree expr(rep);
@@ -262,6 +267,20 @@ string Set::to_string_raw()                         // Returns a string represen
 	for (auto &elem_p : *elems)
 	{
 		representation += elem_p->to_string_raw();   // Recursive, awesome representations. ;)
+		if (i != elems->size() - 1)
+			representation += ", ";
+		i++;
+	}
+	return representation + "}";
+}
+
+string Set::to_string_eval()				// Returns a string representation of the tuple.
+{
+	string representation{ "{" };
+	int i{ 0 };
+	for (auto &elem_p : *elems)
+	{
+		representation += (elem_p->identifier == "") ? elem_p->to_string_raw() : elem_p->identifier;  // Recursive, awesome representations. ;)
 		if (i != elems->size() - 1)
 			representation += ", ";
 		i++;

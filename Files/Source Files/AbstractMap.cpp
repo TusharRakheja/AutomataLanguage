@@ -2,6 +2,10 @@
 #include "../Header Files/ExpressionTree.h"
 #include "../Header Files/ProgramVars.h"
 
+//#include <iostream>
+//using std::cout;
+//using std::endl;
+
 /* Implementations for methods in AbstractMap. */
 
 AbstractMap::AbstractMap(string &mapping_scheme_full) : Elem(ABSTRACT_MAP)
@@ -70,15 +74,38 @@ shared_ptr<AbstractMap> AbstractMap::composed_with(shared_ptr<AbstractMap> g)	//
 shared_ptr<Elem> AbstractMap::operator[](Elem & pre_image)
 {
 	if (domain != nullptr && !domain->has(pre_image)) program_vars::raise_error("Mapping unsuccessful. Pre-image not found in domain.");
-	string to_be_evaluated = this->mapping_scheme;		// We'll replace all instances of 'elem' with elem->to_string().
-	while (to_be_evaluated.find("(x)") != string::npos)	// Iteratively replace the instances in to_be_evaluated.
+	string x = this->mapping_scheme;			// We'll replace all instances of 'elem' at level 0 with elem->to_string().
+	int start = 0;
+	bool in_string = false, in_char = false;
+	vector<string> schemeparts;				// The parts of the criteria without 'elem'
+	for (int i = 0; i < x.size(); i++)
 	{
-		int elem_pos = to_be_evaluated.find("(x)");
-		string part1 = to_be_evaluated.substr(0, elem_pos);
-		string part2 = "(" + pre_image.to_string_raw() + ")";
-		string part3 = to_be_evaluated.substr(elem_pos + 3, to_be_evaluated.size() - (elem_pos + 3));
-		to_be_evaluated = part1 + part2 + part3;
+		if ((x[i] == '"' && !in_string && !in_char) || (x[i] == '\'' && !in_char && !in_string)
+			&& (i == 0 || (x[i - 1] != '\\' || (x[i - 1] == '\\' && i - 2 >= 0 && x[i - 2] == '\\'))))
+		{
+			if (x[i] == '"' && !in_string && !in_char) in_string = true;
+			if (x[i] == '\'' && !in_char && !in_string) in_char = true;
+		}
+		else if ((x[i] == '"' && in_string) || (x[i] == '\'' && in_char)
+			&& (i == 0 || (x[i - 1] != '\\' || (x[i - 1] == '\\' && i - 2 >= 0 && x[i - 2] == '\\'))))
+		{
+			if (x[i] == '"' && in_string) in_string = false;
+			if (x[i] == '\'' && in_char) in_char = false;
+		}
+		else if (x[i] == '(' && i + 2 < x.size() && x.substr(i, 3) == "(x)" && !in_string)
+		{
+			schemeparts.push_back(x.substr(start, i - start));
+			i += 3;
+			start = i;
+		}
 	}
+	schemeparts.push_back(x.substr(start, x.size() - start));
+
+	string to_be_evaluated = schemeparts[0] + ((pre_image.identifier == "") ? pre_image.to_string_eval() : pre_image.identifier);
+	for (int i = 1; i <schemeparts.size() - 1; i++)
+		to_be_evaluated += schemeparts[i] + ((pre_image.identifier == "") ? pre_image.to_string_eval() : pre_image.identifier);
+	to_be_evaluated += schemeparts[schemeparts.size() - 1];
+
 	ExpressionTree eval(to_be_evaluated);
 	shared_ptr<Elem> image = eval.evaluate();
 	if (codomain != nullptr && !codomain->has(*image)) program_vars::raise_error("Mapping unsuccessful. Pre-image not found in domain."); 
@@ -93,7 +120,7 @@ const shared_ptr<Elem> AbstractMap::operator[](Elem & pre_image) const
 	{
 		int elem_pos = to_be_evaluated.find("(x)");
 		string part1 = to_be_evaluated.substr(0, elem_pos);
-		string part2 = "(" + pre_image.to_string_raw() + ")";
+		string part2 = "(" + pre_image.identifier + ")";
 		string part3 = to_be_evaluated.substr(elem_pos + 3, to_be_evaluated.size() - (elem_pos + 3));
 		to_be_evaluated = part1 + part2 + part3;
 	}

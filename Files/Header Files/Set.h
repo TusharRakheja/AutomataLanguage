@@ -31,6 +31,7 @@ public:
 	bool operator<(Elem &e) { return false; }	// This op is basically useless for sets.
 	string to_string();				// Returns a string representation of the set.
 	string to_string_raw();				// Returns a raw_string representation of the set.
+	string to_string_eval();			// Returns an abstract map/set compatible representation of the tuple.
 	shared_ptr<Set> _union(Set &);			// Union with a second set.
 	~Set();						// Destructor.
 };

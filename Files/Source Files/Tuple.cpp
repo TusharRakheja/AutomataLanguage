@@ -2,6 +2,10 @@
 #include "../Header Files/Set.h"
 #include "../Header Files/ExpressionTree.h"
 
+//#include <iostream>
+//using std::cout;
+//using std::endl;
+
 /* Implementations for the methods in the class Tuple. */
 
 vector<char> op_signs_tup = { // These characters will signify the presence of an operator.
@@ -40,9 +44,8 @@ Tuple::Tuple(string &x) : Elem(TUPLE)				// Construct a set using a string repre
 			break;
 		}
 		if (((x[i] == '"' && !in_string && !in_char) || (x[i] == '\'' && !in_char && !in_string) ||
-			x[i] == '{' || x[i] == '(' || x[i] == '[')
-			&&                                                                 // ... and is not escaped.
-			(i == 0 || (x[i - 1] != '\\' || (x[i - 1] == '\\' && i - 2 >= 0 && x[i - 2] == '\\'))))
+			x[i] == '{' || x[i] == '(' || x[i] == '[') 
+			&& (i == 0 || (x[i - 1] != '\\' || (x[i - 1] == '\\' && i - 2 >= 0 && x[i - 2] == '\\')))) 
 		{
 			level++;
 			if (x[i] == '"' && !in_string && !in_char) in_string = true;
@@ -50,7 +53,8 @@ Tuple::Tuple(string &x) : Elem(TUPLE)				// Construct a set using a string repre
 		}
 		else if (((x[i] == '"' && in_string) || (x[i] == '\'' && in_char) ||
 			x[i] == '}' || x[i] == ')' || x[i] == ']')
-			&& (i == 0 || (x[i - 1] != '\\' || (x[i - 1] == '\\' && i - 2 >= 0 && x[i - 2] == '\\')))) {
+			&& (i == 0 || (x[i - 1] != '\\' || (x[i - 1] == '\\' && i - 2 >= 0 && x[i - 2] == '\\')))) 
+		{
 			level--;
 			if (x[i] == '"' && in_string) in_string = false;
 			if (x[i] == '\'' && in_char) in_char = false;
@@ -198,9 +202,26 @@ string Tuple::to_string_raw()				// Returns a string representation of the tuple
 	for (auto &elem_p : *elems)
 	{
 		representation += elem_p->to_string_raw();  // Recursive, awesome representations. ;)
-		representation += ", ";
+		if (i != elems->size() - 1)
+			representation += ", ";
 		i++;
 	}
+	if (i == 1) representation += ", ";
+	return representation + ")";
+}
+
+string Tuple::to_string_eval()				// Returns a string representation of the tuple.
+{
+	string representation{ "(" };
+	int i{ 0 };
+	for (auto &elem_p : *elems)
+	{
+		representation += (elem_p->identifier == "") ? elem_p->to_string_raw() : elem_p->identifier;  // Recursive, awesome representations. ;)
+		if (i != elems->size() - 1)
+			representation += ", ";
+		i++;
+	}
+	if (i == 1) representation += ", ";
 	return representation + ")";
 }
 

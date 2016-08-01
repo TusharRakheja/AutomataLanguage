@@ -31,6 +31,7 @@ public:
 	int size();					// Returns the size (or 'dimension') of this tuple.
 	string to_string();				// Returns a string representation of the tuple.
 	string to_string_raw();				// Returns a raw string representation of the tuple.
+	string to_string_eval();			// Returns an abstract map/set compatible representation of the tuple.
 	~Tuple();					// Destructor.
 };
 
