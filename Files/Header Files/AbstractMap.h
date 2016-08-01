@@ -27,7 +27,7 @@ public:
 	};
 	shared_ptr<Elem> operator[](Elem &);
 	const shared_ptr<Elem> operator[](Elem &) const;
-	string to_string() { return "x -> " + mapping_scheme; };
+	string to_string() { return "x -> " + mapping_scheme; }
 };
 
 #define amap static_pointer_cast<AbstractMap>
