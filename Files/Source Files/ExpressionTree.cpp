@@ -57,9 +57,6 @@ shared_ptr<Elem> Node::parse_literal()		// Parses the token.lexeme to get a valu
 
 	if (this->token.types[1] == ABSTRACT_SET_LIT)
 		return shared_ptr<Elem>{new AbstractSet(token.lexeme)};
-
-	if (this->token.types[1] == ABSTRACT_MAP_LIT)
-		return shared_ptr<Elem>{new AbstractMap(token.lexeme.substr(1, token.lexeme.size() - 2))};
 	
 	return nullptr;
 }
@@ -1789,12 +1786,12 @@ Token ExpressionTree::get_next_token()				// The limited lexical analyzer to par
 		{
 			int j = current_index;
 			current_index = i + 1;
-			string &candidate_lit = expr.substr(j, i - j + 1);
+			string candidate_lit = expr.substr(j, i - j + 1);
 			if (candidate_lit.find('|') == string::npos) // If a '|' doesn't exist in the candidate_lit ... 
 				return{ candidate_lit, { LITERAL, SET_LIT } };
 			
 			// Get the part between '{' and '|', and see if the only non-whitespace in it is the string 'elem'.	
-			string &last_check = candidate_lit.substr(j + 1, candidate_lit.find('|') - j - 1);
+			string last_check = candidate_lit.substr(j + 1, candidate_lit.find('|') - j - 1);
 			int e_pos = 0, m_pos = last_check.size() - 1;	// The positions of the first 'e' and 'm' in elem.
 			while (isspace(last_check[m_pos])) m_pos--;
 			while (isspace(last_check[e_pos])) e_pos++;
