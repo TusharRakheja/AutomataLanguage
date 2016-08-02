@@ -10,10 +10,10 @@ unordered_map<string, shared_ptr<Elem>> * program_vars::identify = new unordered
 	{ "__prompt__", shared_ptr<String>{ new String(">>> ") } },
 	{ "console", shared_ptr<DataSource>{ new DataSource(0, shared_ptr<Char>{ new Char('\n') } ) } },
 	{ "apply", shared_ptr<AbstractMap>{ new AbstractMap (
-		(string)"x -> (|(((x)[1]))| == 1) ? {(x)[0][(((x)[1]))[0]]} : ({(x)[0][(((x)[1]))[0]]} U apply[((x)[0], (((x)[1]))[(1, |(((x)[1]))|)])])"
+	"x -> (|(((x)[1]))| == 1) ? {(x)[0][(((x)[1]))[0]]} : ({(x)[0][(((x)[1]))[0]]} U apply[((x)[0], (((x)[1]))[(1, |(((x)[1]))|)])])"
 	) } },
 	{ "fold", shared_ptr < AbstractMap > { new AbstractMap(
-		(string)"x -> (|((x)[1])| == 1) ? ((x)[1][0]) : ((x)[0][((x)[1][0], fold[((x)[0], (x)[1][(1, |((x)[1])|)])])]);"
+		"x -> (|((x)[1])| == 1) ? ((x)[1][0]) : ((x)[0][((x)[1][0], fold[((x)[0], (x)[1][(1, |((x)[1])|)])])]);"
 	) } },
 	{ "All", shared_ptr<AbstractSet>{ new AbstractSet("{ elem | True }") } },
 	{ "Set", shared_ptr<AbstractSet>{ new AbstractSet("{ elem | typeof elem == \"set\" }") } },
@@ -78,8 +78,8 @@ int main(int argc, char **argv)
 {
 	for (auto pair : *program_vars::identify) pair.second->identifier = pair.first;
 	
-	/*if (argc == 1) { print_info(); program = &cin; }
-	else*/ program = new std::ifstream(/*argv[1]*/"../Examples/NiceTest.al");
+	if (argc == 1) { print_info(); program = &cin; }
+	else program = new std::ifstream(argv[1]);
 	parse_program();
 }
 
