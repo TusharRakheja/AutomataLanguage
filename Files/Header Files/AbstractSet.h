@@ -11,6 +11,7 @@ public:
 	string criteria;					   // The membership criteria for the abstract set.
 	AbstractSet() : Elem(ABSTRACT_SET) { }			   // Uninteresting default constructor.
 	AbstractSet(string &);					   // Construct with a string representing the criteria.
+	AbstractSet(const char *);				   // Construct with a cstring representing the criteria.
 	shared_ptr<AbstractSet> cartesian_product(AbstractSet &);  // Returns the cartesian product of this set and the other set.
 	shared_ptr<Elem> deep_copy()				   // Return a new set with the same criteria.
 	{ 

@@ -22,6 +22,21 @@ AbstractSet::AbstractSet(string &setbuilder) : Elem(ABSTRACT_SET)	// Construct w
 	criteria = setbuilder.substr(cr_start, index - cr_start + 1);	// Phew.
 }
 
+AbstractSet::AbstractSet(const char * _setbuilder) : Elem(ABSTRACT_SET)	// Construct with a cstring representing the criteria.
+{
+	string setbuilder(_setbuilder);
+	int index = 0;
+	while (setbuilder[index] != '|')  index++;			// Now until you find the '|' character, keep going.
+	index++;							// Take the index back to separation + 1, because criteria starts there.
+	while (isspace(setbuilder[index])) index++;			// Ignore extraneous spaces between '|' and the criteria.
+	int cr_start = index;						// Now we must be at the index of the criteria's first character.
+	index = setbuilder.size() - 1;					// We'll look for the criteria's end from the other end.
+	while (setbuilder[index] != '}')  index--;			// First look for the set's closing brace.
+	index--;							// The criteria will definitely end before that.
+	while (isspace(setbuilder[index])) index--;			// Ignore spaces.
+	criteria = setbuilder.substr(cr_start, index - cr_start + 1);	// Phew.
+}
+
 shared_ptr<AbstractSet> AbstractSet::cartesian_product(AbstractSet &other)	// Returns the cartesian product of this set and the other set.
 {
 	string x = this->criteria;				// We'll replace all instances of 'elem' at level 0 with elem->to_string().

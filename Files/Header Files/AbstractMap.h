@@ -13,6 +13,7 @@ public:
 	AbstractMap(shared_ptr<AbstractSet>, shared_ptr<AbstractSet>, string &);
 	AbstractMap(shared_ptr<AbstractSet>, shared_ptr<AbstractSet>);
 	AbstractMap(string &);
+	AbstractMap(const char *);
 	void add_scheme(string &);
 	shared_ptr<AbstractMap> composed_with(shared_ptr<AbstractMap>);
 	shared_ptr<Elem> deep_copy()

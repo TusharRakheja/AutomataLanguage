@@ -17,6 +17,16 @@ AbstractMap::AbstractMap(string &mapping_scheme_full) : Elem(ABSTRACT_MAP)
 	this->mapping_scheme = mapping_scheme_full.substr(start);
 }
 
+AbstractMap::AbstractMap(const char *_mapping_scheme_full) : Elem(ABSTRACT_MAP)
+{
+	string mapping_scheme_full(_mapping_scheme_full);
+	this->domain = nullptr;
+	this->codomain = nullptr;
+	int start = mapping_scheme_full.find("->") + 2;
+	while (isspace(mapping_scheme_full[start])) start++;
+	this->mapping_scheme = mapping_scheme_full.substr(start);
+}
+
 void AbstractMap::add_scheme(string &mapping_scheme_full)
 {
 	int start = mapping_scheme_full.find("->") + 2;

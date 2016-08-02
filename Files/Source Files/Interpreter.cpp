@@ -9,27 +9,26 @@ unordered_map<string, shared_ptr<Elem>> * program_vars::identify = new unordered
 { 
 	{ "__prompt__", shared_ptr<String>{ new String(">>> ") } },
 	{ "console", shared_ptr<DataSource>{ new DataSource(0, shared_ptr<Char>{ new Char('\n') } ) } },
-	{ "apply", shared_ptr<AbstractMap>{ new AbstractMap(
-		(string)"x -> (| (((x)[1])) | == 1) ? { (x)[0][(((x)[1]))[0]] } :" +
-		(string)"({ (x)[0][(((x)[1]))[0]] } U apply[( (x)[0], (((x)[1]))[(1, | (((x)[1])) |)] )] )"
+	{ "apply", shared_ptr<AbstractMap>{ new AbstractMap (
+		(string)"x -> (|(((x)[1]))| == 1) ? {(x)[0][(((x)[1]))[0]]} : ({(x)[0][(((x)[1]))[0]]} U apply[((x)[0], (((x)[1]))[(1, |(((x)[1]))|)])])"
 	) } },
 	{ "fold", shared_ptr < AbstractMap > { new AbstractMap(
 		(string)"x -> (|((x)[1])| == 1) ? ((x)[1][0]) : ((x)[0][((x)[1][0], fold[((x)[0], (x)[1][(1, |((x)[1])|)])])]);"
 	) } },
-	{ "All", shared_ptr<AbstractSet>{ new AbstractSet((string)"{ elem | True }") } },
-	{ "Set", shared_ptr<AbstractSet>{ new AbstractSet((string)"{ elem | typeof elem == \"set\" }") } },
-	{ "Int", shared_ptr<AbstractSet>{ new AbstractSet((string)"{ elem | typeof elem == \"int\" }") } },
-	{ "Map", shared_ptr<AbstractSet>{ new AbstractSet((string)"{ elem | typeof elem == \"map\" }") } },
-	{ "Tuple", shared_ptr<AbstractSet>{ new AbstractSet((string)"{ elem | typeof elem == \"tuple\" }") } },
-	{ "String", shared_ptr<AbstractSet>{ new AbstractSet((string)"{ elem | typeof elem == \"string\" }") } },
-	{ "Source", shared_ptr<AbstractSet>{ new AbstractSet((string)"{ elem | typeof elem == \"source\" }") } },
-	{ "Sink", shared_ptr<AbstractSet>{ new AbstractSet((string)"{ elem | typeof elem == \"sink\" }") } },
-	{ "AMap", shared_ptr<AbstractSet>{ new AbstractSet((string)"{ elem | typeof elem == \"abstract map\" }") } },
-	{ "ASet", shared_ptr<AbstractSet>{ new AbstractSet((string)"{ elem | typeof elem == \"abstract set\" }") } },
-	{ "Sets", shared_ptr<AbstractSet>{ new AbstractSet((string)"{ elem | \"set\" in typeof elem }") } },
-	{ "Auto", shared_ptr<AbstractSet>{ new AbstractSet((string)"{ elem | typeof elem == \"auto\" }") } },
-	{ "Char", shared_ptr<AbstractSet>{ new AbstractSet((string)"{ elem | typeof elem == \"char\" }") } },
-	{ "Logical", shared_ptr<AbstractSet>{ new AbstractSet((string)"{ elem | typeof elem == \"logical\" }") } },
+	{ "All", shared_ptr<AbstractSet>{ new AbstractSet("{ elem | True }") } },
+	{ "Set", shared_ptr<AbstractSet>{ new AbstractSet("{ elem | typeof elem == \"set\" }") } },
+	{ "Int", shared_ptr<AbstractSet>{ new AbstractSet("{ elem | typeof elem == \"int\" }") } },
+	{ "Map", shared_ptr<AbstractSet>{ new AbstractSet("{ elem | typeof elem == \"map\" }") } },
+	{ "Tuple", shared_ptr<AbstractSet>{ new AbstractSet("{ elem | typeof elem == \"tuple\" }") } },
+	{ "String", shared_ptr<AbstractSet>{ new AbstractSet("{ elem | typeof elem == \"string\" }") } },
+	{ "Source", shared_ptr<AbstractSet>{ new AbstractSet("{ elem | typeof elem == \"source\" }") } },
+	{ "Sink", shared_ptr<AbstractSet>{ new AbstractSet("{ elem | typeof elem == \"sink\" }") } },
+	{ "AMap", shared_ptr<AbstractSet>{ new AbstractSet("{ elem | typeof elem == \"abstract map\" }") } },
+	{ "ASet", shared_ptr<AbstractSet>{ new AbstractSet("{ elem | typeof elem == \"abstract set\" }") } },
+	{ "Sets", shared_ptr<AbstractSet>{ new AbstractSet("{ elem | \"set\" in typeof elem }") } },
+	{ "Auto", shared_ptr<AbstractSet>{ new AbstractSet("{ elem | typeof elem == \"auto\" }") } },
+	{ "Char", shared_ptr<AbstractSet>{ new AbstractSet("{ elem | typeof elem == \"char\" }") } },
+	{ "Logical", shared_ptr<AbstractSet>{ new AbstractSet("{ elem | typeof elem == \"logical\" }") } },
 };
 
 // Identifiers mapped to their objects.
