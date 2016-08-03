@@ -24,7 +24,7 @@ public:
 			new AbstractMap (
 				(domain == nullptr) ? nullptr : aset(domain->deep_copy()), 
 				(codomain == nullptr) ? nullptr : aset(codomain->deep_copy()),
-				input_format + " -> " + mapping_scheme
+				this->to_string()
 			)
 		}; 
 	};
