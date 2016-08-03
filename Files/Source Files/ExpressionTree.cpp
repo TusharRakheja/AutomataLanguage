@@ -59,8 +59,9 @@ shared_ptr<Elem> Node::parse_literal()		// Parses the token.lexeme to get a valu
 		return shared_ptr<Elem>{new AbstractSet(token.lexeme)};
 
 	if (this->token.types[1] == ABSTRACT_MAP_LIT)
-	{
-		return shared_ptr<Elem>{new AbstractMap(token.lexeme.substr(2, token.lexeme.size() - 4))};
+	{	
+		string arg = token.lexeme.substr(2, token.lexeme.size() - 4);
+		return shared_ptr<Elem>{new AbstractMap(arg)};
 	}
 	
 	return nullptr;
