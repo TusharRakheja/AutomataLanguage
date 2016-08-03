@@ -20,11 +20,12 @@ public:
 	shared_ptr<AbstractMap> composed_with(shared_ptr<AbstractMap>);
 	shared_ptr<Elem> deep_copy()
 	{
+		string representation = this->to_string();
 		return shared_ptr<AbstractMap>{
 			new AbstractMap (
 				(domain == nullptr) ? nullptr : aset(domain->deep_copy()), 
 				(codomain == nullptr) ? nullptr : aset(codomain->deep_copy()),
-				this->to_string()
+				representation
 			)
 		}; 
 	};
