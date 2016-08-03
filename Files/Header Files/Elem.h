@@ -3,10 +3,12 @@
 
 #include <string>
 #include <memory>
+#include <unordered_map>
 
 using std::string;
 using std::shared_ptr;
 using std::static_pointer_cast;
+using std::unordered_map;
 
 /* The definition of a generic Elem(ent) in Autolang. */
 

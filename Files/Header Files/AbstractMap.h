@@ -7,6 +7,8 @@ class AbstractMap : public Elem
 {
 public:
 	string mapping_scheme;
+	string input_format;
+	unordered_map<string, string> holder_value_pairs;
 	shared_ptr<AbstractSet> domain, codomain;
 	
 	AbstractMap() : Elem(ABSTRACT_MAP) { }
@@ -22,13 +24,15 @@ public:
 			new AbstractMap (
 				(domain == nullptr) ? nullptr : aset(domain->deep_copy()), 
 				(codomain == nullptr) ? nullptr : aset(codomain->deep_copy()),
-				mapping_scheme
+				input_format + " -> " + mapping_scheme
 			)
 		}; 
 	};
+	void parse_holder_value_pairs(string &, string &);
 	shared_ptr<Elem> operator[](Elem &);
 	const shared_ptr<Elem> operator[](Elem &) const;
-	string to_string() { return "x -> " + mapping_scheme; }
+	string to_string() { return input_format + " -> " + mapping_scheme; }
+	string to_string_raw() { return ":: " + input_format + " -> " + mapping_scheme + " ::"; }
 };
 
 #define amap static_pointer_cast<AbstractMap>

@@ -10,10 +10,10 @@ unordered_map<string, shared_ptr<Elem>> * program_vars::identify = new unordered
 	{ "__prompt__", shared_ptr<String>{ new String(">>> ") } },
 	{ "console", shared_ptr<DataSource>{ new DataSource(0, shared_ptr<Char>{ new Char('\n') } ) } },
 	{ "apply", shared_ptr<AbstractMap>{ new AbstractMap (
-	"x -> (|(((x)[1]))| == 1) ? {(x)[0][(((x)[1]))[0]]} : ({(x)[0][(((x)[1]))[0]]} U apply[((x)[0], (((x)[1]))[(1, |(((x)[1]))|)])])"
+		"(am, s) -> (|s| == 1) ? { am[s[0]] } : ( { am[s[0]] } U apply[( am, s[(1, |s|)] )]) "
 	) } },
 	{ "fold", shared_ptr < AbstractMap > { new AbstractMap(
-		"x -> (|((x)[1])| == 1) ? ((x)[1][0]) : ((x)[0][((x)[1][0], fold[((x)[0], (x)[1][(1, |((x)[1])|)])])]);"
+		"(am, s) -> (|s| == 1) ? (s[0]) : ( am[( s[0], fold[( am, s[(1, |s|)] )] )] );"
 	) } },
 	{ "All", shared_ptr<AbstractSet>{ new AbstractSet("{ elem | True }") } },
 	{ "Set", shared_ptr<AbstractSet>{ new AbstractSet("{ elem | typeof elem == \"set\" }") } },
@@ -30,6 +30,29 @@ unordered_map<string, shared_ptr<Elem>> * program_vars::identify = new unordered
 	{ "Char", shared_ptr<AbstractSet>{ new AbstractSet("{ elem | typeof elem == \"char\" }") } },
 	{ "Logical", shared_ptr<AbstractSet>{ new AbstractSet("{ elem | typeof elem == \"logical\" }") } },
 };
+
+unordered_map<string, bool> * program_vars::keyword_ops = new unordered_map<string, bool>
+{
+	{ "abstract", true },
+	{ "set", true },
+	{ "int", true },
+	{ "char", true },
+	{ "string", true },
+	{ "auto", true },
+	{ "map", true },
+	{ "source", true },
+	{ "sink", true },
+	{ "in", true },
+	{ "x", true },
+	{ "o", true },
+	{ "U", true },
+	{ "V", true },
+	{ "c", true },
+	{ "typeof", true },
+	{ "True", true },
+	{ "False", true }
+};
+
 
 // Identifiers mapped to their objects.
 
@@ -465,8 +488,11 @@ void parse_assignment()
 		{
 			if (new_value->type == ABSTRACT_MAP)
 			{
-				// Just replace A's scheme with that of B.
+				amap(update)->input_format = amap(new_value)->input_format;
 				amap(update)->mapping_scheme = amap(new_value)->mapping_scheme;
+				amap(update)->holder_value_pairs = amap(new_value)->holder_value_pairs;
+				amap(update)->domain = amap(new_value)->domain;
+				amap(update)->codomain = amap(new_value)->codomain;
 			}
 			else raise_error("Expected an abstract map on the RHS for a \"=\" operation with an abstract map in the LHS");
 		}
@@ -1051,10 +1077,13 @@ void parse_assignment()
 					else if (new_value->type = INT)  power = logical(new_value)->elem - 1;
 					else if (new_value->type = CHAR) power = character(new_value)->elem - 1;
 
+					shared_ptr<AbstractMap> original_map = amap(update->deep_copy());
+
 					while (power--)
 					{
-						shared_ptr<AbstractMap> raised_map = amap(update)->composed_with(amap(update));
-						amap(update)->mapping_scheme = raised_map->mapping_scheme;
+						shared_ptr<AbstractMap> temp = amap(update)->composed_with(original_map);
+						for (auto &pair : temp->holder_value_pairs)
+							amap(update)->holder_value_pairs[pair.first] = pair.second;
 					}
 				}
 				else raise_error("Expected an integer or another primitive on the RHS for a \"^=\" operation with an abstract map on the LHS");
@@ -1124,8 +1153,13 @@ void parse_assignment()
 			{
 				if (new_value->type == ABSTRACT_MAP)
 				{
-					shared_ptr<AbstractMap> raised_map = amap(update)->composed_with(amap(new_value));
-					amap(update)->mapping_scheme = raised_map->mapping_scheme;
+					shared_ptr<AbstractMap> new_map = amap(update)->composed_with(amap(new_value));
+
+					amap(update)->input_format = new_map->input_format;
+					amap(update)->mapping_scheme = new_map->mapping_scheme;
+					amap(update)->holder_value_pairs = new_map->holder_value_pairs;
+					amap(update)->domain = new_map->domain;
+					amap(update)->codomain = new_map->codomain;
 				}
 				else raise_error("Expected an abstract map on the RHS for a \"o=\" operation with an abstract map on the LHS");
 			}

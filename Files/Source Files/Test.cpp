@@ -2,5 +2,5 @@
 /*
 int main()
 {
-	AbstractMap_test::test_all();
-}*/
+}
+*/

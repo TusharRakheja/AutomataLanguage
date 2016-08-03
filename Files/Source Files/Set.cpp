@@ -129,6 +129,8 @@ Set::Set(string &x) : Elem(SET)					// Construct a set using a string representa
 				this->elems->push_back(shared_ptr<Elem>{new String(rep, 0)});
 			else if (rep == "True" || rep == "False")
 				this->elems->push_back(shared_ptr<Elem>{new Logical(rep)});
+			else if (rep[0] == ':')
+				this->elems->push_back(shared_ptr<Elem>{new AbstractMap(rep.substr(2, rep.size() - 4))});
 			else    	
 			{	// Surely an identifier.
 				ExpressionTree expr(rep);

@@ -35,7 +35,7 @@ string Token::to_string()
 shared_ptr<Elem> Node::parse_literal()		// Parses the token.lexeme to get a value, if the lexeme is a literal.
 {
 	if (this->token.types[0] != LITERAL) 
-		return nullptr;			// If the token is not a literal, ignore it.
+		return nullptr;			// If the token is not a literal, ignore it. 
 	
 	if (this->token.types[1] == INT_LIT)			
 		return shared_ptr<Elem>{new Int(token.lexeme)};
@@ -51,16 +51,20 @@ shared_ptr<Elem> Node::parse_literal()		// Parses the token.lexeme to get a valu
 									// (as opposed to its value).
 	if (this->token.types[1] == SET_LIT)
 		return shared_ptr<Elem>{new Set(token.lexeme)};
-	
+
 	if (this->token.types[1] == TUPLE_LIT)
 		return shared_ptr<Elem>{new Tuple(token.lexeme)};
 
 	if (this->token.types[1] == ABSTRACT_SET_LIT)
 		return shared_ptr<Elem>{new AbstractSet(token.lexeme)};
+
+	if (this->token.types[1] == ABSTRACT_MAP_LIT)
+	{
+		return shared_ptr<Elem>{new AbstractMap(token.lexeme.substr(2, token.lexeme.size() - 4))};
+	}
 	
 	return nullptr;
 }
-
 
 // -----------------------------------------------------</CLASS NODE>-------------------------------------------//
 
@@ -94,33 +98,54 @@ shared_ptr<Elem> ExpressionTree::evaluate()
 			}
 			else if (node->token.lexeme == "|")
 			{
-				shared_ptr<Elem> get_size_of = node->left->evaluate();
-				if (get_size_of->type == SET)
+				shared_ptr<Elem> argument = node->left->evaluate();
+				if (argument->type == INT)
+				{	
+					shared_ptr<Int> absolute_value = integer(argument);
+					node->value = shared_ptr<Int>{new Int(
+						(absolute_value->elem < 0) ? -absolute_value->elem : absolute_value->elem
+					)};
+				}
+				else if (argument->type == CHAR)
 				{
-					shared_ptr<Set> get_size_of_set = set(get_size_of);
+					shared_ptr<Char> absolute_value = character(argument);
+					node->value = shared_ptr<Int>{new Int(
+						(absolute_value->elem < 0) ? -absolute_value->elem : absolute_value->elem
+					)};
+				}
+				else if (argument->type == LOGICAL)
+				{
+					shared_ptr<Logical> absolute_value = logical(argument);
+					node->value = shared_ptr<Int>{new Int(
+						(absolute_value->elem < 0) ? -absolute_value->elem : absolute_value->elem
+					)};
+				}
+				else if (argument->type == SET)
+				{
+					shared_ptr<Set> get_size_of_set = set(argument);
 					node->value = shared_ptr<Int>{new Int(get_size_of_set->cardinality())};
 				}
-				else if (get_size_of->type == TUPLE)
+				else if (argument->type == TUPLE)
 				{
-					shared_ptr<Tuple> get_size_of_tuple = _tuple(get_size_of);
+					shared_ptr<Tuple> get_size_of_tuple = _tuple(argument);
 					node->value = shared_ptr<Int>{new Int(get_size_of_tuple->size())};
 				}
-				else if (get_size_of->type == STRING)
+				else if (argument->type == STRING)
 				{
-					shared_ptr<String> get_size_of_string = str(get_size_of);
+					shared_ptr<String> get_size_of_string = str(argument);
 					node->value = shared_ptr<Int>{new Int(get_size_of_string->elem.size())};
 				}
-				else if (get_size_of->type == MAP)
+				else if (argument->type == MAP)
 				{
-					shared_ptr<Map> get_num_of_mappings = map(get_size_of);
+					shared_ptr<Map> get_num_of_mappings = map(argument);
 					node->value = shared_ptr<Int>{new Int(get_num_of_mappings->_map->size())};
 				}
-				else if (get_size_of->type == DATASOURCE)
+				else if (argument->type == DATASOURCE)
 				{
-					shared_ptr<DataSource> get_current_position = datasource(get_size_of);
+					shared_ptr<DataSource> get_current_position = datasource(argument);
 					node->value = shared_ptr<Int>{new Int(get_current_position->elem->tellg())};
 				}
-				else raise_error("Expected a string or a container for \"| |\" operation.");
+				else raise_error("Expected a primitive, a string, or a container for respective \"| |\" operations.");
 			}
 			else if (node->token.lexeme == "!")
 			{
@@ -1478,11 +1503,14 @@ shared_ptr<Elem> ExpressionTree::evaluate()
 						else if (right->type = INT)  power = logical(right)->elem - 1;
 						else if (right->type = CHAR) power = character(right)->elem - 1;
 
-						shared_ptr<AbstractMap> raised_map = amap(left);
+						shared_ptr<AbstractMap> raised_map = amap(left->deep_copy());
 
 						while (power--)
 						{
-							raised_map = raised_map->composed_with(amap(left));
+							shared_ptr<AbstractMap> temp = raised_map->composed_with(amap(left));
+							for (auto &pair : temp->holder_value_pairs)
+								raised_map->holder_value_pairs[pair.first] = pair.second;
+
 						}
 						node->value = raised_map;
 					}
@@ -1577,6 +1605,40 @@ Token ExpressionTree::get_next_token()				// The limited lexical analyzer to par
 
 	else if (expr[current_index] == ':')
 	{
+		if (expr[current_index + 1] == ':')
+		{
+			int i, level = 0;							  // We'll look for the closing '}' now.
+			bool in_string = false, in_char = false, closing_doublecolon_found = false;
+			for (i = current_index + 2; i < expr.size(); i++)
+			{
+				if (expr[i] == ':' && !in_string && !in_char
+				    && i + 1 < expr.size() && expr[i+1] == ':')
+				{
+					i += 2;
+					closing_doublecolon_found = true;
+					break;
+				}
+				if (((expr[i] == '"' && !in_string && !in_char) || (expr[i] == '\'' && !in_char && !in_string))
+					&&                                                                 // ... and is not escaped.
+					(i == 0 || (expr[i - 1] != '\\' || (expr[i - 1] == '\\' && i - 2 >= 0 && expr[i - 2] == '\\'))))
+				{
+					if (expr[i] == '"' && !in_string && !in_char) in_string = true;
+					if (expr[i] == '\'' && !in_char && !in_string) in_char = true;
+				}
+				else if (((expr[i] == '"' && in_string) || (expr[i] == '\'' && in_char))
+					&& 
+					(i == 0 || (expr[i - 1] != '\\' || (expr[i - 1] == '\\' && i - 2 >= 0 && expr[i - 2] == '\\')))) {
+					if (expr[i] == '"' && in_string) in_string = false;
+					if (expr[i] == '\'' && in_char) in_char = false;
+				}
+			}
+			if (!closing_doublecolon_found) return{ "", {ERROR} };
+			else 
+			{	int j = current_index;
+				current_index = i;
+				return{ expr.substr(j, i - j), { LITERAL, ABSTRACT_MAP_LIT } };
+			}
+		}
 		current_index++;
 		return{ ":", {COLON} };
 	}

@@ -30,7 +30,7 @@ Tuple::Tuple(string &x) : Elem(TUPLE)				// Construct a set using a string repre
 	int level = 0, start = 0;
 	bool in_string = false, in_char = false;
 	vector<string> elements;			// We're going to extract e1, e2 ... out of x = "{ e1, e2, ... }".	
-	while (x[start] != '(')	start++;		// Look for the set's opening brace.	
+	while (x[start] != '(')	start++;		// Look for the tuple's opening parenthesis.	
 	start++;
 	while (isspace(x[start])) start++;		// Once we've found the opening '(', remove the extra space before the first element.
 	for (int i = start; i < x.size(); i++)
@@ -124,6 +124,8 @@ Tuple::Tuple(string &x) : Elem(TUPLE)				// Construct a set using a string repre
 				this->elems->push_back(shared_ptr<Elem>{new String(rep, 0)});
 			else if (rep == "True" || rep == "False")
 				this->elems->push_back(shared_ptr<Elem>{new Logical(rep)});
+			else if (rep[0] == ':')
+				this->elems->push_back(shared_ptr<Elem>{new AbstractMap(rep.substr(2, rep.size() - 4))});
 			else
 			{	// Surely an identifier.
 				ExpressionTree expr(rep);
