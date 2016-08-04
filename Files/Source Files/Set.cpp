@@ -130,7 +130,10 @@ Set::Set(string &x) : Elem(SET)					// Construct a set using a string representa
 			else if (rep == "True" || rep == "False")
 				this->elems->push_back(shared_ptr<Elem>{new Logical(rep)});
 			else if (rep[0] == ':')
-				this->elems->push_back(shared_ptr<Elem>{new AbstractMap(rep.substr(2, rep.size() - 4))});
+			{
+				string lambda = rep.substr(2, rep.size() - 4);
+				this->elems->push_back(shared_ptr<Elem>{new AbstractMap(lit)});
+			}
 			else    	
 			{	// Surely an identifier.
 				ExpressionTree expr(rep);
