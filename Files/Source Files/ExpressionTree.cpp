@@ -60,8 +60,8 @@ shared_ptr<Elem> Node::parse_literal()		// Parses the token.lexeme to get a valu
 
 	if (this->token.types[1] == ABSTRACT_MAP_LIT)
 	{	
-		string arg = token.lexeme.substr(2, token.lexeme.size() - 4);
-		return shared_ptr<Elem>{new AbstractMap(arg)};
+		string lambda = token.lexeme.substr(2, token.lexeme.size() - 4);
+		return shared_ptr<Elem>{new AbstractMap(lambda)};
 	}
 	
 	return nullptr;
