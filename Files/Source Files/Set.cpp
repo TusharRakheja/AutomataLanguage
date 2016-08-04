@@ -132,7 +132,7 @@ Set::Set(string &x) : Elem(SET)					// Construct a set using a string representa
 			else if (rep[0] == ':')
 			{
 				string lambda = rep.substr(2, rep.size() - 4);
-				this->elems->push_back(shared_ptr<Elem>{new AbstractMap(lit)});
+				this->elems->push_back(shared_ptr<Elem>{new AbstractMap(lambda)});
 			}
 			else    	
 			{	// Surely an identifier.
