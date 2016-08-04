@@ -85,7 +85,8 @@ AbstractMap::AbstractMap(string &format_and_scheme) : Elem(ABSTRACT_MAP)
 	int start = 0;
 	input_format = format_and_scheme.substr(0, format_and_scheme.find("->"));
 	mapping_scheme = format_and_scheme.substr(format_and_scheme.find("->") + 2); 
-	parse_holder_value_pairs(input_format, (string)"(x)");
+	string first_parent = "(x)";
+	parse_holder_value_pairs(input_format, first_parent);
 }
 
 AbstractMap::AbstractMap(const char *_format_and_scheme) : Elem(ABSTRACT_MAP)
@@ -95,14 +96,16 @@ AbstractMap::AbstractMap(const char *_format_and_scheme) : Elem(ABSTRACT_MAP)
 	this->codomain = nullptr;
 	input_format = format_and_scheme.substr(0, format_and_scheme.find("->"));
 	mapping_scheme = format_and_scheme.substr(format_and_scheme.find("->") + 2);
-	parse_holder_value_pairs(input_format, (string)"(x)");
+	string first_parent = "(x)";
+	parse_holder_value_pairs(input_format, first_parent);
 }
 
 void AbstractMap::add_scheme(string &format_and_scheme)
 {
 	input_format = format_and_scheme.substr(0, format_and_scheme.find("->"));
 	mapping_scheme = format_and_scheme.substr(format_and_scheme.find("->") + 2);
-	parse_holder_value_pairs(input_format, (string)"(x)");
+	string first_parent = "(x)";
+	parse_holder_value_pairs(input_format, first_parent);
 }
 
 AbstractMap::AbstractMap(shared_ptr<AbstractSet> domain, shared_ptr<AbstractSet> codomain) : Elem(ABSTRACT_MAP)
@@ -117,7 +120,8 @@ AbstractMap::AbstractMap(shared_ptr<AbstractSet> domain, shared_ptr<AbstractSet>
 	this->codomain = codomain;
 	input_format = format_and_scheme.substr(0, format_and_scheme.find("->"));
 	mapping_scheme = format_and_scheme.substr(format_and_scheme.find("->") + 2);
-	parse_holder_value_pairs(input_format, (string)"(x)");
+	string first_parent = "(x)";
+	parse_holder_value_pairs(input_format, first_parent);
 }
 
 shared_ptr<AbstractMap> AbstractMap::composed_with(shared_ptr<AbstractMap> g)	// Returns an abstract_map (this composed with g).
