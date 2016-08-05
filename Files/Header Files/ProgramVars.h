@@ -3,10 +3,11 @@
 
 #define ANY true
 #define DUMMYc '\0'
-#define DUMMYv vector<char>{{}}
 
 #include "Elem.h"
 #include <vector>
+
+vector<char> DUMMYv = { {} };
 
 namespace program_vars
 {
