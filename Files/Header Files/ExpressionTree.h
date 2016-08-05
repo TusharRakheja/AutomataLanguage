@@ -8,13 +8,13 @@
 #include "AbstractMap.h"
 #include <cmath>
 
-enum Token_type 
+enum Token_type // If you update this please go and update token_name[] in ExpressionTree.cpp as well.
 { 
 	INT_LIT, LOGICAL_LIT, CHAR_LIT, STRING_LIT, SET_LIT, ABSTRACT_SET_LIT, TUPLE_LIT,
 	ABSTRACT_MAP_LIT, LITERAL, INDEX, IDENTIFIER, OP, UNARY, END, ERROR, EXPR, 
 	TYPE, MAPPING_SYMBOL, SOURCE_OP, PRINT, IF, ELSEIF, ELSE, WHILE, DECLARE, 
 	L_BRACE, UPDATE_OP, GET, R_BRACE, QUIT, DELETE, DELETE_ELEMS, MAP_OP, 
-	COLON, LET, UNDER, ABSTRACT, PRINTR
+	COLON, LET, UNDER, ABSTRACT, PRINTR, MULTITYPE, COMMA, AND
 };
 
 class Token

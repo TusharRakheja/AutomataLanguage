@@ -27,84 +27,27 @@ Tuple::Tuple(vector<shared_ptr<Elem>> * elems) : Elem(TUPLE)	// Tuple-ize an exi
 Tuple::Tuple(string &x) : Elem(TUPLE)				// Construct a set using a string representation of it.
 {
 	elems = new vector < shared_ptr<Elem> >;
-	int level = 0, start = 0;
-	bool in_string = false, in_char = false;
+	int start = 0;
 	vector<string> elements;			// We're going to extract e1, e2 ... out of x = "{ e1, e2, ... }".	
 	while (x[start] != '(')	start++;		// Look for the tuple's opening parenthesis.	
 	start++;
 	while (isspace(x[start])) start++;		// Once we've found the opening '(', remove the extra space before the first element.
-	for (int i = start; i < x.size(); i++)
+	int st = start;
+	for (int i : program_vars::findall_at_level_0(x.substr(start), ANY, DUMMYc, vector<char>{{ ',', ')' }}))
 	{
-		if (x[i] == ')' && level == 0) // Usually the closing ')' will be the last character in the string, but, just in case.
-		{
-			int j = i;					// Store the position of the comma.
-			while (isspace(x[j - 1])) j--;			// Work back from there, to get a trimmed representation. 
-			if (x.substr(start, j - 1) != "")		// If the trimmed representation isn't empty.
-				elements.push_back(x.substr(start, j - start));	// Push it to the vector of representations
-			break;
-		}
-		if (((x[i] == '"' && !in_string && !in_char) || (x[i] == '\'' && !in_char && !in_string) ||
-			x[i] == '{' || x[i] == '(' || x[i] == '[') 
-			&& (i == 0 || (x[i - 1] != '\\' || (x[i - 1] == '\\' && i - 2 >= 0 && x[i - 2] == '\\')))) 
-		{
-			level++;
-			if (x[i] == '"' && !in_string && !in_char) in_string = true;
-			if (x[i] == '\'' && !in_char && !in_string) in_char = true;
-		}
-		else if (((x[i] == '"' && in_string) || (x[i] == '\'' && in_char) ||
-			x[i] == '}' || x[i] == ')' || x[i] == ']')
-			&& (i == 0 || (x[i - 1] != '\\' || (x[i - 1] == '\\' && i - 2 >= 0 && x[i - 2] == '\\')))) 
-		{
-			level--;
-			if (x[i] == '"' && in_string) in_string = false;
-			if (x[i] == '\'' && in_char) in_char = false;
-		}
-		else if (x[i] == ',' && level == 0)		// If we find a comma that delimits an elements representation ...
-		{
-			int j = i;					// Store the position of the comma.
-			while (isspace(x[j - 1])) j--;			// Work back from there, to get a trimmed representation. 
-			if (x.substr(start, j - 1) != "")		// If the trimmed representation isn't empty.
-				elements.push_back(x.substr(start, j - start));	// Push it to the vector of representations.
-			start = i + 1;					// The next element's representation will usually start from i + 1.
-			while (isspace(x[start])) start++;		// But it may not, in case of extra spaces.
-			if (x[start] == ')') break;
-		}
+		int j = i + st;					// Store the position of the comma.
+		while (isspace(x[j - 1])) j--;			// Work back from there, to get a trimmed representation. 
+		if (x.substr(start, j - start) != "")		// If the trimmed representation isn't empty.
+			elements.push_back(x.substr(start, j - start));	// Push it to the vector of representations
+		if (x[i + st] == ')') break;
+		start = i + st + 1;					// The next element's representation will usually start from i + 1.
+		while (isspace(x[start])) start++;		// But it may not, in case of extra spaces.
+		if (x[start] == ')') break;
 	}
 	for (auto &rep : elements) // An important thing to remember is that, the elements can still be expressions.
 	{
 		// So first of all, we'll check if the element we're looking at (or rep. thereof) is an expression or not.
-
-		int level = 0;		  // An operator sign found at level 0 will tell us that we're looking at an expression.
-		bool seeing_expr = false; // Will hold the result of our investigation with regards the above comment.
-		bool in_string = false;	  // Helps us keep track of the level when strings are involved.
-		bool in_char = false;     // Helps us keep track of the level when chars are involved.
-
-		for (int i = 0; i < rep.size(); i++)
-		{
-			// If, it's level 0, and the character that we're looking at right now in the rep. is the sign of an operator.
-			if (level == 0 && std::find(op_signs_tup.begin(), op_signs_tup.end(), rep[i]) != op_signs_tup.end())
-			{
-				seeing_expr = true;
-				break;
-			}
-			if (((rep[i] == '"' && !in_string && !in_char) || (rep[i] == '\'' && !in_char && !in_string) ||
-				rep[i] == '{' || rep[i] == '(' || rep[i] == '[')
-				&&                                                                 // ... and is not escaped.
-				(i == 0 || (rep[i - 1] != '\\' || (rep[i - 1] == '\\' && i - 2 >= 0 && rep[i - 2] == '\\'))))
-			{
-				level++;
-				if (rep[i] == '"' && !in_string && !in_char) in_string = true;
-				if (rep[i] == '\'' && !in_char && !in_string) in_char = true;
-			}
-			else if (((rep[i] == '"' && in_string) || (rep[i] == '\'' && in_char) ||
-				rep[i] == '}' || rep[i] == ')' || rep[i] == ']')
-				&& (i == 0 || (rep[i - 1] != '\\' || (rep[i - 1] == '\\' && i - 2 >= 0 && rep[i - 2] == '\\'))))
-			{
-				level--;
-				if (rep[i] == '"' && in_string) in_string = false;
-				if (rep[i] == '\'' && in_char) in_char = false;
-			}
-		}
+		bool seeing_expr = program_vars::find_at_level_0(rep, ANY, DUMMYc, op_signs_tup);
 		if (seeing_expr)
 		{
 			ExpressionTree expr(rep);
@@ -113,7 +56,28 @@ Tuple::Tuple(string &x) : Elem(TUPLE)				// Construct a set using a string repre
 		else
 		{
 			if (rep[0] == '{')						// If the element to be parsed is a set ...
-				this->elems->push_back(shared_ptr<Elem>{new Set(rep)});	// ... recursively parse that too.
+			{	
+				int i = 0;
+				bool pipe_at_zero = program_vars::exists_at_level_0(rep.substr(1), !ANY, '|', DUMMYv);
+				if (!pipe_at_zero) // If a '|' doesn't exist in the candidate_lit ... 
+				{
+					this->elems->push_back(shared_ptr<Elem>{new Set(rep)});
+					continue;
+				}
+				// Get the part between '{' and '|', and if is empty or has any operator tokens, it's a SET_LIT. 
+				string last_check = rep.substr(1, program_vars::find_at_level_0(rep.substr(1), !ANY, '|', DUMMYv));
+				bool empty = true;
+				for (char c : last_check) { if (!isspace(c)) { empty = false; break; } }
+				if (empty)
+				{
+					this->elems->push_back(shared_ptr<Elem>{new Set(rep)});
+					continue;
+				}
+				if (program_vars::exists_at_level_0(rep.substr(1), ANY, DUMMYc, op_signs_tup))
+					this->elems->push_back(shared_ptr<Elem>{new Set(rep)});
+				else
+					this->elems->push_back(shared_ptr<Elem>{new AbstractSet(rep)});
+			}
 			else if (rep[0] == '(')
 				this->elems->push_back(shared_ptr<Elem>{new Tuple(rep)});
 			else if (isdigit(rep[0]))
@@ -127,6 +91,7 @@ Tuple::Tuple(string &x) : Elem(TUPLE)				// Construct a set using a string repre
 			else if (rep[0] == ':')
 			{
 				string lambda = rep.substr(2, rep.size() - 4);
+				cout << "Here: " << lambda << "\n";
 				this->elems->push_back(shared_ptr<Elem>{new AbstractMap(lambda)});
 			}
 			else

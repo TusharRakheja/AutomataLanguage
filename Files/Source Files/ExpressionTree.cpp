@@ -1,11 +1,20 @@
 #include "../Header Files/ExpressionTree.h"
 using program_vars::raise_error;
 
-#include <iostream>
-using std::cout;
-using std::endl;
+vector<char> * op_signs_set = new vector<char> { // These characters will signify the presence of an operator.
+	'+', '-', '*', '/', '^', '%', '\\', '.', 'U', 'i', '|',
+	'?', 'V', '&', '=', '!', '<', '>', 'o', 'c', 'x', '[', '!'
+}; // Just the first (often the only) characters in the operators. 
+
+//#include <iostream>
+//using std::cout;
+//using std::endl;
 
 /* Implementations for methods in the classes Token, Node, and ExpressionTree. */
+
+// ----------------------------------------------------<HELPER METHODS>----------------------------------------//
+
+// ---------------------------------------------------</HELPER METHODS>----------------------------------------//
 
 // -----------------------------------------------------<CLASS TOKEN>------------------------------------------//
 
@@ -15,7 +24,7 @@ string token_name[] =
 	"ABSTRACT_MAP_LIT", "LITERAL", "INDEX", "IDENTIFIER", "OP", "UNARY", "END", "ERROR", "EXPR", 
 	"TYPE", "MAPPING_SYMBOL", "SOURCE_OP", "PRINT", "IF", "ELSEIF", "ELSE", "WHILE", "DECLARE", 
 	"L_BRACE", "UPDATE_OP", "GET", "R_BRACE", "QUIT", "DELETE", "DELETE_ELEMS", "MAP_OP", 
-	"COLON", "LET", "UNDER", "ABSTRACT", "PRINTR"
+	"COLON", "LET", "UNDER", "ABSTRACT", "PRINTR", "MULTITYPE", "COMMA", "AND"
 };
 
 string Token::to_string()
@@ -51,13 +60,13 @@ shared_ptr<Elem> Node::parse_literal()		// Parses the token.lexeme to get a valu
 									// (as opposed to its value).
 	if (this->token.types[1] == SET_LIT)
 		return shared_ptr<Elem>{new Set(token.lexeme)};
-
+	
 	if (this->token.types[1] == TUPLE_LIT)
 		return shared_ptr<Elem>{new Tuple(token.lexeme)};
 
 	if (this->token.types[1] == ABSTRACT_SET_LIT)
 		return shared_ptr<Elem>{new AbstractSet(token.lexeme)};
-
+	
 	if (this->token.types[1] == ABSTRACT_MAP_LIT)
 	{	
 		string lambda = token.lexeme.substr(2, token.lexeme.size() - 4);
@@ -1793,160 +1802,70 @@ Token ExpressionTree::get_next_token()				// The limited lexical analyzer to par
 	}
 	else if (expr[current_index] == '{')			// Abstract Set and Set literals.
 	{
-		int level = 0, i;						// We'll look for the closing '}' now.
-		bool in_string = false, in_char = false, closing_brace_found = false;
-		for (i = current_index + 1; i < expr.size(); i++)
+		int i = current_index;			
+		string rest_of_expr = expr.substr(i + 1);				// Because we'll need this many times.
+		if (!program_vars::exists_at_level_0(rest_of_expr, !ANY, '}', DUMMYv))  // We'll look for the closing '}' now.
+			return{ "", {ERROR} };
+
+		int j = i + 1 + program_vars::find_at_level_0(rest_of_expr, !ANY, '}', DUMMYv);
+
+		current_index = j + 1;							// Next token will start after set.
+		string rep = expr.substr(i, j - i + 1);
+
+		if (program_vars::exists_at_level_0(rest_of_expr, !ANY, ',', DUMMYv))	// Surely a set because ',' at level 0.
 		{
-			if (expr[i] == '}' && level == 0)
-			{
-				closing_brace_found = true;
-				break;
-			}
-			if (((expr[i] == '"' && !in_string && !in_char) || (expr[i] == '\'' && !in_char && !in_string) ||
-				expr[i] == '{' || expr[i] == '(' || expr[i] == '[')
-				&&                                                                 // ... and is not escaped.
-				(i == 0 || (expr[i - 1] != '\\' || (expr[i - 1] == '\\' && i - 2 >= 0 && expr[i - 2] == '\\'))))
-			{
-				level++;
-				if (expr[i] == '"' && !in_string && !in_char) in_string = true;
-				if (expr[i] == '\'' && !in_char && !in_string) in_char = true;
-			}
-			else if (((expr[i] == '"' && in_string) || (expr[i] == '\'' && in_char) ||
-				expr[i] == '}' || expr[i] == ')' || expr[i] == ']')
-				&& (i == 0 || (expr[i - 1] != '\\' || (expr[i - 1] == '\\' && i - 2 >= 0 && expr[i - 2] == '\\')))) {
-				level--;
-				if (expr[i] == '"' && in_string) in_string = false;
-				if (expr[i] == '\'' && in_char) in_char = false;
-			}
+			current_index = j + 1;
+			return{ rep, { LITERAL, SET_LIT } };
 		}
-		if (!closing_brace_found) { return{ "", {ERROR} }; }
-		else
+
+		bool pipe_at_zero = program_vars::exists_at_level_0(rep.substr(1), !ANY, '|', DUMMYv);
+		if (!pipe_at_zero) 
+			return{ rep, { LITERAL, SET_LIT } };
+		// Get the part between '{' and '|', and if is empty or has any operator tokens, it's a SET_LIT. 
+		int pipe_pos = program_vars::find_at_level_0(rep.substr(1), !ANY, '|', DUMMYv);
+		string last_check = rep.substr(1, pipe_pos);
+		bool empty = true;  
+		for (char c : last_check) { if (!isspace(c)) { empty = false; break; } }
+		if (empty)		
+			return{ rep, { LITERAL, SET_LIT } };
+		
+		if (program_vars::exists_at_level_0(rep.substr(1, pipe_pos), ANY, DUMMYc, *op_signs_set))
 		{
-			int j = current_index;
-			current_index = i + 1;
-			string candidate_lit = expr.substr(j, i - j + 1);
-			if (candidate_lit.find('|') == string::npos) // If a '|' doesn't exist in the candidate_lit ... 
-				return{ candidate_lit, { LITERAL, SET_LIT } };
-			
-			// Get the part between '{' and '|', and see if the only non-whitespace in it is the string 'elem'.	
-			string last_check = candidate_lit.substr(j + 1, candidate_lit.find('|') - j - 1);
-			int e_pos = 0, m_pos = last_check.size() - 1;	// The positions of the first 'e' and 'm' in elem.
-			while (isspace(last_check[m_pos])) m_pos--;
-			while (isspace(last_check[e_pos])) e_pos++;
-			
-			if (e_pos + 3 == m_pos && last_check.substr(e_pos, 4) == "elem") // Abstract set!
-			{
-				return{ candidate_lit, { LITERAL, ABSTRACT_SET_LIT } };
-			}
-			return{ candidate_lit, { LITERAL, SET_LIT } };                   // Otherwise, normal.
+			return{ rep, { LITERAL, SET_LIT } };
 		}
+		return{ rep, { LITERAL, ABSTRACT_SET_LIT } };
+
+		// Let's look for the closing parentheses.
 	}
 	else if (expr[current_index] == '(')	  		// Now depending on the current character, we return a token.
 	{					  		// It can either be (<expr>) or a tuple literal.
-		int level = 0, i;
-		bool in_string = false, is_tuple = false, closing_paren_found = false, in_char = false;
-		for (i = current_index + 1; i < expr.size(); i++)
+		int i = current_index;
+		string rest_of_expr = expr.substr(i + 1);				// Because we'll need this many times.
+		if (!program_vars::exists_at_level_0(rest_of_expr, !ANY, ')', DUMMYv))  // We'll look for the closing ')' now.
+			return{ "", { ERROR } };
+
+		int j = i + 1 + program_vars::find_at_level_0(rest_of_expr, !ANY, ')', DUMMYv);
+		string rep = expr.substr(i, j - i + 1);
+
+		current_index = j + 1;
+		if (program_vars::exists_at_level_0(rep.substr(1), !ANY, ',', DUMMYv))	// Surely a tuple because ',' at level 0.
 		{
-			if (((expr[i] == '"' && !in_string && !in_char) || (expr[i] == '\'' && !in_char && !in_string) ||
-				expr[i] == '{' || expr[i] == '(' || expr[i] == '[')
-				&&                                                                 // ... and is not escaped.
-				(i == 0 || (expr[i - 1] != '\\' || (expr[i - 1] == '\\' && i - 2 >= 0 && expr[i - 2] == '\\'))))
-			{
-				level++;
-				if (expr[i] == '"' && !in_string && !in_char) in_string = true;
-				if (expr[i] == '\'' && !in_char && !in_string) in_char = true;
-			}
-			else if (((expr[i] == '"' && in_string) || (expr[i] == '\'' && in_char) ||
-				expr[i] == '}' || expr[i] == ')' || expr[i] == ']')
-				&& (i == 0 || (expr[i - 1] != '\\' || (expr[i - 1] == '\\' && i - 2 >= 0 && expr[i - 2] == '\\')))) {
-				level--;
-				if (expr[i] == '"' && in_string) in_string = false;
-				if (expr[i] == '\'' && in_char) in_char = false;
-			}
-			else if (expr[i] == ',' && level == 0)		// It's a tuple if a comma exists at level 0.
-			{
-				is_tuple = true;
-				break;
-			}
-		}			
-		level = 0;						// We'll look for the closing ')' now.
-		in_string = false;
-		in_char = false;
-		for (i = current_index + 1; i < expr.size(); i++)
-		{
-			if (expr[i] == ')' && level == 0)
-			{
-				closing_paren_found = true;
-				break;
-			}
-			if (((expr[i] == '"' && !in_string && !in_char) || (expr[i] == '\'' && !in_char && !in_string) ||
-				expr[i] == '{' || expr[i] == '(' || expr[i] == '[')
-				&&                                                                 // ... and is not escaped.
-				(i == 0 || (expr[i - 1] != '\\' || (expr[i - 1] == '\\' && i - 2 >= 0 && expr[i - 2] == '\\'))))
-			{
-				level++;
-				if (expr[i] == '"' && !in_string && !in_char) in_string = true;
-				if (expr[i] == '\'' && !in_char && !in_string) in_char = true;
-			}
-			else if (((expr[i] == '"' && in_string) || (expr[i] == '\'' && in_char) ||
-				expr[i] == '}' || expr[i] == ')' || expr[i] == ']')
-				&& (i == 0 || (expr[i - 1] != '\\' || (expr[i - 1] == '\\' && i - 2 >= 0 && expr[i - 2] == '\\')))) {
-				level--;
-				if (expr[i] == '"' && in_string) in_string = false;
-				if (expr[i] == '\'' && in_char) in_char = false;
-			}
+			return{ rep, { LITERAL, TUPLE_LIT } };
 		}
-		if (!closing_paren_found) return{ "", {ERROR} };
-		else if (is_tuple)
-		{
-			int j = current_index;
-			current_index = i + 1;
-			return{ expr.substr(j, i - j + 1), { LITERAL, TUPLE_LIT } };
-		}
-		else
-		{
-			int j = current_index;
-			current_index = i + 1;
-			return{ expr.substr(j + 1, i - j - 1), { EXPR } };
-		}
+		return{ rep.substr(1, rep.size() - 2), { EXPR } };
 	}
 	//-------------------------------------------</LITERALS>----------------------------------------------//
 
 	else if (expr[current_index] == '[')
 	{
-		int i, level = 0;				// We're going to look for closing bracket ']' at level 0.
-		bool closingbracket_found = false, in_string = false, in_char = false;
-		for (i = current_index + 1; i < expr.size(); i++)
-		{
-			if (expr[i] == ']' && level == 0)
-			{
-				closingbracket_found = true;
-				break;
-			}
-			if (((expr[i] == '"' && !in_string && !in_char) || (expr[i] == '\'' && !in_char && !in_string) ||
-				expr[i] == '{' || expr[i] == '(' || expr[i] == '[')
-				&&                                                                 // ... and is not escaped.
-				(i == 0 || (expr[i - 1] != '\\' || (expr[i - 1] == '\\' && i - 2 >= 0 && expr[i - 2] == '\\'))))
-			{
-				level++;
-				if (expr[i] == '"' && !in_string && !in_char) in_string = true;
-				if (expr[i] == '\'' && !in_char && !in_string) in_char = true;
-			}
-			else if (((expr[i] == '"' && in_string) || (expr[i] == '\'' && in_char) ||
-				expr[i] == '}' || expr[i] == ')' || expr[i] == ']')
-				&& (i == 0 || (expr[i - 1] != '\\' || (expr[i - 1] == '\\' && i - 2 >= 0 && expr[i - 2] == '\\')))) {
-				level--;
-				if (expr[i] == '"' && in_string) in_string = false;
-				if (expr[i] == '\'' && in_char) in_char = false;
-			}
-		}
-		if (!closingbracket_found) return{ "", { ERROR } };
-		else
-		{
-			int j = current_index;
-			current_index = i + 1;	// The next lexeme starts after ']'
-			return{ expr.substr(j + 1, i - j - 1), { INDEX } };
-		}
+		int i = current_index;
+		string rest_of_expr = expr.substr(i + 1);				// Because we'll need this many times.
+		if (!program_vars::exists_at_level_0(rest_of_expr, !ANY, ']', DUMMYv))  // We'll look for the closing ']' now.
+			return{ "", { ERROR } };
+
+		int j = i + 1 + program_vars::find_at_level_0(rest_of_expr, !ANY, ']', DUMMYv);
+		current_index = j + 1;							// The next lexeme starts after ']'
+		return{ expr.substr(i + 1, j - i - 1), { INDEX } };
 	}
 	
 	else if (isalpha(expr[current_index]) || expr[current_index] == '_')	// Parsing identifier.

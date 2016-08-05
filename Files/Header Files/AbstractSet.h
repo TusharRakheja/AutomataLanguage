@@ -25,6 +25,7 @@ public:
 		crit_copy += " }";
 		return shared_ptr<Elem>{new AbstractSet(crit_copy)}; 
 	} 
+	void parse_holder_value_pairs(string &, string &);
 	shared_ptr<AbstractSet> exclusion(AbstractSet &);	   // Returns a set containing elements of this, minus those of the argument.
 	bool has(Elem &);					   // Looks for an element in the set.
 	shared_ptr<AbstractSet> intersection(AbstractSet &);       // Intersection with a second set.

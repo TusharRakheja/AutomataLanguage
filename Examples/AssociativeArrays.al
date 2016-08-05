@@ -5,7 +5,6 @@ set arrays = {{"Harvey", "Mike", "Jessica", "Donna"}, {"Specter", "Ross", "Pears
 set keys = {"First", "Last"}				# They keys with which we want to associate the.
 
 map names : keys -> arrays				# Declare the association map.										
-
 declare int i						# An index to help with the mappings.
 
 while (i < |arrays|) & (i < |keys|)			# As long as we're within limits.

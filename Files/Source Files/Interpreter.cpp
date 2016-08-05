@@ -5,58 +5,7 @@ using std::cin;
 using std::endl;
 using std::getline;
 
-unordered_map<string, shared_ptr<Elem>> * program_vars::identify = new unordered_map<string, shared_ptr<Elem>>
-{ 
-	{ "__prompt__", shared_ptr<String>{ new String(">>> ") } },
-	{ "console", shared_ptr<DataSource>{ new DataSource(0, shared_ptr<Char>{ new Char('\n') } ) } },
-	{ "apply", shared_ptr<AbstractMap>{ new AbstractMap (
-		"(am, s) -> (|s| == 1) ? { am[s[0]] } : ( { am[s[0]] } U apply[( am, s[(1, |s|)] )]) "
-	) } },
-	{ "fold", shared_ptr < AbstractMap > { new AbstractMap(
-		"(am, s) -> (|s| == 1) ? (s[0]) : ( am[( s[0], fold[( am, s[(1, |s|)] )] )] );"
-	) } },
-	{ "All", shared_ptr<AbstractSet>{ new AbstractSet("{ elem | True }") } },
-	{ "Set", shared_ptr<AbstractSet>{ new AbstractSet("{ elem | typeof elem == \"set\" }") } },
-	{ "Int", shared_ptr<AbstractSet>{ new AbstractSet("{ elem | typeof elem == \"int\" }") } },
-	{ "Map", shared_ptr<AbstractSet>{ new AbstractSet("{ elem | typeof elem == \"map\" }") } },
-	{ "Tuple", shared_ptr<AbstractSet>{ new AbstractSet("{ elem | typeof elem == \"tuple\" }") } },
-	{ "String", shared_ptr<AbstractSet>{ new AbstractSet("{ elem | typeof elem == \"string\" }") } },
-	{ "Source", shared_ptr<AbstractSet>{ new AbstractSet("{ elem | typeof elem == \"source\" }") } },
-	{ "Sink", shared_ptr<AbstractSet>{ new AbstractSet("{ elem | typeof elem == \"sink\" }") } },
-	{ "AMap", shared_ptr<AbstractSet>{ new AbstractSet("{ elem | typeof elem == \"abstract map\" }") } },
-	{ "ASet", shared_ptr<AbstractSet>{ new AbstractSet("{ elem | typeof elem == \"abstract set\" }") } },
-	{ "Sets", shared_ptr<AbstractSet>{ new AbstractSet("{ elem | \"set\" in typeof elem }") } },
-	{ "Auto", shared_ptr<AbstractSet>{ new AbstractSet("{ elem | typeof elem == \"auto\" }") } },
-	{ "Char", shared_ptr<AbstractSet>{ new AbstractSet("{ elem | typeof elem == \"char\" }") } },
-	{ "Logical", shared_ptr<AbstractSet>{ new AbstractSet("{ elem | typeof elem == \"logical\" }") } },
-};
-
-unordered_map<string, bool> * program_vars::keyword_ops = new unordered_map<string, bool>
-{
-	{ "abstract", true },
-	{ "set", true },
-	{ "int", true },
-	{ "char", true },
-	{ "string", true },
-	{ "auto", true },
-	{ "map", true },
-	{ "source", true },
-	{ "sink", true },
-	{ "in", true },
-	{ "x", true },
-	{ "o", true },
-	{ "U", true },
-	{ "V", true },
-	{ "c", true },
-	{ "typeof", true },
-	{ "True", true },
-	{ "False", true }
-};
-
-
 // Identifiers mapped to their objects.
-
-int program_vars::line_num = 1;
 
 using program_vars::identify;
 using program_vars::raise_error;
@@ -100,9 +49,8 @@ void program_vars::raise_error(const char *message)
 int main(int argc, char **argv) 
 {
 	for (auto pair : *program_vars::identify) pair.second->identifier = pair.first;
-	
-	if (argc == 1) { print_info(); program = &cin; }
-	else program = new std::ifstream(argv[1]);
+	/*if (argc == 1) { print_info(); program = &cin; }
+	else*/ program = new std::ifstream(/*argv[1]*/"../Examples/NiceTest.al");
 	parse_program();
 }
 

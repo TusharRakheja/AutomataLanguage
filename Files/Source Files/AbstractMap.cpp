@@ -28,7 +28,7 @@ void AbstractMap::parse_holder_value_pairs(string &x, string &parent)
 		start++;
 		for (int i = start; i < x.size(); i++)
 		{
-			if (x[i] == closing_char && level == 0)   // Usually the closing ')' will be the last character in the string, but, just in case.
+			if (x[i] == closing_char && level == 0)   
 			{ 
 				int j = i - 1;
 				while (isspace(x[j])) j--;
@@ -65,6 +65,7 @@ void AbstractMap::parse_holder_value_pairs(string &x, string &parent)
 				value += std::to_string(i);
 				value += "]";
 				holder_value_pairs[holder] = value;
+			//	cout << "{ Holder = " << holder << " : Value = " << value << " }\n";
 			}
 			else
 			{
@@ -160,6 +161,7 @@ shared_ptr<Elem> AbstractMap::operator[](Elem & pre_image)
 	int start = 0;
 	bool in_string = false, in_char = false;
 	vector<string> schemeparts;				// The parts of the criteria without 'elem'
+	
 	for (int i = 0; i < x.size(); i++)
 	{
 		if ((x[i] == '"' && !in_string && !in_char) || (x[i] == '\'' && !in_char && !in_string)
@@ -183,6 +185,7 @@ shared_ptr<Elem> AbstractMap::operator[](Elem & pre_image)
 			{
 				if (!(*program_vars::identify)[candidate_holder]) // and if it's not an identifier, it's a holder.
 				{
+					//cout << x.substr(start, i - start);
 					schemeparts.push_back(x.substr(start, i - start));
 					string &holder = candidate_holder;
 					string holder_value = holder_value_pairs[holder];
@@ -192,20 +195,24 @@ shared_ptr<Elem> AbstractMap::operator[](Elem & pre_image)
 					holder_value.substr(holder_value.find("(x)") + 3);
 
 					ExpressionTree holder_value_expr(holder_value);
+					//cout << holder_value_expr.evaluate()->to_string_eval();
 					schemeparts.push_back(holder_value_expr.evaluate()->to_string_eval());
 
 					start = i = j;
 				}
 				else i = j;
 			}
+			else i = j;
 		}
 	}
+	//cout << x.substr(start, x.size() - start) << endl;
 	schemeparts.push_back(x.substr(start, x.size() - start));
-	
+
 	string to_be_evaluated = "";
 	for (int i = 0; i < schemeparts.size(); i++)
 		to_be_evaluated += schemeparts[i];
-		
+
+	//cout << "Evaluating: " << to_be_evaluated << endl;
 	ExpressionTree eval(to_be_evaluated);
 	shared_ptr<Elem> image = eval.evaluate();
 	if (codomain != nullptr && !codomain->has(*image)) program_vars::raise_error("Mapping unsuccessful. Image not found in domain."); 

@@ -6,7 +6,7 @@ CXX = g++
 SOURCE = Files/Source\ Files/
 HEADER = Files/Header\ Files/
 FLAGS = -std=c++14 -w
-OBJS = Interpreter.o Auto.o ExpressionTree.o Map.o Set.o Tuple.o AbstractMap.o AbstractSet.o
+OBJS = Interpreter.o Auto.o ExpressionTree.o Map.o Set.o Tuple.o AbstractMap.o AbstractSet.o ProgramVars.o
 
 # TARGETS
 
@@ -30,6 +30,9 @@ Map.o : $(SOURCE)Map.cpp $(HEADER)Map.h
 
 Auto.o : $(SOURCE)Auto.cpp $(HEADER)Auto.h
 	$(CXX) -c $(FLAGS) $(SOURCE)Auto.cpp
+
+ProgramVars.o : $(SOURCE)ProgramVars.cpp $(HEADER)ProgramVars.h
+	$(CXX) -c $(FLAGS) $(SOURCE)ProgramVars.cpp
 
 ExpressionTree.o : $(SOURCE)ExpressionTree.cpp $(HEADER)ExpressionTree.h
 	$(CXX) -c $(FLAGS) $(SOURCE)ExpressionTree.cpp
