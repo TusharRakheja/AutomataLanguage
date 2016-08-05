@@ -6,6 +6,7 @@
 #define DUMMYv vector<char>{{}}
 
 #include "Elem.h"
+#include <vector>
 
 namespace program_vars
 {
