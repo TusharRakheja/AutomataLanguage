@@ -1,10 +1,23 @@
 # Autolang &nbsp;[![Build Status](https://travis-ci.org/TusharRakheja/Autolang.svg?branch=master)](https://travis-ci.org/TusharRakheja/Autolang)
+<table>
+<tr>
+ <td> <img src="http://i.imgur.com/hPJTyrh.gif" width=2500 height=600 /> </td>
+ <td> 
+  <p> <b>Autolang</b> is a high-level programming language supporting multiple paradigms, with syntax rooted in mathematical notation. </p> 
+  
+  <p> It supports
+   <ul>
+    <li>Primitive data types (<code>int</code>, <code>char</code>, and <code>logical</code>),</li>
+    <li>Containers (<code>sets</code>, <code>tuples</code>,<code>maps</code> and <code>strings</code>), and</li> 
+    <li>Abstract containers (<code>abstract sets</code>, <code>abstract maps</code>).</li>
+    It has in-built support for automata (<code>auto</code>), which are the inspiration behind the name. 
+   </ul>
+  </p> 
+ </td>
+</tr>
+</table>
 
-![Autolang Interactive.](http://i.imgur.com/hPJTyrh.gif)
 
-**Autolang** is a high-level programming language supporting multiple paradigms, with syntax rooted in mathematical notation.
-
-It supports primitive data types (`int`, `char`, and `logical`), containers (`sets`, `tuples`,`maps`, and `strings`), and abstract containers (`abstract sets`, `abstract maps`). It has in-built support for automata (`auto`), which are the inspiration behind the name. 
 
 ## Building
 
