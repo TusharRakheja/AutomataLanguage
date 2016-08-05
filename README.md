@@ -12,7 +12,13 @@
     <li>Abstract containers (<code>abstract sets</code>, <code>abstract maps</code>).</li>
     It has in-built support for automata (<code>auto</code>), which are the inspiration behind the name. 
    </ul>
-  </p> 
+  </p>
+  <hr>
+  <p align="center">
+   <a href="https://github.com/TusharRakheja/Autolang#building">Build</a> &middot; 
+   <a href="https://github.com/TusharRakheja/Autolang#examples">Try</a> &middot; 
+   <a href="https://github.com/TusharRakheja/Autolang#license">License</a>
+  </p>
  </td>
 </tr>
 </table>
