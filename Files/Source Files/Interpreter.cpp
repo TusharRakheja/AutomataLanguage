@@ -49,8 +49,8 @@ void program_vars::raise_error(const char *message)
 int main(int argc, char **argv) 
 {
 	for (auto pair : *program_vars::identify) pair.second->identifier = pair.first;
-	/*if (argc == 1) { print_info(); program = &cin; }
-	else*/ program = new std::ifstream(/*argv[1]*/"../Examples/NiceTest.al");
+	if (argc == 1) { print_info(); program = &cin; }
+	else program = new std::ifstream(argv[1]);
 	parse_program();
 }
 
