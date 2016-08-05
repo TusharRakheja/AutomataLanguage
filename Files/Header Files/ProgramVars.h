@@ -7,7 +7,7 @@
 #include "Elem.h"
 #include <vector>
 
-vector<char> DUMMYv = { {} };
+std::vector<char> DUMMYv { {} };
 
 namespace program_vars
 {
