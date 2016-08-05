@@ -8,11 +8,8 @@
 
 /* Implementations for the methods in the class Tuple. */
 
-vector<char> op_signs_tup = { // These characters will signify the presence of an operator.
-	'+', '-', '*', '/', '^', '%', '\\', '.', 'U', 'i', '|',
-	'?', 'V', '&', '=', '!', '<', '>', 'o', 'c', 'x', '[', '!'
-}; // Just the first (often the only) characters in the operators. 
-
+using program_vars::DUMMYv;
+using program_vars::op_signs_set;
 
 Tuple::Tuple() : Elem(TUPLE)				// Default constructor, empty tuple.
 {
@@ -33,7 +30,8 @@ Tuple::Tuple(string &x) : Elem(TUPLE)				// Construct a set using a string repre
 	start++;
 	while (isspace(x[start])) start++;		// Once we've found the opening '(', remove the extra space before the first element.
 	int st = start;
-	for (int i : program_vars::findall_at_level_0(x.substr(start), ANY, DUMMYc, vector<char>{{ ',', ')' }}))
+	vector<char> delims{{ ',', ')' }};
+	for (int i : program_vars::findall_at_level_0(x.substr(start), ANY, DUMMYc, delims))
 	{
 		int j = i + st;					// Store the position of the comma.
 		while (isspace(x[j - 1])) j--;			// Work back from there, to get a trimmed representation. 
@@ -47,7 +45,7 @@ Tuple::Tuple(string &x) : Elem(TUPLE)				// Construct a set using a string repre
 	for (auto &rep : elements) // An important thing to remember is that, the elements can still be expressions.
 	{
 		// So first of all, we'll check if the element we're looking at (or rep. thereof) is an expression or not.
-		bool seeing_expr = program_vars::find_at_level_0(rep, ANY, DUMMYc, op_signs_tup);
+		bool seeing_expr = program_vars::find_at_level_0(rep, ANY, DUMMYc, op_signs_set);
 		if (seeing_expr)
 		{
 			ExpressionTree expr(rep);
@@ -73,7 +71,7 @@ Tuple::Tuple(string &x) : Elem(TUPLE)				// Construct a set using a string repre
 					this->elems->push_back(shared_ptr<Elem>{new Set(rep)});
 					continue;
 				}
-				if (program_vars::exists_at_level_0(rep.substr(1), ANY, DUMMYc, op_signs_tup))
+				if (program_vars::exists_at_level_0(rep.substr(1), ANY, DUMMYc, op_signs_set))
 					this->elems->push_back(shared_ptr<Elem>{new Set(rep)});
 				else
 					this->elems->push_back(shared_ptr<Elem>{new AbstractSet(rep)});

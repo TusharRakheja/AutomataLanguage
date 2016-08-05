@@ -163,4 +163,9 @@ vector<int> program_vars::findall_at_level_0(const string & in, bool any, char f
 	return indices;
 }
 
+std::vector<char> program_vars::DUMMYv = { {} };
+std::vector<char> program_vars::op_signs_set = { // These characters will signify the presence of an operator.
+	'+', '-', '*', '/', '^', '%', '\\', '.', 'U', 'i', '|',
+	'?', 'V', '&', '=', '!', '<', '>', 'o', 'c', 'x', '[', '!'
+}; // Just the first (often the only) characters in the operators. 
 int program_vars::line_num = 1;

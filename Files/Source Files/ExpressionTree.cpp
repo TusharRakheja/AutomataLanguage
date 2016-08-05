@@ -1,20 +1,16 @@
 #include "../Header Files/ExpressionTree.h"
-using program_vars::raise_error;
-
-vector<char> * op_signs_set = new vector<char> { // These characters will signify the presence of an operator.
-	'+', '-', '*', '/', '^', '%', '\\', '.', 'U', 'i', '|',
-	'?', 'V', '&', '=', '!', '<', '>', 'o', 'c', 'x', '[', '!'
-}; // Just the first (often the only) characters in the operators. 
 
 //#include <iostream>
 //using std::cout;
 //using std::endl;
 
+using program_vars::raise_error;
+using program_vars::DUMMYv;
+using program_vars::op_signs_set;
+
+
+
 /* Implementations for methods in the classes Token, Node, and ExpressionTree. */
-
-// ----------------------------------------------------<HELPER METHODS>----------------------------------------//
-
-// ---------------------------------------------------</HELPER METHODS>----------------------------------------//
 
 // -----------------------------------------------------<CLASS TOKEN>------------------------------------------//
 
@@ -1829,7 +1825,7 @@ Token ExpressionTree::get_next_token()				// The limited lexical analyzer to par
 		if (empty)		
 			return{ rep, { LITERAL, SET_LIT } };
 		
-		if (program_vars::exists_at_level_0(rep.substr(1, pipe_pos), ANY, DUMMYc, *op_signs_set))
+		if (program_vars::exists_at_level_0(rep.substr(1, pipe_pos), ANY, DUMMYc, op_signs_set))
 		{
 			return{ rep, { LITERAL, SET_LIT } };
 		}

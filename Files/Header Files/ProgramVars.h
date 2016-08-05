@@ -7,8 +7,6 @@
 #include "Elem.h"
 #include <vector>
 
-std::vector<char> DUMMYv { {} };
-
 namespace program_vars
 {
 	extern unordered_map<string, shared_ptr<Elem>> * identify; // Stores the objects against their identifiers.
@@ -18,6 +16,8 @@ namespace program_vars
 	extern int find_at_level_0(const string &, bool, char, std::vector<char> &);
 	extern bool exists_at_level_0(const string &, bool, char, std::vector<char> &);
 	extern std::vector<int> findall_at_level_0(const string &, bool, char, std::vector<char> &);
+	extern std::vector<char> DUMMYv;
+	extern std::vector<char> op_signs_set;
 }
 
 #endif

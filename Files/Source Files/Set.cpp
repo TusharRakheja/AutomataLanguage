@@ -7,11 +7,8 @@
 
 /* Implementations for methods in the class Set. */
 
-vector<char> op_signs_set = { // These characters will signify the presence of an operator.
-	'+', '-', '*', '/', '^', '%', '\\', '.', 'U', 'i', '|',
-	'?', 'V', '&', '=', '!', '<', '>', 'o', 'c', 'x', '[', '!'
-}; // Just the first (often the only) characters in the operators. 
-
+using program_vars::DUMMYv;
+using program_vars::op_signs_set;
 
 Set::Set() : Elem(SET)								// Default constructor.
 {
@@ -37,7 +34,8 @@ Set::Set(string &x) : Elem(SET)					// Construct a set using a string representa
 	start++;
 	while (isspace(x[start])) start++;		// Once we've found the opening brace, remove the extra space before the first element.
 	int st = start;
-	for (int i : program_vars::findall_at_level_0(x.substr(start), ANY, DUMMYc, vector<char>{{ ',', '}' }}))
+	vector<char> delims{{ ',', '}' }};
+	for (int i : program_vars::findall_at_level_0(x.substr(start), ANY, DUMMYc, delims))
 	{
 		int j = i + st;					// Store the position of the comma.
 		while (isspace(x[j - 1])) j--;			// Work back from there, to get a trimmed representation. 
