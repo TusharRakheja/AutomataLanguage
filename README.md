@@ -795,24 +795,34 @@ As a demonstration of Autolang's functional capabilities, I've implemented two h
 {1, 4, 9, 16}
 ```
 
-Their implementation has been left as an ... nah, I wouldn't do that. I hate it. Really. *"**No**, I don't need **you** to tell me what IS and what isn't an exercise for me, you condescending narcissist. Fuck you!"*
+Their implementation has been left as an ... nah, I wouldn't do that. I hate it. Really. _"**No**, I don't need **you** to tell me what IS and what isn't an exercise for me, you condescending narcissist. Fuck you!"_
 
 ```perl
 >>> under apply : (am, s) -> (|s| == 1) ? { am[s[0]] } : ({ am[s[0]] } U apply[(am, s[(1, |s|)])])
-
 >>> under fold : (am, s) -> (|s| == 1) ? (s[0]) : (am[(s[0], fold[(am, s[(1, |s|)])])])
 ```
 
-They do come built-in with the interpreter though, so you won't need to write them again.
+They do come built-in with the interpreter though, so you won't need to write them again. Another criteria for higher-order functions is sometimes said to be that they return a function. That's not a problem, since that can be done. 
+
+```perl
+>>> declare abstract map binop
+>>> under binop : name -> (name == "mult") ? mult : ::(a, b) -> a + b:: 
+>>> print binop["mult"][(3, 3)]
+9
+>>> print binop["dflt"][(3, 3)]      # A lambda expression can be returned as well.
+6
+```
 
 #### c) Pure Functions
 
 This one is more subtle and kind of indirect. It is *possible* to write purely pure functions (maps) in Autolang, if you:
 
-1. *Only use literals or immutables (copies) with the domain and codomain.* 
+1. *Only use literals or immutable copies with the domain and codomain.* 
+
    This means writing ```f : {1, 2} -> {3, 4}``` or `.A -> .B` over `A -> B`. This way, the domain and codomain of `f` will be unaffected by any changes that happen to A or B over the course of the program, or
 
-2. *Never use the **`let`** and **`get`** keywords with the identifiers associated with these maps (and if the identifier is a map, no **`under`** either).*
+2. _Never use the **`let`** and **`get`** keywords with the identifiers associated with these maps (and if the identifier is a map, no **`under`** either)._
+
    Writing `s -> s U .A` in place of `s -> s U A` would be ineffective in ensuring the same result for the same `s`, since it will simply make a deep copy of whatever A is at the time of the call, not at the time of definition.
 
 As such, Autolang makes a distinction between 'operators' and 'updaters'. Operators by themselves cannot change data, only create it. The operands are not affected, so an operator applied to the same operands will always give the same result. By extension, a map using only operators will always give the same result with the same arguments (***referential transparency***). To fully realize this, though, the two conditions above must be met. 
@@ -851,15 +861,15 @@ Autolang is imperfect. The parser is brittle, there are memory leaks etc. But pe
 
  * [ ] Lexical scoping.
  
+ * [ ] Casting.
+ 
  * [ ] Support for graphics, modularity etc.
  
 ### Completed
 
- * [x] Abstract Maps.
- 
+ * [x] Abstract Maps 
+
  * [x] Abstract Sets.
- 
- * [x] Lambda Expressions.
  
  * [x] Automatic memory management.
 
