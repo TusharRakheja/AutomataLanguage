@@ -795,7 +795,9 @@ As a demonstration of Autolang's functional capabilities, I've implemented two h
 {1, 4, 9, 16}
 ```
 
-Their implementation has been left as an ... nah, I wouldn't do that. I hate it. Really. _"**No**, I don't need **you** to tell me what IS and what isn't an exercise for me, you condescending narcissist. Fuck you!"_
+Their implementation has been left as an ... nah, I wouldn't do that. I hate it. Really. 
+
+> _"**No**, I don't need **you** to tell me what IS and what isn't an exercise for me, you condescending narcissist. Fuck you!"_ <br> <br> <p align="right"> *-Rex, to every cocky mathematician in the world.*</p>
 
 ```perl
 >>> under apply : (am, s) -> (|s| == 1) ? { am[s[0]] } : ({ am[s[0]] } U apply[(am, s[(1, |s|)])])
