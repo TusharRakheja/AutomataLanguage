@@ -1,10 +1,27 @@
 # Autolang &nbsp;[![Build Status](https://travis-ci.org/TusharRakheja/Autolang.svg?branch=master)](https://travis-ci.org/TusharRakheja/Autolang)
-
-![Autolang Interactive.](http://i.imgur.com/hPJTyrh.gif)
-
-**Autolang** is a high-level programming language supporting multiple paradigms, with syntax rooted in mathematical notation.
-
-It supports primitive data types (`int`, `char`, and `logical`), containers (`sets`, `tuples`,`maps`, and `strings`), and abstract containers (`abstract sets`, `abstract maps`). It has in-built support for automata (`auto`), which are the inspiration behind the name. 
+<table>
+<tr>
+ <td> <img src="http://i.imgur.com/hPJTyrh.gif" width=2500 height=600 /> </td>
+ <td> 
+  <p> <b>Autolang</b> is a high-level programming language supporting multiple paradigms, with syntax rooted in mathematical notation. </p> 
+  
+  <p> It supports
+   <ul>
+    <li>Primitive data types (<code>int</code>, <code>char</code>, and <code>logical</code>),</li>
+    <li>Containers (<code>sets</code>, <code>tuples</code>,<code>maps</code> and <code>strings</code>), and</li> 
+    <li>Abstract containers (<code>abstract sets</code>, <code>abstract maps</code>).</li>
+    It has in-built support for automata (<code>auto</code>), which are the inspiration behind the name. 
+   </ul>
+  </p>
+  <hr>
+  <p align="center">
+   <a href="https://github.com/TusharRakheja/Autolang#building">Build</a> &middot; 
+   <a href="https://github.com/TusharRakheja/Autolang#examples">Try</a> &middot; 
+   <a href="https://github.com/TusharRakheja/Autolang#license">License</a>
+  </p>
+ </td>
+</tr>
+</table>
 
 ## Building
 
@@ -45,16 +62,20 @@ The real joy of Autolang is its very math-oriented syntax. Here are some cool ex
    * [Maps](https://github.com/TusharRakheja/Autolang#d-maps)
  * [Abstract Containers](https://github.com/TusharRakheja/Autolang#3-abstract-containers)
    * [Abstract Sets](https://github.com/TusharRakheja/Autolang#a-abstract-sets)
-   * [Abstract Maps (&lambda;)](https://github.com/TusharRakheja/Autolang#b-abstract-maps-λ)
+   * [Abstract Maps](https://github.com/TusharRakheja/Autolang#b-abstract-maps)
  * [Automata](https://github.com/TusharRakheja/Autolang#4-automata)
    * [DFA](https://github.com/TusharRakheja/Autolang#a-dfa)
  * [Sources and Sinks (I/O)](https://github.com/TusharRakheja/Autolang#5-sources-and-sinks-inputoutput)
    * [Files](https://github.com/TusharRakheja/Autolang#a-files)
    * [Console](https://github.com/TusharRakheja/Autolang#b-console)
    * [Strings as Sources](https://github.com/TusharRakheja/Autolang#c-strings-as-sources)
- * [Data is Code](https://github.com/TusharRakheja/Autolang#6-data-is-code)
- * [Loops and Conditionals](https://github.com/TusharRakheja/Autolang#7-loops-and-conditionals)
- * [Notes](https://github.com/TusharRakheja/Autolang#8-notes)
+ * [Data as Code](https://github.com/TusharRakheja/Autolang#6-data-as-code)
+ * [Functional Concepts](https://github.com/TusharRakheja/Autolang#7-functional-concepts)
+   * [&lambda; Expressions](https://github.com/TusharRakheja/Autolang#a-λ-expressions) 
+   * [Higher-order Functions](https://github.com/TusharRakheja/Autolang#b-higher-order-functions)
+   * [Pure Functions](https://github.com/TusharRakheja/Autolang#c-pure-functions)
+ * [Loops and Conditionals](https://github.com/TusharRakheja/Autolang#8-loops-and-conditionals)
+ * [Notes](https://github.com/TusharRakheja/Autolang#9-notes)
  
 ### 1. Primitives
 
@@ -88,6 +109,8 @@ Here is a brief list of examples illustrating operators and updaters that work w
 >>> let i += 2                                       # A simple update. One could similarly use -=, *=, ^= etc.
 >>> print (i % 2) == 0                               # All comparative operators are supported (<, >, <= etc).
 True
+>>> print |14| + |-13|                               # |n| is the modulus of n. Use |(n)| for an expression.
+27
 ```
 #### b) Characters
 
@@ -108,8 +131,11 @@ True
 '\}'
 ```
 **Operations and Updates**
-
-_(refer to section [`Operations and Updates`](https://github.com/TusharRakheja/Autolang/blob/master/README.md#a-integers) under Integers)_
+```perl
+>>> print |'a'|                                       # For characters, '|' prints the ASCII value.
+97
+```
+_(For more, refer to section [`Operations and Updates`](https://github.com/TusharRakheja/Autolang/blob/master/README.md#a-integers) under Integers)_
 
 #### c) Logicals
 
@@ -169,6 +195,7 @@ The key data structure in Autolang is a  **set** - a (possibly heterogeneous) co
 {27, J, 1996, {}}
 >>> printr easter                                 # The printr command recursively prints the raw version of the elements. 
 {27, 'J', 1996, {}}
+>>> print exprset = { 1 + 2, 3 + 4 }              # The elements of a set can be expressions as well.
 ```
 
 **Basic Operations**
@@ -184,16 +211,16 @@ The key data structure in Autolang is a  **set** - a (possibly heterogeneous) co
 **Advanced Operations** 
 
 ```perl
->>> set A = {1, 2, 3} x {'A', 'B'}                 # Cartesian Product. The result is a set of tuples.                              
+>>> set A = {1, 2, 3} x {'A', 'B'}                # Cartesian Product. The result is a set of tuples.                              
 >>> print A                          
 {(1, A), (1, B), (2, A), (2, B), (3, A), (3, B)} 
->>> print |A|                                      # Print the cardinality of set A (an integer).
+>>> print |A|                                     # Print the cardinality of set A (an integer).
 6
 ```
 
 **Subset Query**
 ```perl
->>> print {(1, 'B')} c A                           # Is this set a subset of A?
+>>> print {(1, 'B')} c A                          # Is this set a subset of A?
 True
 ```
 **Access Query**
@@ -201,16 +228,16 @@ True
 In addition to the standard set operations, it is possible to access a member of a set at a specific position, using the **`[]`** operator (may also be used with *tuples*).
 
 ```perl
->>> print A[1]                                      # Access the element of A at index 1.
+>>> print A[1]                                    # Access the element of A at index 1.
 {(1, B)}
->>> print A[(1, 3)]                                 # Access the subset of A between [1, 3).
+>>> print A[(1, 3)]                               # Access the subset of A between [1, 3).
 {(1, B), (2, A)}
 ```
 An element of a set accessed via the **`[]`** operator can be used exactly like you'd expect. For instance:
 
 ```perl
->>> set A = {{1, 2}, {3, 4}}                        # A set of sets. 
->>> let A[1] \= {4}                                 # Directly update the set at index 1 of A.
+>>> set A = {{1, 2}, {3, 4}}                      # A set of sets. 
+>>> let A[1] \= {4}                               # Directly update the set at index 1 of A.
 >>> print A
 {{1, 2}, {3}}
 ```
@@ -316,6 +343,17 @@ True
 
 A thing to keep in mind is that the **`[]`** operator for strings follows _value semantics_, unlike in the case of sets and tuples. It does not return references to characters of the string, but instead, returns new copies of those characters.  
 
+**Typeof operator**
+
+**`typeof`** is a unary operator that takes in an expression, and return a string denoting it's type. 
+
+```perl
+>>> print typeof 1
+int
+>>> printr typeof (True V False)
+"logical"
+```
+
 #### d) Maps
 
 Containers that store mappings between two sets of elements are called **maps**. Their syntax is inspired by the mathematical definition of a function.
@@ -377,21 +415,49 @@ Maps have many uses. For instance, they can be used to implement **associative a
 
 Autolang has two abstract containers, **sets** and **maps**. Abstract containers are preceded by the **`abstract`** keyword during declaration/initialization.
 
-#### a) Abstract Sets
-One very powerful concept Autolang supports is that of an **abstract set**. Unlike a normal set, an abstract set does not have fixed members, but rather, a membership criteria. 
 
-The criteria is supposed to be a logical expression, which is evaluated for every query on the set when needed. One must use the **`elem`** keyword as a placeholder for the incoming query. 
+#### a) Abstract Sets
+
+One very powerful concept Autolang supports is that of an **abstract set**. Unlike a normal set, an abstract set does not have fixed members, but rather, an *input format* and a  *membership criteria*. 
+
+The input format describes the structure of a generic element in/query on the set. The membership criteria is supposed to be a logical expression, which is evaluated for every query on the set when needed.  
 
 **Basic Syntax**
 
-If you get creative, there's a lot that suddenly became possible. For instance.
+For example, let us say we want to make an abstract set that contains sets that:
+1. Have strictly two elements, and
+2. The product of the two elements is even.
+
+```perl
+>>> declare abstract set EvenP                       # Abstract sets are declared just like normal sets, but with the abstract keyword.
+>>> let EvenP = { {a, b} | ((a * b) % 2) == 0 }      # This is an abstract set literal.
+>>> print {1, 2} in EvenP
+True
+>>> print {1, 3} in EvenP
+False
+>>> print EvenP
+{ {a, b} | ((a * b) % 2) == 0 }
+```
+
+The input format can be arbitrarily complex or deep, but must not contain any operators. Also, a placeholder will override an identifier if they have the same name.
+
+```
+>>> int l = 4000
+>>> abstract set Test = { l | l < 2000 }
+>>> print 3 in Test                                  # The local placeholder 'l' will override the int 'l'.
+True
+```
+
+The format is also strictly binding, in that the program will raise an error (or sometimes, crash! _*_*gasp*_*_) if the input doesn't match. 
+
+If you get creative, there's a lot that suddenly became possible with abstract sets. For instance.
 
 ```perl
 >>> set A = {1, 2, 3} 		                         # Autolang also supports the notion of 'abstract' sets.
 >>> abstract set PowA = { elem | elem c A }          # Define the PowA as the power set of A.
->>> print ({1, 3} in PowA)
+>>> print {1, 3} in PowA
 True
->>> print ({1, 4} in PowA)
+>>> print {1, 4} in PowA
 False
 ```
 
@@ -400,9 +466,7 @@ False
 Most set operations will also work with abstract sets, except the **`[]`** operator (since an abstract set can be potentially uncountably infinite in size). However, an operation between an abstract set and a normal set is __not__ possible (for now), except a subset operation (which, (un)interestingly, cannot be performed on two abstract sets).
 
 ```perl
->>> declare abstract set Inter
->>> abstract set EvenP = { elem | (((elem[0]) * (elem[1])) % 2) == 0 } 
->>> let Inter = PowA & EvenP
+>>> abstract set Inter = PowA & EvenP               # Take the intersection of two abstract sets.
 >>> print {1, 2} in Inter
 True
 >>> print {1, 3} in Inter
@@ -413,37 +477,69 @@ True
 
 Of course, one can make new abstract sets by taking unions, exclusions, and cartesian products of two abstract sets as well, as well as perform the corresponding updates.
 
-#### b) Abstract Maps (&lambda;)
+The operand sets can have the same placeholders too, Autolang takes care of that by modifying the placeholders.
 
-Autolang supports a certain *flavor* of lambda expressions in the form of **abstract maps**.
+**Some built-in abstract sets**
+
+If you take the keyword representing a data type and capitalize the first letter (ASet and AMap for abstract sets and maps resepectively), you get an abstract set containing all objects with that data type. The `All` abstract set will return `True` for every membership query. These are useful for restricting the domains and codomains/ranges of [abstract maps](https://github.com/TusharRakheja/Autolang#b-abstract-maps).
+
+**Interesting**: The abstract set `ASet` is an abstract set containing all abstract sets. So, it contains itself!
+
+```perl
+>>> print ASet in ASet 
+True
+```
+
+We have established that certain objects can contain themselves. So what if we define a set as follows:
+
+```perl
+>>> abstract set S = { obj | ! (obj in obj) }  
+```
+
+`S` contains all objects that do not contain themselves. So, `ASet` would not be in `S`. But, 
+is `S` in `S`? Turns out, `S in S` ↔  `! (S in S)`.
+
+This is called [Russell's Paradox](https://en.wikipedia.org/wiki/Russell%27s_paradox), and the expression `S in S` results in a stack overflow in Autolang.
+
+#### b) Abstract Maps
+
+Just like abstract sets,  **abstract maps** do not store mappings, but rather, have an input format and a mapping scheme, which generate the image for an incoming pre-image query. 
 
 **Basic Syntax**
 
+
 ```perl
->>> declare abstract map fact                       # An abstract map to compute the factorial.
->>> under fact : x -> ((x) == 0) ? (1) : ((x) * fact[(x) - 1])
+>>> declare abstract map add                         # Abstract maps can be declared the same way as normal maps, with the 'abstract' keyword.
+>>> under add : (a, b) -> a + b                      # Take in a tuple of two objects, add them up.
+>>> print add[(1, 2)]
+3
+>>> print add[("A", "B")]
+AB
+```
+
+The mapping scheme can include a recursive call to the map itself.
+
+```perl
+>>> abstract map fact : Int -> Int                   # The domain and codomain of abstract maps have to be abstract sets.
+>>> under fact : n -> (n < 2) ? 1 : (n * fact[n - 1])
 >>> print fact[5]
 120
 ```
 
-We used a *conditional operator* **`?`** in the `fact` map, which is the only ternary operator in Autolang. Abstract maps can be composed too, but for now, they don't have domains and codomains restricting their input, so any composition between two abstract maps is possible. However, a composition between an abstract and a normal map is not possible (again, for now).
-
-Again, like abstract sets, abstract maps work by replacing a certain keyword with the value of the query. This *keyword*, which is more like a key-expression, is in the mapping scheme (the part to the right of the mapping operator `->`), exclusively represented by **`(x)`**. This combination of these characters, **`(x)`**, does not occur in Autolang anywhere else.
+We used a *conditional operator* **`?:`** in the `fact` map, which is the only ternary operator in Autolang. Abstract maps can be composed with the **`o`** operator and the **`o=`** updater too, but since the subset operation cannot be performed on their domains and codomains, any composition between two abstract maps is possible. However, a composition between an abstract and a normal map is not possible (for now).
 
 It's a good time to remember that a abstract maps are also objects, just like regular maps, and hence can be part of sets and tuples. 
 
 **Operations and Updates**
 
 ```perl
->>> declare abstract map square
->>> declare abstract map octa
+>>> declare abstract map square                        # If the domain and range are nnot specified, no restriction on input/output.
+>>> declare abstract map octa                          # Semantically equivalent to `abstract map octa : All -> All`.
 >>> set pmaps = { square, octa }                       # Make a set of abstract maps.
->>> under pmaps[0] : x -> (x) ^ 2                      # Assign a mapping scheme to pmaps[0], which is the map `square`.
->>> print (pmaps[0])[3]                                # Print the square of 3.
+>>> under pmaps[0] : n -> n ^ 2                        # Assign a mapping scheme to pmaps[0], which is the map `square`.
+>>> print pmaps[0][3]                                  # Print the square of 3.
 9
->>> let pmaps[1] = (pmaps[0]) ^ 3                      # Let the map `octa` be the cube of the map `square`.
->>> print octa                                         # Abstract maps can be printed.
-x -> (((x) ^ 2) ^ 2) ^ 2 
+>>> let pmaps[1] = pmaps[0] ^ 3                        # Let the map `octa` be the cube of the map `square`.
 >>> print octa[2]                                      # Query the abstract map.
 256
 ```
@@ -628,17 +724,17 @@ Strings are not sources (no mutual **`=`** updates possible), but they can be us
 False
 ```
 
-### 6. Data is Code
+### 6. Data as Code
 
 Some entities in Autolang have a way to internally call Autolang's expression parser. You guessed it, Abstract Sets and Abstract Maps. Along with sourcing, this allows us to create abstract maps and sets at runtime. 
 
 Let us say a file **`unpack.txt`** has this data.
 ```
 # unpack : Unpacks tuples of the form (a, (b, c)) into (a, b, c).
-x -> ((x)[0], ((x)[1])[0], ((x)[1])[1]);
+(e, (f, g)) -> (e, f, g);
 
 # unpackall : From a set of tuples of the form (a, (b, c)), return a set of (a, b, c).
-x -> (|((x))| == 1) ? { unpack[((x))[0]] } : ({ unpack[((x))[0]] } U (unpackall[((x))[(1, |((x))|)]);
+s -> (|s| == 1) ? { unpack[s[0]] } : ({ unpack[s[0]] } U unpackall[s[(1, |s|)]]);
 ```
 
 Clearly, the file contains mapping schemes for abstract maps. We can use these to make maps in Autolang. Here's how.
@@ -649,6 +745,7 @@ Clearly, the file contains mapping schemes for abstract maps. We can use these t
 >>> let maps[1] = ';'                            # Now it's time to read a scheme.
 >>> abstract map unpack <- maps                  # Make an abstract map using the scheme.
 >>> let maps[1] = '\n'                           # Time to read more junk.
+>>> get junk <- maps                             # Eat the '\n' after the previous ';'
 >>> get junk <- maps                             # Eat the blank line.
 >>> get junk <- maps                             # Eat the comment.
 >>> let maps[1] = ';'                            # Time to read another scheme.
@@ -661,12 +758,84 @@ Clearly, the file contains mapping schemes for abstract maps. We can use these t
 
 **Interesting**: Of course, the source can be **`console`** too! Which means, effectively, a client running an Autolang program can also write parts of the program, at run-time.
 
+### 7. Functional Concepts
 
-### 7. Loops and Conditionals
+Though Autolang is not pure functional language, it does support a variety of functional concepts.
+
+#### a) λ Expressions
+
+Lambda expressions (λs) in Autolang are denoted with the **`::`** symbol. Their syntax comprises of an input format and a mapping scheme, just like an abstract map. In fact, internally, they are treated like abstract map 'literals', if you will. 
+
+```perl
+>>> print :: (a, b) -> a + b ::[(9, 9)]        
+18
+```
+
+Using the **`let`** operator, we can bind λs to existing abstract map identifiers.
+
+```perl
+>>> declare abstract map add
+>>> let add = :: (a, b) -> a + b ::
+>>> print add[("Brooklyn", " Nine-Nine")]             .
+>>> Brooklyn Nine-Nine
+```
+
+#### b) Higher-order Functions 
+
+Higher-order functions are functions that can take one or more functions as arguments.
+
+As a demonstration of Autolang's functional capabilities, I've implemented two higher-order functions typically found in functional languages, namely **map** (as **`apply`**), and **reduce** (as **`fold`**). **`apply`** takes a map and applies it to every member of a set, and **`fold`** takes a binary operator-map and 'folds' or 'reduces' all the set members under that operator. 
+
+```perl
+>>> print fold[(add, {1, 2, 3, 4})]               # computes 1 + 2 + 3 + 4.
+10
+>>> print fold[(mult, {1, 2, 3, 4})]              # computes 1 * 2 * 3 * 4.
+24
+>>> print apply[(:: n -> n ^ 2 ::, {1, 2, 3, 4})] # A λ in place of a map will do just fine. 
+{1, 4, 9, 16}
+```
+
+Their implementation has been left as an ... nah, I wouldn't do that. I hate it. Really. _"**No**, I don't need **you** to tell me what IS and what isn't an exercise for me, you condescending narcissist. Fuck you!"_
+
+```perl
+>>> under apply : (am, s) -> (|s| == 1) ? { am[s[0]] } : ({ am[s[0]] } U apply[(am, s[(1, |s|)])])
+>>> under fold : (am, s) -> (|s| == 1) ? (s[0]) : (am[(s[0], fold[(am, s[(1, |s|)])])])
+```
+
+They do come built-in with the interpreter though, so you won't need to write them again. Another criteria for higher-order functions is sometimes said to be that they return a function. That's not a problem, since that can be done. 
+
+```perl
+>>> declare abstract map binop
+>>> under binop : name -> (name == "mult") ? mult : ::(a, b) -> a + b:: 
+>>> print binop["mult"][(3, 3)]
+9
+>>> print binop["dflt"][(3, 3)]      # A lambda expression can be returned as well.
+6
+```
+
+#### c) Pure Functions
+
+This one is more subtle and kind of indirect. It is *possible* to write purely pure functions (maps) in Autolang, if you:
+
+1. *Only use literals or immutable copies with the domain and codomain.* 
+
+   This means writing ```f : {1, 2} -> {3, 4}``` or `.A -> .B` over `A -> B`. This way, the domain and codomain of `f` will be unaffected by any changes that happen to A or B over the course of the program, or
+
+2. _Never use the **`let`** and **`get`** keywords with the identifiers associated with these maps (and if the identifier is a map, no **`under`** either)._
+
+   Writing `s -> s U .A` in place of `s -> s U A` would be ineffective in ensuring the same result for the same `s`, since it will simply make a deep copy of whatever A is at the time of the call, not at the time of definition.
+
+As such, Autolang makes a distinction between 'operators' and 'updaters'. Operators by themselves cannot change data, only create it. The operands are not affected, so an operator applied to the same operands will always give the same result. By extension, a map using only operators will always give the same result with the same arguments (***referential transparency***). To fully realize this, though, the two conditions above must be met. 
+
+In fact, as such, all maps and abstract maps *are* half-pure by nature, in that they have ***no side-effects***. What I mean by that is, the computation of a mapping operation, *can never* change any data by itself. Because updaters (`=, +=, <-` etc) are *not allowed* in a mapping scheme. They must, invariably, occur with the **`let`** or **`get`** keyword, if they are to change data (`=` and `<-` can occur with initializations too, but they aren't changing data then. They are creating it).
+
+So, as long as the two conditions stated above are met, the map will be **pure**. It will be referentially transparent, and have no side-effects. 
+
+### 8. Loops and Conditionals
 
 To see an example of how the while loop (the only looping construct in the language, right now) and the if statements work, check `Examples/Example7.al` out. A language specification is coming soon.
 
-### 8. Notes
+### 9. Notes
 
 The while loop doesn't work in interactive mode.
 
@@ -684,7 +853,7 @@ More generally, a thing to keep in mind is that though Autolang tries to approxi
 
 Depending on your moral values and whether or not you believe there is any justice in the world, this may or may not have been what you expected. But for now, this is the result. 
 
-We can adjust this particular result using the `unpack` map mentioned in [*`Data is Code`*](https://github.com/TusharRakheja/Autolang#6-data-is-code). Likewise, we may have to come up with such 'hacks' every now and then.
+We can adjust this particular result using the `unpack` map mentioned in [*`Data as Code`*](https://github.com/TusharRakheja/Autolang#6-data-as-code). Likewise, we may have to come up with such 'hacks' every now and then.
 
 Autolang is imperfect. The parser is brittle, there are memory leaks etc. But perfection is the goal. And perfection, is a journey unto itself.
 
@@ -698,7 +867,7 @@ Autolang is imperfect. The parser is brittle, there are memory leaks etc. But pe
  
 ### Completed
 
- * [x] Abstract Maps (&lambda;).
+ * [x] Abstract Maps 
 
  * [x] Abstract Sets.
  
