@@ -1,9 +1,9 @@
 #include "../Header Files/Set.h"
 #include "../Header Files/ExpressionTree.h"
 
-//#include <iostream>
-//using std::cout;
-//using std::endl;
+#include <iostream>
+using std::cout;
+using std::endl;
 
 /* Implementations for methods in the class Set. */
 
@@ -39,14 +39,14 @@ Set::Set(string &x) : Elem(SET)					// Construct a set using a string representa
 	{
 		int j = i + st;					// Store the position of the comma.
 		while (isspace(x[j - 1])) j--;			// Work back from there, to get a trimmed representation. 
-		if (x.substr(start, j - start) != "")		// If the trimmed representation isn't empty.
-			elements.push_back(x.substr(start, j - start));	// Push it to the vector of representations
+		string elem = x.substr(start, j - start);
+		if (!elem.empty())				// If the trimmed representation isn't empty.
+			elements.push_back(elem);		// Push it to the vector of representations
 		if (x[i + st] == ')') break;
 		start = i + st + 1;				// The next element's representation will usually start from i + 1.
 		while (isspace(x[start])) start++;		// But it may not, in case of extra spaces.
 		if (x[start] == ')') break;
 	}
-
 	for (auto &rep : elements) // An important thing to remember is that, the elements can still be expressions.
 	{	
 		bool seeing_expr = program_vars::find_at_level_0(rep, ANY, DUMMYc, op_signs_set);

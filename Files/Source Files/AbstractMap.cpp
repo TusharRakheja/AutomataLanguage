@@ -2,20 +2,21 @@
 #include "../Header Files/ExpressionTree.h"
 #include "../Header Files/ProgramVars.h"
 
-//#include <iostream>
-//using std::cout;
-//using std::endl;
+#include <iostream>
+using std::cout;
+using std::endl;
 
 /* Implementations for methods in AbstractMap. */
 
 void AbstractMap::parse_holder_value_pairs(string &x, string &parent)
 {
-	if (x.find("(") == string::npos)			    // Only a single holder provided (eg n -> <expr>)
+	if (x.find("(") == string::npos && x.find("{") == string::npos)     // Only a single holder provided (eg n -> <expr>)
 	{
 		int start = 0, end = x.size() - 1;
 		while (isspace(x[start])) start++;
 		while (isspace(x[end])) end--;
 		holder_value_pairs[x.substr(start, end - start + 1)] = "(x)";
+		//cout << "{ Holder = " << x.substr(start, end - start + 1) << " : Value = " << "(x)" << " }\n";
 	}
 	else
 	{
@@ -65,7 +66,7 @@ void AbstractMap::parse_holder_value_pairs(string &x, string &parent)
 				value += std::to_string(i);
 				value += "]";
 				holder_value_pairs[holder] = value;
-			//	cout << "{ Holder = " << holder << " : Value = " << value << " }\n";
+				//cout << "{ Holder = " << holder << " : Value = " << value << " }\n";
 			}
 			else
 			{
@@ -85,7 +86,7 @@ AbstractMap::AbstractMap(string &format_and_scheme) : Elem(ABSTRACT_MAP)
 	this->codomain = nullptr;
 	int start = 0;
 	input_format = format_and_scheme.substr(0, format_and_scheme.find("->"));
-	mapping_scheme = format_and_scheme.substr(format_and_scheme.find("->") + 2); 
+	mapping_scheme = format_and_scheme.substr(format_and_scheme.find("->") + 2);
 	string first_parent = "(x)";
 	parse_holder_value_pairs(input_format, first_parent);
 }
@@ -149,7 +150,6 @@ shared_ptr<AbstractMap> AbstractMap::composed_with(shared_ptr<AbstractMap> g)	//
 	fog->mapping_scheme = this->mapping_scheme;
 	fog->domain = g->domain;
 	fog->codomain = this->codomain;
-	// IMPORTANT: Maps are never constructed nameless. Every map WILL be given an identifier.
 	return fog;
 }
 
@@ -161,7 +161,7 @@ shared_ptr<Elem> AbstractMap::operator[](Elem & pre_image)
 	int start = 0;
 	bool in_string = false, in_char = false;
 	vector<string> schemeparts;				// The parts of the criteria without 'elem'
-	
+
 	for (int i = 0; i < x.size(); i++)
 	{
 		if ((x[i] == '"' && !in_string && !in_char) || (x[i] == '\'' && !in_char && !in_string)
@@ -183,11 +183,11 @@ shared_ptr<Elem> AbstractMap::operator[](Elem & pre_image)
 			string candidate_holder = x.substr(i, j - i);
 			if (!(*program_vars::keyword_ops)[candidate_holder]) // If this is not an operator or keyword.
 			{
-				if (!(*program_vars::identify)[candidate_holder]) // and if it's not an identifier, it's a holder.
+				//cout << x.substr(start, i - start);
+				string &holder = candidate_holder;
+				if (!holder_value_pairs[holder].empty())     // If it is empty, it'll be an identifier.
 				{
-					//cout << x.substr(start, i - start);
 					schemeparts.push_back(x.substr(start, i - start));
-					string &holder = candidate_holder;
 					string holder_value = holder_value_pairs[holder];
 
 					holder_value = holder_value.substr(0, holder_value.find("(x)")) + 

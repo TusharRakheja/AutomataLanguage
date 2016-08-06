@@ -38,16 +38,12 @@ void update_unpack_criteria(const string & criteria1, const string & criteria2, 
 				string candidate_holder = x.substr(i, j - i);
 				if (!(*program_vars::keyword_ops)[candidate_holder]) // If this is not an operator or keyword.
 				{
-					if (!(*program_vars::identify)[candidate_holder]) // and if it's not an identifier, it's a holder.
-					{
-						//cout << x.substr(start, i - start);
- 						criteria->push_back(x.substr(start, i - start));
-						string updated_holder = candidate_holder + std::to_string(extension + 1);
-						//cout << updated_holder;
-						criteria->push_back(updated_holder);
-						start = i = j;
-					}
-					else i = j;
+					//cout << x.substr(start, i - start);
+ 					criteria->push_back(x.substr(start, i - start));
+					string updated_holder = candidate_holder + std::to_string(extension + 1);
+					//cout << updated_holder;
+					criteria->push_back(updated_holder);
+					start = i = j;
 				}
 				else i = j;
 			}
@@ -60,12 +56,13 @@ void update_unpack_criteria(const string & criteria1, const string & criteria2, 
 
 void AbstractSet::parse_holder_value_pairs(string &x, string &parent)
 {
-	if (x.find("(") == string::npos)			    // Only a single holder provided (eg n -> <expr>)
+	if (x.find("(") == string::npos && x.find("{") == string::npos)    // Only a single holder provided (eg n -> <expr>)
 	{
 		int start = 0, end = x.size() - 1;
 		while (isspace(x[start])) start++;
 		while (isspace(x[end])) end--;
 		holder_value_pairs[x.substr(start, end - start + 1)] = "(x)";
+		//cout << "{ Holder = " << x.substr(start, end - start + 1) << " : Value = " << "(x)" << " }\n";
 	}
 	else
 	{
@@ -245,6 +242,25 @@ shared_ptr<AbstractSet> AbstractSet::exclusion(AbstractSet &exclude)	// Returns 
 	return exclusive;
 }
 
+void AbstractSet::add_criteria(string &setbuilder)
+{
+	int start = setbuilder.find("{") + 1, end = setbuilder.find("|") - 1;
+	while (isspace(setbuilder[start])) start++;
+	while (isspace(setbuilder[end])) end--;
+	input_format = setbuilder.substr(start, end - start + 1);
+	int index = setbuilder.find("|") + 1;				// Take the index back to separation + 1, because criteria starts there.
+	while (isspace(setbuilder[index])) index++;			// Ignore extraneous spaces between '|' and the criteria.
+	int cr_start = index;						// Now we must be at the index of the criteria's first character.
+	index = setbuilder.size() - 1;					// We'll look for the criteria's end from the other end.
+	while (setbuilder[index] != '}')  index--;			// First look for the set's closing brace.
+	index--;							// The criteria will definitely end before that.
+	while (isspace(setbuilder[index])) index--;			// Ignore spaces.
+	criteria = setbuilder.substr(cr_start, index - cr_start + 1);	// Phew.
+	//cout << "Criteria: " << criteria << endl;
+	string first_parent = "(x)";					// For matching arguments.
+	parse_holder_value_pairs(input_format, first_parent);
+}
+
 bool AbstractSet::has(Elem &query)				// Returns true if the argument elem fulfils the membership criteria.
 {
 	string x = this->criteria;				// We'll replace all instances of 'elem' at level 0 with elem->to_string().
@@ -273,10 +289,10 @@ bool AbstractSet::has(Elem &query)				// Returns true if the argument elem fulfi
 			//cout << candidate_holder << endl;
 			if (!(*program_vars::keyword_ops)[candidate_holder]) // If this is not an operator or keyword.
 			{
-				if (!(*program_vars::identify)[candidate_holder]) // and if it's not an identifier, it's a holder.
+				string &holder = candidate_holder;
+				if (!holder_value_pairs[holder].empty())     // If it is empty, it'll be an identifier.
 				{
 					criteriaparts.push_back(x.substr(start, i - start));
-					string &holder = candidate_holder;
 					string holder_value = holder_value_pairs[holder];
 
 					holder_value = holder_value.substr(0, holder_value.find("(x)")) +
@@ -284,8 +300,8 @@ bool AbstractSet::has(Elem &query)				// Returns true if the argument elem fulfi
 						holder_value.substr(holder_value.find("(x)") + 3);
 
 					ExpressionTree holder_value_expr(holder_value);
+					//cout << holder_value_expr.evaluate()->to_string_eval();
 					criteriaparts.push_back(holder_value_expr.evaluate()->to_string_eval());
-
 					start = i = j;
 				}
 				else i = j;

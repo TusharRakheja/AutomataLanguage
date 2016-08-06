@@ -2,9 +2,9 @@
 #include "../Header Files/Set.h"
 #include "../Header Files/ExpressionTree.h"
 
-//#include <iostream>
-//using std::cout;
-//using std::endl;
+#include <iostream>
+using std::cout;
+using std::endl;
 
 /* Implementations for the methods in the class Tuple. */
 
@@ -35,10 +35,11 @@ Tuple::Tuple(string &x) : Elem(TUPLE)				// Construct a set using a string repre
 	{
 		int j = i + st;					// Store the position of the comma.
 		while (isspace(x[j - 1])) j--;			// Work back from there, to get a trimmed representation. 
-		if (x.substr(start, j - start) != "")		// If the trimmed representation isn't empty.
-			elements.push_back(x.substr(start, j - start));	// Push it to the vector of representations
+		string elem = x.substr(start, j - start);
+		if (!elem.empty())				// If the trimmed representation isn't empty.
+			elements.push_back(elem);		// Push it to the vector of representations
 		if (x[i + st] == ')') break;
-		start = i + st + 1;					// The next element's representation will usually start from i + 1.
+		start = i + st + 1;				// The next element's representation will usually start from i + 1.
 		while (isspace(x[start])) start++;		// But it may not, in case of extra spaces.
 		if (x[start] == ')') break;
 	}

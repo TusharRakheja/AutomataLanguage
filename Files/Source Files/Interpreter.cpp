@@ -250,7 +250,7 @@ void parse_mapping()
 	
 	Token colon = get_next_token();
 
-	if (colon.types[0] != COLON) raise_error("Missing operator \":\".");
+	if (colon.types[0] != COLON) raise_error("Expected updater \":\".");
 
 	if (candidate_map->type == MAP)
 	{
@@ -262,7 +262,7 @@ void parse_mapping()
 
 		Token mapsymb = get_next_token();
 
-		if (mapsymb.types[0] != MAPPING_SYMBOL) raise_error("Missing operator \"->\".");
+		if (mapsymb.types[0] != MAPPING_SYMBOL) raise_error("Expected symbol \"->\".");
 
 		read_right_expr = true;
 
@@ -284,7 +284,7 @@ void parse_mapping()
 		
 		absmap->add_scheme(mapping_scheme.lexeme);
 	}
-	else raise_error("Expected a map or an abstract map for a \":\" operation.");
+	else raise_error("Expected a map or an abstract map for an \":\" update.");
 }
 
 void parse_assignment()
@@ -1262,22 +1262,14 @@ void parse_fromsource()
 				// (hope I'm right about this).
 				string abs_set_lit;				
 				getline(*datasource(new_value)->elem, abs_set_lit, datasource(new_value)->delimiter->elem); 
-				int start = 0, end = abs_set_lit.size() - 1;
-				while (abs_set_lit[start] != '|') start++;
-				start++;
-				while (abs_set_lit[end] != '}') end--;
-				end--;
-				while (isspace(abs_set_lit[end])) end--;
-				aset(get)->criteria = abs_set_lit.substr(start, end - start + 1);
+				aset(get)->add_criteria(abs_set_lit);
 			}
 			else if (get->type == ABSTRACT_MAP)
 			{
 				// Same for maps.
 				string abs_map_lit;
 				getline(*datasource(new_value)->elem, abs_map_lit, datasource(new_value)->delimiter->elem);
-				int start = abs_map_lit.find("->") + 2;
-				while (isspace(abs_map_lit[start])) start++;
-				amap(get)->mapping_scheme = abs_map_lit.substr(start, abs_map_lit.size() - start);
+				amap(get)->add_scheme(abs_map_lit);
 			}
 			else raise_error("Expected a non-source/sink type for reading via a source.");
 		}
@@ -1316,23 +1308,14 @@ void parse_fromsource()
 			// So, since the criteria for an abstract set is a ready-to-execute logical expression that doesn't ... 
 			// ... need to be parsed, but readily executed, we don't really need a raw representation of the string.
 			// (hope I'm right about this).
-			string abs_set_lit = str(new_value)->elem;
-			int start = 0, end = abs_set_lit.size() - 1;
-			while (abs_set_lit[start] != '|') start++;
-			start++;
-			while (abs_set_lit[end] != '}') end--;
-			end--;
-			while (isspace(abs_set_lit[end])) end--;
-			aset(get)->criteria = abs_set_lit.substr(start, end - start + 1);
+			string abs_set_lit = str(new_value)->elem;				
+			aset(get)->add_criteria(abs_set_lit);
 		}
 		else if (get->type == ABSTRACT_MAP)
 		{
 			// Same for maps.
-				// Same for maps.
 			string abs_map_lit = str(new_value)->elem;
-			int start = abs_map_lit.find("->") + 2;
-			while (isspace(abs_map_lit[start])) start++;
-			amap(get)->mapping_scheme = abs_map_lit.substr(start, abs_map_lit.size() - start);
+			amap(get)->add_scheme(abs_map_lit);
 		}
 	}
 }
@@ -1393,7 +1376,7 @@ void parse_initialization()
 				}
 				else raise_error("Expected a source or a string for a \"<-\" operation.");
 			}
-			else raise_error("Expected operator \"=\" or \"<-\".");
+			else raise_error("Expected updater \"=\" or \"<-\".");
 		}
 		else if (data_type.lexeme == "tuple")
 		{
@@ -1435,9 +1418,9 @@ void parse_initialization()
 						
 					(*identify)[new_identifier.lexeme] = shared_ptr<Tuple>{ new Tuple(tuprep) };
 				}
-				else raise_error("Expected a source or a string for a \"<-\" operation.");
+				else raise_error("Expected a source or a string for a \"<-\" update.");
 			}
-			else raise_error("Expected operator \"=\" or \"<-\".");
+			else raise_error("Expected updater \"=\" or \"<-\".");
 		}
 		else if (data_type.lexeme == "map")
 		{
@@ -1457,7 +1440,7 @@ void parse_initialization()
 
 			shared_ptr<Elem> map_domain = nullptr, map_codomain = nullptr;	// Actual pointers that will be used in the map's constructor.
 
-			if (mapsymb.types[0] != MAPPING_SYMBOL) raise_error("Missing mapping operator \"->\".");
+			if (mapsymb.types[0] != MAPPING_SYMBOL) raise_error("Expected symbol \"->\".");
 
 			if (domain.types[0] == IDENTIFIER)
 				if ((*identify)[domain.lexeme] == nullptr)
@@ -1531,9 +1514,9 @@ void parse_initialization()
 					string val = str(src)->elem;
 					(*identify)[new_identifier.lexeme] = shared_ptr<Int>{ new Int(std::stoi(val)) };
 				}
-				else raise_error("Expected a source or a string for a \"<-\" operation.");
+				else raise_error("Expected a source or a string for a \"<-\" update.");
 			}
-			else raise_error("Expected operators \"=\" or \"<-\".");
+			else raise_error("Expected updater \"=\" or \"<-\".");
 		}
 		else if (data_type.lexeme == "char")
 		{
@@ -1572,9 +1555,9 @@ void parse_initialization()
 					string val = str(src)->elem;
 					(*identify)[new_identifier.lexeme] = shared_ptr<Char>{ new Char(val[0]) };
 				}
-				else raise_error("Expected a source or a string for a \"<-\" operation.");
+				else raise_error("Expected a source or a string for a \"<-\" update.");
 			}
-			else raise_error("Expected operators \"=\" or \"<-\".");
+			else raise_error("Expected updater \"=\" or \"<-\".");
 		}
 		else if (data_type.lexeme == "string") 
 		{
@@ -1613,9 +1596,9 @@ void parse_initialization()
 					string val = str(src)->elem;
 					(*identify)[new_identifier.lexeme] = shared_ptr<String>{ new String(val) };
 				}
-				else raise_error("Expected a source or a string for a \"<-\" operation.");
+				else raise_error("Expected a source or a string for a \"<-\" update.");
 			}
-			else raise_error("Expected operators \"=\" or \"<-\".");
+			else raise_error("Expected updater \"=\" or \"<-\".");
 		}
 		else if (data_type.lexeme == "logical")
 		{
@@ -1658,9 +1641,9 @@ void parse_initialization()
 						new Logical(val.find("True") != string::npos)
 					};
 				}
-				else raise_error("Expected a source or a string for a \"<-\" operation.");
+				else raise_error("Expected a source or a string for a \"<-\" update.");
 			}
-			else raise_error("Expected operators \"=\" or \"<-\".");
+			else raise_error("Expected updater \"=\" or \"<-\".");
 		}
 		else if (data_type.lexeme == "auto")
 		{
@@ -1823,7 +1806,7 @@ void parse_initialization()
 					(*identify)[new_identifier.lexeme] = shared_ptr<AbstractSet>{new AbstractSet(val)};
 				}
 			}
-			else raise_error("Missing operator \"=\" or \"<-\".");
+			else raise_error("Expected updater \"=\" or \"<-\".");
 		}
 		else if (type.lexeme == "map")
 		{
@@ -1837,7 +1820,7 @@ void parse_initialization()
 
 				Token mapssymb = get_next_token();
 
-				if (mapssymb.types[0] != MAPPING_SYMBOL) raise_error("Missing operator \"->\".");
+				if (mapssymb.types[0] != MAPPING_SYMBOL) raise_error("Expected symbol \"->\".");
 
 				read_right_expr = true;
 
@@ -1875,9 +1858,9 @@ void parse_initialization()
 					string val = str(src)->elem;
 					(*identify)[new_identifier.lexeme] = shared_ptr<AbstractMap>{new AbstractMap(val)};
 				}
-				else raise_error("Expected a source or a string for a \"<-\" operation.");
+				else raise_error("Expected a source or a string for a \"<-\" update.");
 			}
-			else raise_error("Missing operator \":\" or \"<-\".");
+			else raise_error("Expected symbol \":\" or operator \"<-\".");
 		}
 		else raise_error("Only sets and maps can be abstract.");		
 		

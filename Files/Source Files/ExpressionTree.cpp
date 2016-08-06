@@ -1,8 +1,8 @@
 #include "../Header Files/ExpressionTree.h"
 
-//#include <iostream>
-//using std::cout;
-//using std::endl;
+#include <iostream>
+using std::cout;
+using std::endl;
 
 using program_vars::raise_error;
 using program_vars::DUMMYv;

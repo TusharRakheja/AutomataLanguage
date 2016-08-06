@@ -8,10 +8,10 @@ unordered_map<string, shared_ptr<Elem>> * program_vars::identify = new unordered
 	{ "__prompt__", shared_ptr<String>{ new String(">>> ") } },
 	{ "console", shared_ptr<DataSource>{ new DataSource(0, shared_ptr<Char>{ new Char('\n') }) } },
 	{ "apply", shared_ptr<AbstractMap>{ new AbstractMap(
-	"(am, s) -> (|s| == 1) ? { am[s[0]] } : ( { am[s[0]] } U apply[( am, s[(1, |s|)] )]) "
+	"(am, s) -> (|s| == 1) ? { am[s[0]] } : ({ am[s[0]] } U apply[(am, s[(1, |s|)])])"
 	) } },
 	{ "fold", shared_ptr < AbstractMap > { new AbstractMap(
-	"(am, s) -> (|s| == 1) ? (s[0]) : ( am[( s[0], fold[( am, s[(1, |s|)] )] )] )"
+	"(am, s) -> (|s| == 1) ? (s[0]) : (am[(s[0], fold[(am, s[(1, |s|)])])])"
 	) } },
 	{ "All", shared_ptr<AbstractSet>{ new AbstractSet("{ elem | True }") } },
 	{ "Set", shared_ptr<AbstractSet>{ new AbstractSet("{ elem | typeof elem == \"set\" }") } },
