@@ -68,9 +68,7 @@ Set::Set(string &x) : Elem(SET)					// Construct a set using a string representa
 				}
 				// Get the part between '{' and '|', and if is empty or has any operator tokens, it's a SET_LIT. 
 				string last_check = rep.substr(1, program_vars::find_at_level_0(rep.substr(1), !ANY, '|', DUMMYv));
-				bool empty = true;  
-				for (char c : last_check) { if (!isspace(c)) { empty = false; break; } }
-				if (empty)
+				if (last_check.empty())
 				{
 					this->elems->push_back(shared_ptr<Elem>{new Set(rep)});
 					continue;

@@ -1820,9 +1820,7 @@ Token ExpressionTree::get_next_token()				// The limited lexical analyzer to par
 		// Get the part between '{' and '|', and if is empty or has any operator tokens, it's a SET_LIT. 
 		int pipe_pos = program_vars::find_at_level_0(rep.substr(1), !ANY, '|', DUMMYv);
 		string last_check = rep.substr(1, pipe_pos);
-		bool empty = true;  
-		for (char c : last_check) { if (!isspace(c)) { empty = false; break; } }
-		if (empty)		
+		if (last_check.empty())		
 			return{ rep, { LITERAL, SET_LIT } };
 		
 		if (program_vars::exists_at_level_0(rep.substr(1, pipe_pos), ANY, DUMMYc, op_signs_set))
