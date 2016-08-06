@@ -861,13 +861,15 @@ Autolang is imperfect. The parser is brittle, there are memory leaks etc. But pe
 
  * [ ] Lexical scoping.
  
- * [ ] Casting.
+ * [ ] Support for graphics.
  
- * [ ] Support for graphics, modularity etc.
+ * [ ] Support for modularity.
  
 ### Completed
 
- * [x] Abstract Maps 
+ * [x] Abstract Maps.
+ 
+ * [x] λ Expressions.
 
  * [x] Abstract Sets.
  
