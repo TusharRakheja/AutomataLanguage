@@ -10,8 +10,8 @@
     <li>Primitive data types (<code>int</code>, <code>char</code>, and <code>logical</code>),</li>
     <li>Containers (<code>sets</code>, <code>tuples</code>,<code>maps</code> and <code>strings</code>), and</li> 
     <li>Abstract containers (<code>abstract sets</code>, <code>abstract maps</code>).</li>
-    It has in-built support for automata (<code>auto</code>), which are the inspiration behind the name. 
    </ul>
+    It has in-built support for automata (<code>auto</code>), which are the inspiration behind the name. 
   </p>
   <hr>
   <p align="center">
