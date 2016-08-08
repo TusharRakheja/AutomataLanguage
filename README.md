@@ -776,7 +776,7 @@ Using the **`let`** operator, we can bind λs to existing abstract map identifie
 ```perl
 >>> declare abstract map add
 >>> let add = :: (a, b) -> a + b ::
->>> print add[("Brooklyn", " Nine-Nine")]             .
+>>> print add[("Brooklyn", " Nine-Nine")]             
 >>> Brooklyn Nine-Nine
 ```
 
