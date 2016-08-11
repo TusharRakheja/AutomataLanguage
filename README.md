@@ -528,7 +528,7 @@ The mapping scheme can include a recursive call to the map itself.
 
 We used a *conditional operator* **`?:`** in the `fact` map, which is the only ternary operator in Autolang. Abstract maps can be composed with the **`o`** operator and the **`o=`** updater too, but since the subset operation cannot be performed on their domains and codomains, any composition between two abstract maps is possible. However, a composition between an abstract and a normal map is not possible (for now).
 
-It's a good time to remember that a abstract maps are also objects, just like regular maps, and hence can be part of sets and tuples. 
+It's a good time to remember that abstract maps are also objects, just like regular maps, and hence can be part of sets and tuples. 
 
 **Operations and Updates**
 
