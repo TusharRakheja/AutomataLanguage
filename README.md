@@ -15,9 +15,9 @@
   </p>
   <hr>
   <p align="center">
-   <a href="https://github.com/TusharRakheja/Autolang#building">Build</a> &middot; 
-   <a href="https://github.com/TusharRakheja/Autolang#examples">Try</a> &middot; 
-   <a href="https://github.com/TusharRakheja/Autolang#license">License</a>
+   <a href="https://github.com/TusharRakheja/Autolang#building"><b>Build</b></a> &middot; 
+   <a href="https://github.com/TusharRakheja/Autolang#examples"><b>Try</b></a> &middot; 
+   <a href="https://github.com/TusharRakheja/Autolang#license"><b>License</b></a>
   </p>
  </td>
 </tr>
