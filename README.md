@@ -196,6 +196,7 @@ The key data structure in Autolang is a  **set** - a (possibly heterogeneous) co
 >>> printr easter                                 # The printr command recursively prints the raw version of the elements. 
 {27, 'J', 1996, {}}
 >>> print exprset = { 1 + 2, 3 + 4 }              # The elements of a set can be expressions as well.
+{3, 7}
 ```
 
 **Basic Operations**
