@@ -771,7 +771,7 @@ Lambda expressions (λs) in Autolang are denoted with the **`::`** symbol. Their
 18
 ```
 
-Using the **`let`** operator, we can bind λs to existing abstract map identifiers.
+Using the **`let`** keyword, we can bind λs to existing abstract map identifiers.
 
 ```perl
 >>> declare abstract map add
