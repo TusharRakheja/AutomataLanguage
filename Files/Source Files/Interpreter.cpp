@@ -8,8 +8,10 @@ using std::getline;
 // Identifiers mapped to their objects.
 
 using program_vars::identify;
+using program_vars::scopewise_identifiers;
 using program_vars::raise_error;
 using program_vars::line_num;
+using program_vars::scope_level;
 
 Token current_token;		// The current token we're looking at. 
 istream * program;		// The stream of text constituting the program.
@@ -42,7 +44,7 @@ void program_vars::raise_error(const char *message)
 	cout << "ERROR: ";
 	if (program != &cin) cout << "Line " << (line_num - 1) << ": ";
 	cout << message << endl;
-	delete program_vars::identify;
+	delete scopewise_identifiers;
 	exit(0);
 }
 
@@ -52,6 +54,9 @@ int main(int argc, char **argv)
 	if (argc == 1) { print_info(); program = &cin; }
 	else program = new std::ifstream(argv[1]);
 	parse_program();
+	if (program != &cin) delete program;
+	delete scopewise_identifiers;
+	return 0;
 }
 
 Token get_next_token()						// The lexer.
@@ -1891,13 +1896,22 @@ void parse_while()
 
 	while (logical(do_or_not)->elem)
 	{
-		if (logical_condition != nullptr) delete logical_condition;	// We have no use for the old parse tree of the condition ...
 
+		if (logical_condition != nullptr) delete logical_condition;	// We have no use for the old parse tree of the condition ...
 		current_token = get_next_token();
+
+		scope_level++;
+		if (scopewise_identifiers->size() == scope_level)		
+			scopewise_identifiers->resize(scopewise_identifiers->size() + 1);
+		identify = &(*scopewise_identifiers)[scope_level];
 
 		while (current_token.types[0] != R_BRACE)			// As long as you don't see the end of the while loop ...
 			parse_statement();					// ... keep parsing statements.
-
+		
+		scopewise_identifiers->erase(scopewise_identifiers->end() - 1);
+		scope_level--;
+		identify = &(*scopewise_identifiers)[scope_level];
+		
 		if (program != &cin)
 			program->seekg(loop_from, ios::beg);			// Go back to the beginning of statements when you're done.
 		
@@ -1935,8 +1949,6 @@ void parse_if()		// Parsing if statements.
 
 	Token condition = get_next_token();
 
-	if (condition.types[0] != EXPR) raise_error("Expected an expression.");
-
 	Token starting_brace = get_next_token();
 
 	if (starting_brace.types[0] != L_BRACE) raise_error("Missing '{'.");
@@ -1952,36 +1964,59 @@ void parse_if()		// Parsing if statements.
 		delete logical_condition;	// We have no use for the old parse tree of the condition ...
 
 		current_token = get_next_token();
+		
+		scope_level++;
+		if (scopewise_identifiers->size() == scope_level)
+			scopewise_identifiers->resize(scopewise_identifiers->size() + 1);
+		identify = &(*scopewise_identifiers)[scope_level];
 
 		while (current_token.types[0] != R_BRACE)			// As long as you don't see the end of the if block ...
 			parse_statement();					// ... keep parsing statements.
 
+		scopewise_identifiers->erase(scopewise_identifiers->end() - 1);
+		scope_level--;
+		identify = &(*scopewise_identifiers)[scope_level];
+
 		Token else_ = get_next_token();
 
-		if (else_.types[0] != ELSE) raise_error("else block expected.");
-
-		Token left_brace = get_next_token();
-
-		if (left_brace.types[0] != L_BRACE) raise_error("'{' expected.");
-
-		// But we have to do nothing with the else block. We just need to ignore it.
-
-		bool toss_tokens = true;	// Now we're literally going to keep tossing out tokens until we find "}".
-		int level = 0;
-
-		while (toss_tokens)
+		if (else_.types[0] != ELSE)
 		{
-			Token token = get_next_token();
-			if (token.types[0] == LET) read_update_expr = true;
-			if (token.types[0] == GET) read_getfs_expr = true;
-			if (token.types[0] == UNDER) read_map_expr = true;
-			if (token.types[0] == UPDATE_OP || token.types[0] == COLON || token.types[0] == PRINT
-				|| token.types[0] == WHILE || token.types[0] == IF || token.types[0] == SOURCE_OP) read_right_expr = true;
-			if (token.types[0] == L_BRACE) level++;
-			if (token.types[0] == R_BRACE)
-				if (level == 0)
-					toss_tokens = false;
-				else level--;
+			if (program == &cin)
+			{
+				int putbacklen = else_.lexeme.size();
+				while (putbacklen--)
+					program->unget();
+			}
+			else
+			{
+				program->seekg(-(int)else_.lexeme.size()*(int)sizeof(char), ios::cur);
+			}
+		}
+		else
+		{
+			Token left_brace = get_next_token();
+
+			if (left_brace.types[0] != L_BRACE) raise_error("'{' expected.");
+
+			// But we have to do nothing with the else block. We just need to ignore it.
+
+			bool toss_tokens = true;	// Now we're literally going to keep tossing out tokens until we find "}".
+			int level = 0;
+
+			while (toss_tokens)
+			{
+				Token token = get_next_token();
+				if (token.types[0] == LET) read_update_expr = true;
+				if (token.types[0] == GET) read_getfs_expr = true;
+				if (token.types[0] == UNDER) read_map_expr = true;
+				if (token.types[0] == UPDATE_OP || token.types[0] == COLON || token.types[0] == PRINT
+					|| token.types[0] == WHILE || token.types[0] == IF || token.types[0] == SOURCE_OP) read_right_expr = true;
+				if (token.types[0] == L_BRACE) level++;
+				if (token.types[0] == R_BRACE)
+					if (level == 0)
+						toss_tokens = false;
+					else level--;
+			}
 		}
 	}
 	else
@@ -2008,15 +2043,38 @@ void parse_if()		// Parsing if statements.
 		}
 		Token else_ = get_next_token();
 
-		if (else_.types[0] != ELSE) raise_error("else block expected.");
+		if (else_.types[0] != ELSE) 
+		{
+			if (program == &cin)
+			{
+				int putbacklen = else_.lexeme.size();
+				while (putbacklen--)
+					program->unget();
+			}
+			else
+			{
+				program->seekg(-(int)else_.lexeme.size()*(int)sizeof(char), ios::cur);
+			}
+		}
+		else
+		{
+			Token l_brace = get_next_token();
+			if (l_brace.types[0] != L_BRACE) raise_error("'{' expected.");
 
-		Token l_brace = get_next_token();
-		if (l_brace.types[0] != L_BRACE) raise_error("'{' expected.");
+			current_token = get_next_token();
 
-		current_token = get_next_token();
-			
-		while (current_token.types[0] != R_BRACE)			// As long as you don't see the end of the else block ...
-			parse_statement();					// ... keep parsing statements.
+			scope_level++;
+			if (scopewise_identifiers->size() == scope_level)
+				scopewise_identifiers->resize(scopewise_identifiers->size() + 1);
+			identify = &(*scopewise_identifiers)[scope_level];
+
+			while (current_token.types[0] != R_BRACE)			// As long as you don't see the end of the while loop ...
+				parse_statement();					// ... keep parsing statements.
+
+			scopewise_identifiers->erase(scopewise_identifiers->end() - 1);
+			scope_level--;
+			identify = &(*scopewise_identifiers)[scope_level];
+		}
 	}
 }
 

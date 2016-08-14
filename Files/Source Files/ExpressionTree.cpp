@@ -2090,7 +2090,25 @@ ExpressionTree::ExpressionTree(string &expr)
 		node->operator_node = false;
 		node->token = t1;
 		//cout << "ComputingI: " << t1.lexeme << endl;
-		node->value = (*program_vars::identify)[t1.lexeme];
+		int look_in_scope = program_vars::scope_level;
+		unordered_map<string, shared_ptr<Elem>> * look_in = program_vars::identify; 
+		while (look_in_scope >= 0 && (*look_in)[t1.lexeme] == nullptr)
+		{
+			look_in_scope--;
+			look_in = &(*program_vars::scopewise_identifiers)[look_in_scope];
+		}
+	
+		if (look_in_scope < 0) 
+		{
+			string err = "No identifier ";
+			err += t1.lexeme;
+			err += " exists in either this or an enclosing scope.";
+			raise_error(err.c_str());
+		}
+		else
+		{
+			node->value = (*look_in)[t1.lexeme];
+		}
 		return;
 	}
 

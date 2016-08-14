@@ -1,33 +1,37 @@
 #include "../Header Files/ProgramVars.h"
 #include "../Header Files/ExpressionTree.h"
 
-/* Implementations and assignments for all the methods in the namespace program_vars.*/
+/* Implementations and assignments for all the nethods and objects in the namespace program_vars.*/
 
-unordered_map<string, shared_ptr<Elem>> * program_vars::identify = new unordered_map<string, shared_ptr<Elem>>
+std::vector<unordered_map<string, shared_ptr<Elem>>> * program_vars::scopewise_identifiers = new std::vector<unordered_map<string, shared_ptr<Elem>>>
 {
-	{ "__prompt__", shared_ptr<String>{ new String(">>> ") } },
-	{ "console", shared_ptr<DataSource>{ new DataSource(0, shared_ptr<Char>{ new Char('\n') }) } },
-	{ "apply", shared_ptr<AbstractMap>{ new AbstractMap(
-	"(am, s) -> (|s| == 1) ? { am[s[0]] } : ({ am[s[0]] } U apply[(am, s[(1, |s|)])])"
-	) } },
-	{ "fold", shared_ptr < AbstractMap > { new AbstractMap(
-	"(am, s) -> (|s| == 1) ? (s[0]) : (am[(s[0], fold[(am, s[(1, |s|)])])])"
-	) } },
-	{ "All", shared_ptr<AbstractSet>{ new AbstractSet("{ elem | True }") } },
-	{ "Set", shared_ptr<AbstractSet>{ new AbstractSet("{ elem | typeof elem == \"set\" }") } },
-	{ "Int", shared_ptr<AbstractSet>{ new AbstractSet("{ elem | typeof elem == \"int\" }") } },
-	{ "Map", shared_ptr<AbstractSet>{ new AbstractSet("{ elem | typeof elem == \"map\" }") } },
-	{ "Tuple", shared_ptr<AbstractSet>{ new AbstractSet("{ elem | typeof elem == \"tuple\" }") } },
-	{ "String", shared_ptr<AbstractSet>{ new AbstractSet("{ elem | typeof elem == \"string\" }") } },
-	{ "Source", shared_ptr<AbstractSet>{ new AbstractSet("{ elem | typeof elem == \"source\" }") } },
-	{ "Sink", shared_ptr<AbstractSet>{ new AbstractSet("{ elem | typeof elem == \"sink\" }") } },
-	{ "AMap", shared_ptr<AbstractSet>{ new AbstractSet("{ elem | typeof elem == \"abstract map\" }") } },
-	{ "ASet", shared_ptr<AbstractSet>{ new AbstractSet("{ elem | typeof elem == \"abstract set\" }") } },
-	{ "Sets", shared_ptr<AbstractSet>{ new AbstractSet("{ elem | \"set\" in typeof elem }") } },
-	{ "Auto", shared_ptr<AbstractSet>{ new AbstractSet("{ elem | typeof elem == \"auto\" }") } },
-	{ "Char", shared_ptr<AbstractSet>{ new AbstractSet("{ elem | typeof elem == \"char\" }") } },
-	{ "Logical", shared_ptr<AbstractSet>{ new AbstractSet("{ elem | typeof elem == \"logical\" }") } },
+	{
+		{ "__prompt__", shared_ptr<String>{ new String(">>> ") } },
+		{ "console", shared_ptr<DataSource>{ new DataSource(0, shared_ptr<Char>{ new Char('\n') }) } },
+		{ "apply", shared_ptr<AbstractMap>{ new AbstractMap(
+		"(am, s) -> (|s| == 1) ? { am[s[0]] } : ({ am[s[0]] } U apply[(am, s[(1, |s|)])])"
+		) } },
+		{ "fold",  shared_ptr<AbstractMap>{ new AbstractMap(
+		"(am, s) -> (|s| == 1) ? (s[0]) : (am[(s[0], fold[(am, s[(1, |s|)])])])"
+		) } },
+		{ "All", shared_ptr<AbstractSet>{ new AbstractSet("{ elem | True }") } },
+		{ "Set", shared_ptr<AbstractSet>{ new AbstractSet("{ elem | typeof elem == \"set\" }") } },
+		{ "Int", shared_ptr<AbstractSet>{ new AbstractSet("{ elem | typeof elem == \"int\" }") } },
+		{ "Map", shared_ptr<AbstractSet>{ new AbstractSet("{ elem | typeof elem == \"map\" }") } },
+		{ "Tuple", shared_ptr<AbstractSet>{ new AbstractSet("{ elem | typeof elem == \"tuple\" }") } },
+		{ "String", shared_ptr<AbstractSet>{ new AbstractSet("{ elem | typeof elem == \"string\" }") } },
+		{ "Source", shared_ptr<AbstractSet>{ new AbstractSet("{ elem | typeof elem == \"source\" }") } },
+		{ "Sink", shared_ptr<AbstractSet>{ new AbstractSet("{ elem | typeof elem == \"sink\" }") } },
+		{ "AMap", shared_ptr<AbstractSet>{ new AbstractSet("{ elem | typeof elem == \"abstract map\" }") } },
+		{ "ASet", shared_ptr<AbstractSet>{ new AbstractSet("{ elem | typeof elem == \"abstract set\" }") } },
+		{ "Sets", shared_ptr<AbstractSet>{ new AbstractSet("{ elem | \"set\" in typeof elem }") } },
+		{ "Auto", shared_ptr<AbstractSet>{ new AbstractSet("{ elem | typeof elem == \"auto\" }") } },
+		{ "Char", shared_ptr<AbstractSet>{ new AbstractSet("{ elem | typeof elem == \"char\" }") } },
+		{ "Logical", shared_ptr<AbstractSet>{ new AbstractSet("{ elem | typeof elem == \"logical\" }") } },
+	}
 };
+
+unordered_map<string, shared_ptr<Elem>> * program_vars::identify = &(*program_vars::scopewise_identifiers)[0];
 
 unordered_map<string, bool> * program_vars::keyword_ops = new unordered_map<string, bool>
 {
@@ -169,3 +173,5 @@ std::vector<char> program_vars::op_signs_set = { // These characters will signif
 	'?', 'V', '&', '=', '!', '<', '>', 'o', 'c', 'x', '[', '!'
 }; // Just the first (often the only) characters in the operators. 
 int program_vars::line_num = 1;
+
+int program_vars::scope_level = 0;

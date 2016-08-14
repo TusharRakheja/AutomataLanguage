@@ -9,8 +9,10 @@
 
 namespace program_vars
 {
-	extern unordered_map<string, shared_ptr<Elem>> * identify; // Stores the objects against their identifiers.
+	extern std::vector<unordered_map<string, shared_ptr<Elem>>> * scopewise_identifiers; // Stores the objects against their scope and names.
+	extern unordered_map<string, shared_ptr<Elem>> * identify;	      // Points to the most immediate scope's identifiers.
 	extern int line_num;
+	extern int scope_level;
 	extern void raise_error(const char *);
 	extern unordered_map<string, bool> * keyword_ops;
 	extern int find_at_level_0(const string &, bool, char, std::vector<char> &);

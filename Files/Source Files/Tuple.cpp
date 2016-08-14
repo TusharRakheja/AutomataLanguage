@@ -28,7 +28,6 @@ Tuple::Tuple(string &x) : Elem(TUPLE)				// Construct a set using a string repre
 	vector<string> elements;			// We're going to extract e1, e2 ... out of x = "{ e1, e2, ... }".	
 	while (x[start] != '(')	start++;		// Look for the tuple's opening parenthesis.	
 	start++;
-	while (isspace(x[start])) start++;		// Once we've found the opening '(', remove the extra space before the first element.
 	int st = start;
 	vector<char> delims{{ ',', ')' }};
 	for (int i : program_vars::findall_at_level_0(x.substr(start), ANY, DUMMYc, delims))

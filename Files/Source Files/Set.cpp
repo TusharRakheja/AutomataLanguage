@@ -33,6 +33,7 @@ Set::Set(string &x) : Elem(SET)					// Construct a set using a string representa
 	while (x[start] != '{')	start++;		// Look for the set's opening brace.	
 	start++;
 	while (isspace(x[start])) start++;		// Once we've found the opening brace, remove the extra space before the first element.
+	if (x[start] == '}') return;
 	int st = start;
 	vector<char> delims{{ ',', '}' }};
 	for (int i : program_vars::findall_at_level_0(x.substr(start), ANY, DUMMYc, delims))
@@ -42,10 +43,9 @@ Set::Set(string &x) : Elem(SET)					// Construct a set using a string representa
 		string elem = x.substr(start, j - start);
 		if (!elem.empty())				// If the trimmed representation isn't empty.
 			elements.push_back(elem);		// Push it to the vector of representations
-		if (x[i + st] == ')') break;
 		start = i + st + 1;				// The next element's representation will usually start from i + 1.
 		while (isspace(x[start])) start++;		// But it may not, in case of extra spaces.
-		if (x[start] == ')') break;
+		if (x[start] == '}') break;
 	}
 	for (auto &rep : elements) // An important thing to remember is that, the elements can still be expressions.
 	{	
