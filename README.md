@@ -69,11 +69,11 @@ The real joy of Autolang is its very math-oriented syntax. Here are some cool ex
    * [Files](https://github.com/TusharRakheja/Autolang#a-files)
    * [Console](https://github.com/TusharRakheja/Autolang#b-console)
    * [Strings as Sources](https://github.com/TusharRakheja/Autolang#c-strings-as-sources)
- * [Data as Code](https://github.com/TusharRakheja/Autolang#6-data-as-code)
- * [Functional Concepts](https://github.com/TusharRakheja/Autolang#7-functional-concepts)
+ * [Functional Concepts](https://github.com/TusharRakheja/Autolang#6-functional-concepts)
    * [&lambda; Expressions](https://github.com/TusharRakheja/Autolang#a-λ-expressions) 
    * [Higher-order Functions](https://github.com/TusharRakheja/Autolang#b-higher-order-functions)
    * [Pure Functions](https://github.com/TusharRakheja/Autolang#c-pure-functions)
+ * [Data as Code](https://github.com/TusharRakheja/Autolang#7-data-as-code)
  * [Loops and Conditionals](https://github.com/TusharRakheja/Autolang#8-loops-and-conditionals)
  * [Notes](https://github.com/TusharRakheja/Autolang#9-notes)
  
@@ -725,41 +725,7 @@ Strings are not sources (no mutual **`=`** updates possible), but they can be us
 False
 ```
 
-### 6. Data as Code
-
-Some entities in Autolang have a way to internally call Autolang's expression parser. You guessed it, Abstract Sets and Abstract Maps. Along with sourcing, this allows us to create abstract maps and sets at runtime. 
-
-Let us say a file **`unpack.txt`** has this data.
-```
-# unpack : Unpacks tuples of the form (a, (b, c)) into (a, b, c).
-(e, (f, g)) -> (e, f, g);
-
-# unpackall : From a set of tuples of the form (a, (b, c)), return a set of (a, b, c).
-s -> (|s| == 1) ? { unpack[s[0]] } : ({ unpack[s[0]] } U unpackall[s[(1, |s|)]]);
-```
-
-Clearly, the file contains mapping schemes for abstract maps. We can use these to make maps in Autolang. Here's how.
-
-```perl
->>> source maps = ("unpack.txt", '\n')           # Open file.
->>> string junk <- maps                          # Eat comments and blank lines.
->>> let maps[1] = ';'                            # Now it's time to read a scheme.
->>> abstract map unpack <- maps                  # Make an abstract map using the scheme.
->>> let maps[1] = '\n'                           # Time to read more junk.
->>> get junk <- maps                             # Eat the '\n' after the previous ';'
->>> get junk <- maps                             # Eat the blank line.
->>> get junk <- maps                             # Eat the comment.
->>> let maps[1] = ';'                            # Time to read another scheme.
->>> abstract map unpackall <- maps               # Make the map.
->>> print unpack[(1, (2, 3))]                    # Time to test, yay!
-(1, 2, 3)
->>> print unpackall[{1, 2} x {'A', 'B'} x {True}]
-{(1, A, True), (1, B, True), (2, A, True), (2, B, True)}
-```
-
-**Interesting**: Of course, the source can be **`console`** too! Which means, effectively, a client running an Autolang program can also write parts of the program, at run-time.
-
-### 7. Functional Concepts
+### 6. Functional Concepts
 
 Though Autolang is not pure functional language, it does support a variety of functional concepts.
 
@@ -833,6 +799,40 @@ As such, Autolang makes a distinction between 'operators' and 'updaters'. Operat
 In fact, as such, all maps and abstract maps *are* half-pure by nature, in that they have ***no side-effects***. What I mean by that is, the computation of a mapping operation, *can never* change any data by itself. Because updaters (`=, +=, <-` etc) are *not allowed* in a mapping scheme. They must, invariably, occur with the **`let`** or **`get`** keyword, if they are to change data (`=` and `<-` can occur with initializations too, but they aren't changing data then. They are creating it).
 
 So, as long as the two conditions stated above are met, the map will be **pure**. It will be referentially transparent, and have no side-effects. 
+
+### 7. Data as Code
+
+Some entities in Autolang have a way to internally call Autolang's expression parser. You guessed it, Abstract Sets and Abstract Maps. Along with sourcing, this allows us to create abstract maps and sets at runtime. 
+
+Let us say a file **`unpack.txt`** has this data.
+```
+# unpack : Unpacks tuples of the form (a, (b, c)) into (a, b, c).
+(e, (f, g)) -> (e, f, g);
+
+# unpackall : From a set of tuples of the form (a, (b, c)), return a set of (a, b, c).
+s -> (|s| == 1) ? { unpack[s[0]] } : ({ unpack[s[0]] } U unpackall[s[(1, |s|)]]);
+```
+
+Clearly, the file contains mapping schemes for abstract maps. We can use these to make maps in Autolang. Here's how.
+
+```perl
+>>> source maps = ("unpack.txt", '\n')           # Open file.
+>>> string junk <- maps                          # Eat comments and blank lines.
+>>> let maps[1] = ';'                            # Now it's time to read a scheme.
+>>> abstract map unpack <- maps                  # Make an abstract map using the scheme.
+>>> let maps[1] = '\n'                           # Time to read more junk.
+>>> get junk <- maps                             # Eat the '\n' after the previous ';'
+>>> get junk <- maps                             # Eat the blank line.
+>>> get junk <- maps                             # Eat the comment.
+>>> let maps[1] = ';'                            # Time to read another scheme.
+>>> abstract map unpackall <- maps               # Make the map.
+>>> print unpack[(1, (2, 3))]                    # Time to test, yay!
+(1, 2, 3)
+>>> print unpackall[{1, 2} x {'A', 'B'} x {True}]
+{(1, A, True), (1, B, True), (2, A, True), (2, B, True)}
+```
+
+**Interesting**: Of course, the source can be **`console`** too! Which means, effectively, a client running an Autolang program can also write parts of the program, at run-time.
 
 ### 8. Loops and Conditionals
 
