@@ -39,6 +39,8 @@ bool identifier(string &);	// Returns true if a string is an identifier.
 bool all_spaces(string &);	// Returns true if a string is full of spaces.
 void print_info();		// Prints the license and other info.
 
+vector<char> delims{',','\0'};  // Delimiters to parse multiple declarations, print statements etc.
+
 void program_vars::raise_error(const char *message)
 {
 	cout << "ERROR: ";
@@ -183,6 +185,10 @@ Token get_next_token()						// The lexer.
 		 lexeme == "char" || lexeme == "tuple" || lexeme == "map" ||
 	       	 lexeme == "logical" || lexeme == "auto" || lexeme == "source" || 
 		 lexeme == "sink")      return{ lexeme, { TYPE } };
+	else if (lexeme == "sets" || lexeme == "strings" || lexeme == "ints" ||	// If it's a data_type token.
+		lexeme == "chars" || lexeme == "tuples" || lexeme == "maps" ||
+		lexeme == "logicals" || lexeme == "autos" || lexeme == "sources" ||
+		lexeme == "sinks")      return{ lexeme, { MULTITYPE } };
 	else if (lexeme == "=")		return{ lexeme, { UPDATE_OP } };
 	else if (lexeme == "&=")	return{ lexeme, { UPDATE_OP} };
 	else if (lexeme == "U=")	return{ lexeme, { UPDATE_OP } };
@@ -1125,11 +1131,19 @@ void parse_print()
 {
 	read_right_expr = true;
 	Token print = get_next_token();
-
-	ExpressionTree expr(print.lexeme);	 
+	// It's possible that we've read in not just one token, but several separated by commas.
+	int start = 0;
+	for (int i : program_vars::findall_at_level_0(print.lexeme, ANY, DUMMYc, delims))
+	{
+		string token = print.lexeme.substr(start, i - start);
+		ExpressionTree expr(token);
+		shared_ptr<Elem> to_be_printed = expr.evaluate();
+		cout << to_be_printed->to_string() << " ";
+		start = i + 1;
+	}
+	ExpressionTree expr(print.lexeme.substr(start));
 	shared_ptr<Elem> to_be_printed = expr.evaluate();
-
-	cout << to_be_printed->to_string();
+	cout << to_be_printed->to_string() << " ";
 	if (program == &cin) cout << endl << endl;
 }
 
@@ -1137,11 +1151,19 @@ void parse_printr()
 {
 	read_right_expr = true;
 	Token print = get_next_token();
-
-	ExpressionTree expr(print.lexeme);
+	// It's possible that we've read in not just one token, but several separated by commas.
+	int start = 0;
+	for (int i : program_vars::findall_at_level_0(print.lexeme, ANY, DUMMYc, delims))
+	{
+		string token = print.lexeme.substr(start, i - start);
+		ExpressionTree expr(token);
+		shared_ptr<Elem> to_be_printed = expr.evaluate();
+		cout << to_be_printed->to_string_raw() << " ";
+		start = i + 1;
+	}
+	ExpressionTree expr(print.lexeme.substr(start));
 	shared_ptr<Elem> to_be_printed = expr.evaluate();
-
-	cout << to_be_printed->to_string_raw();
+	cout << to_be_printed->to_string() << " ";
 	if (program == &cin) cout << endl << endl;
 }
 
@@ -1149,7 +1171,8 @@ void parse_declaration()	// Parse a declaration.
 {
 	Token data_type = get_next_token();
 
-	if (data_type.types[0] != TYPE && data_type.types[0] != ABSTRACT) raise_error("Data type not supported.");
+	if (data_type.types[0] != TYPE && data_type.types[0] != MULTITYPE && data_type.types[0] != ABSTRACT)
+		raise_error("Data type not supported.");
 
 	if (data_type.types[0] == TYPE) 
 	{
@@ -1168,26 +1191,97 @@ void parse_declaration()	// Parse a declaration.
 		else if (data_type.lexeme ==   "auto" ) (*identify)[new_identifier.lexeme] = shared_ptr<   Auto   >{new Auto()};
 		else if (data_type.lexeme ==  "source") (*identify)[new_identifier.lexeme] = shared_ptr<DataSource>{new DataSource()};
 		else if (data_type.lexeme ==   "sink")  (*identify)[new_identifier.lexeme] = shared_ptr< DataSink >{new DataSink()};
-
 		(*identify)[new_identifier.lexeme]->identifier = new_identifier.lexeme; // Assign the identifier to the elem's identifier attr.
+	}
+	else if (data_type.types[0] == MULTITYPE)
+	{
+		read_right_expr = true;
+		Token new_identifiers = get_next_token();
+		int start = 0;
+		for (int i : program_vars::findall_at_level_0(new_identifiers.lexeme, ANY, DUMMYc, delims))
+		{
+			string new_identifier = new_identifiers.lexeme.substr(start, i - start);
+			if (!identifier(new_identifier))	    raise_error("Please use a valid name for the identifier.");
+			if ((*identify)[new_identifier] != nullptr) raise_error("Identifier already in use. Cannot re-declare.");
+			if	(data_type.lexeme ==   "sets"  ) (*identify)[new_identifier] = shared_ptr<   Set    >{new Set()};
+			else if (data_type.lexeme ==  "tuples" ) (*identify)[new_identifier] = shared_ptr<  Tuple   >{new Tuple()};
+			else if (data_type.lexeme ==   "maps"  ) (*identify)[new_identifier] = shared_ptr<   Map    >{new Map(nullptr, nullptr)};
+			else if (data_type.lexeme ==   "ints"  ) (*identify)[new_identifier] = shared_ptr<   Int    >{new Int()};
+			else if (data_type.lexeme ==   "chars" ) (*identify)[new_identifier] = shared_ptr<   Char   >{new Char()};
+			else if (data_type.lexeme ==  "strings") (*identify)[new_identifier] = shared_ptr<  String  >{new String()};
+			else if (data_type.lexeme == "logicals") (*identify)[new_identifier] = shared_ptr<  Logical >{new Logical()};
+			else if (data_type.lexeme ==   "autos" ) (*identify)[new_identifier] = shared_ptr<   Auto   >{new Auto()};
+			else if (data_type.lexeme ==  "sources") (*identify)[new_identifier] = shared_ptr<DataSource>{new DataSource()};
+			else if (data_type.lexeme ==   "sinks")  (*identify)[new_identifier] = shared_ptr< DataSink >{new DataSink()};
+			(*identify)[new_identifier]->identifier = new_identifier;
+			start = i + 1;
+			while (isspace(new_identifiers.lexeme[start])) start++;
+		}
+		string new_identifier = new_identifiers.lexeme.substr(start);
+		if (!identifier(new_identifier))	    raise_error("Please use a valid name for the identifier.");
+		if ((*identify)[new_identifier] != nullptr) raise_error("Identifier already in use. Cannot re-declare.");
+		if	(data_type.lexeme ==   "sets"  ) (*identify)[new_identifier] = shared_ptr<   Set    >{new Set()};
+		else if (data_type.lexeme ==  "tuples" ) (*identify)[new_identifier] = shared_ptr<  Tuple   >{new Tuple()};
+		else if (data_type.lexeme ==   "maps"  ) (*identify)[new_identifier] = shared_ptr<   Map    >{new Map(nullptr, nullptr)};
+		else if (data_type.lexeme ==   "ints"  ) (*identify)[new_identifier] = shared_ptr<   Int    >{new Int()};
+		else if (data_type.lexeme ==   "chars" ) (*identify)[new_identifier] = shared_ptr<   Char   >{new Char()};
+		else if (data_type.lexeme ==  "strings") (*identify)[new_identifier] = shared_ptr<  String  >{new String()};
+		else if (data_type.lexeme == "logicals") (*identify)[new_identifier] = shared_ptr<  Logical >{new Logical()};
+		else if (data_type.lexeme ==   "autos" ) (*identify)[new_identifier] = shared_ptr<   Auto   >{new Auto()};
+		else if (data_type.lexeme ==  "sources") (*identify)[new_identifier] = shared_ptr<DataSource>{new DataSource()};
+		else if (data_type.lexeme ==   "sinks")  (*identify)[new_identifier] = shared_ptr< DataSink >{new DataSink()};
+		(*identify)[new_identifier]->identifier = new_identifier;
 	}
 	else if (data_type.types[0] == ABSTRACT)
 	{
 		Token type = get_next_token();
 
-		if (type.lexeme != "set" && type.lexeme != "map") raise_error("Only sets and maps can be abstract.");
+		if (type.lexeme != "set" && type.lexeme != "map" && type.lexeme != "sets" && type.lexeme != "maps") 
+			raise_error("Only sets and maps can be abstract.");
 
-		Token new_identifier = get_next_token();
-
-		if ((*identify)[new_identifier.lexeme] != nullptr) raise_error("Identifier already in use. Cannot re-declare.");
-
-		if (type.lexeme == "set")
-			(*identify)[new_identifier.lexeme] = shared_ptr<AbstractSet>{new AbstractSet()};
-		else                     
-			(*identify)[new_identifier.lexeme] = shared_ptr<AbstractMap>{new AbstractMap()};
-
-		(*identify)[new_identifier.lexeme]->identifier = new_identifier.lexeme; // Assign the identifier to the elem's identifier attr.
+		if (type.types[0] == TYPE)
+		{
+			Token new_identifier = get_next_token();
+			if (!identifier(new_identifier.lexeme))		   raise_error("Please use a valid name for the identifier.");
+			if ((*identify)[new_identifier.lexeme] != nullptr) raise_error("Identifier already in use. Cannot re-declare.");
+			if (type.lexeme == "set")
+				(*identify)[new_identifier.lexeme] = shared_ptr<AbstractSet>{new AbstractSet()};
+			else                     
+				(*identify)[new_identifier.lexeme] = shared_ptr<AbstractMap>{new AbstractMap()};
+			// Assign the identifier to the elem's identifier attr.
+			(*identify)[new_identifier.lexeme]->identifier = new_identifier.lexeme; 
+		}
+		else if (type.types[0] == MULTITYPE)
+		{
+			read_right_expr = true;
+			Token new_identifiers = get_next_token();
+			int start = 0;
+			for (int i : program_vars::findall_at_level_0(new_identifiers.lexeme, ANY, DUMMYc, delims))
+			{
+				string new_identifier = new_identifiers.lexeme.substr(start, i - start);
+				if (!identifier(new_identifier))	    raise_error("Please use a valid name for the identifier.");
+				if ((*identify)[new_identifier] != nullptr) raise_error("Identifier already in use. Cannot re-declare.");
+				if (type.lexeme == "sets") 
+					(*identify)[new_identifier] = shared_ptr<AbstractSet>{new AbstractSet()};
+				else
+					(*identify)[new_identifier] = shared_ptr<AbstractMap>{new AbstractMap()};
+				// Assign the identifier to the elem's identifier attr.
+				(*identify)[new_identifier]->identifier = new_identifier;
+				start = i + 1;
+				while (isspace(new_identifiers.lexeme[start])) start++;
+			}
+			string new_identifier = new_identifiers.lexeme.substr(start);
+			if (!identifier(new_identifier))	    raise_error("Please use a valid name for the identifier.");
+			if ((*identify)[new_identifier] != nullptr) raise_error("Identifier already in use. Cannot re-declare.");
+			if (type.lexeme == "sets")
+				(*identify)[new_identifier] = shared_ptr<AbstractSet>{new AbstractSet()};
+			else
+				(*identify)[new_identifier] = shared_ptr<AbstractMap>{new AbstractMap()};
+			// Assign the identifier to the elem's identifier attr.
+			(*identify)[new_identifier]->identifier = new_identifier;
+		}
 	}
+	else raise_error("Invalid declaration syntax.");
 }
 
 void parse_fromsource()
