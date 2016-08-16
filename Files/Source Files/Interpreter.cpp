@@ -1141,7 +1141,8 @@ void parse_print()
 		cout << to_be_printed->to_string() << " ";
 		start = i + 1;
 	}
-	ExpressionTree expr(print.lexeme.substr(start));
+	string token = print.lexeme.substr(start);
+	ExpressionTree expr(token);
 	shared_ptr<Elem> to_be_printed = expr.evaluate();
 	cout << to_be_printed->to_string() << " ";
 	if (program == &cin) cout << endl << endl;
@@ -1161,7 +1162,8 @@ void parse_printr()
 		cout << to_be_printed->to_string_raw() << " ";
 		start = i + 1;
 	}
-	ExpressionTree expr(print.lexeme.substr(start));
+	string token = print.lexeme.substr(start);
+	ExpressionTree expr(token);
 	shared_ptr<Elem> to_be_printed = expr.evaluate();
 	cout << to_be_printed->to_string() << " ";
 	if (program == &cin) cout << endl << endl;
