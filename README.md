@@ -537,8 +537,7 @@ It's a good time to remember that abstract maps are also objects, just like regu
 **Operations and Updates**
 
 ```perl
->>> declare abstract map square                        # If the domain and range are nnot specified, no restriction on input/output.
->>> declare abstract map octa                          # Semantically equivalent to `abstract map octa : All -> All`.
+>>> declare abstract maps square, octa                 # If the domain and range are nnot specified, no restriction on input/output.
 >>> set pmaps = { square, octa }                       # Make a set of abstract maps.
 >>> under pmaps[0] : n -> n ^ 2                        # Assign a mapping scheme to pmaps[0], which is the map `square`.
 >>> print pmaps[0][3]                                  # Print the square of 3.
