@@ -88,12 +88,15 @@ Standard 32-bit. The type keyword is `int`, as you've already probably seen.
 **Basic Syntax**
 
 ```perl
->>> declare int i                                         # Integers are initialized to 0 by default. Characters to '\0', and logicals to False. 
+>>> declare int i                                    # Integers are initialized to 0 by default. Characters to '\0', and logicals to False. 
 >>> print i                                                        
 0
->>> int j = 1                                             # A custom initialization is also possible.
+>>> int j = 1                                        # A custom initialization is also possible.
 >>> print j
 1
+>>> declare ints k, l                                # Using the type of the object in plural, multiple declarations can be made in one statement.
+>>> print k, l                                       # Print multiple space-separated objects using commas. 
+0 0
 ```
 
 **Operations and Updates**
