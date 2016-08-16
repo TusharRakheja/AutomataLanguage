@@ -445,7 +445,7 @@ False
 
 The input format can be arbitrarily complex or deep, but must not contain any operators. Also, a placeholder will override an identifier if they have the same name.
 
-```
+```perl
 >>> int l = 4000
 >>> abstract set Test = { l | l < 2000 }
 >>> print 3 in Test                                  # The local placeholder 'l' will override the int 'l'.
