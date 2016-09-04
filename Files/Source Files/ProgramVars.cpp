@@ -167,11 +167,27 @@ vector<int> program_vars::findall_at_level_0(const string & in, bool any, char f
 	return indices;
 }
 
-std::vector<char> program_vars::DUMMYv = { {} };
-std::vector<char> program_vars::op_signs_set = { // These characters will signify the presence of an operator.
-	'+', '-', '*', '/', '^', '%', '\\', '.', 'U', 'i', '|',
+bool program_vars::identifier(const string &s)
+{
+	if (s[0] == '_' || isalpha(s[0])) {
+		for (int i = 1; i < s.size(); i++)
+			if (!isalnum(s[i]) && s[i] != '_')
+				return false;
+		return true;
+	}
+	else return false;
+}
+
+std::vector<char> program_vars::DUMMYv { {} };
+std::vector<char> program_vars::op_signs_set { // These characters will signify the presence of an operator.
+	'+', '-', '*', '/', '^', '%', '\\', '.', 'U', 'i', '|', 't',
 	'?', 'V', '&', '=', '!', '<', '>', 'o', 'c', 'x', '[', '!'
 }; // Just the first (often the only) characters in the operators. 
+
+std::vector<char> program_vars::op_signs_set_VERBOSE {
+	'i', 'U', '?', 'V', 'o', 'c', 'x', 't'
+};
+
 int program_vars::line_num = 1;
 
 int program_vars::scope_level = 0;

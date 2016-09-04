@@ -20,6 +20,8 @@ namespace program_vars
 	extern std::vector<int> findall_at_level_0(const string &, bool, char, std::vector<char> &);
 	extern std::vector<char> DUMMYv;
 	extern std::vector<char> op_signs_set;
+	extern std::vector<char> op_signs_set_VERBOSE;
+	extern bool identifier(const string &);
 }
 
 #endif

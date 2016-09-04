@@ -7,8 +7,9 @@ using std::endl;
 using program_vars::raise_error;
 using program_vars::DUMMYv;
 using program_vars::op_signs_set;
-
-
+using program_vars::op_signs_set_VERBOSE;
+using program_vars::identifier;
+using program_vars::keyword_ops;
 
 /* Implementations for methods in the classes Token, Node, and ExpressionTree. */
 
@@ -1823,9 +1824,32 @@ Token ExpressionTree::get_next_token()				// The limited lexical analyzer to par
 		if (last_check.empty())		
 			return{ rep, { LITERAL, SET_LIT } };
 		
-		if (program_vars::exists_at_level_0(rep.substr(1, pipe_pos), ANY, DUMMYc, op_signs_set))
+		string find_in = rep.substr(1, pipe_pos);
+
+		if (program_vars::exists_at_level_0(find_in, ANY, DUMMYc, op_signs_set))
 		{
-			return{ rep, { LITERAL, SET_LIT } };
+			// We have found operator signatures at level 0. Let's scan them all to make sure they're legit.
+			for (int i : program_vars::findall_at_level_0(find_in, ANY, DUMMYc, op_signs_set))
+			{
+				if (std::find(op_signs_set_VERBOSE.begin(), op_signs_set_VERBOSE.end(), find_in[i]) == op_signs_set_VERBOSE.end())
+				{ // If it's not a verbose or "word-like" operator signature (i.e. NOT 't' for typeof, 'c' for c etc.)
+					return{ rep, { LITERAL, SET_LIT } };
+				  // No further checks needed. It's a set literal.
+				}
+				else
+				{ // If it IS a verbose operator signature.
+					int start = i, end = i + 1;
+					while (isalnum(find_in[start - 1])) start--;
+					while (isalnum(find_in[end])) end++;
+					string candidate = find_in.substr(start, end - start);
+					if (candidate == "in" || candidate == "typeof" || candidate == "x"
+					|| candidate == "o" || candidate == "U" || candidate == "V" || candidate == "c")
+					{  // If it DOES structurally resemble an identifier (can be a verbose op).
+					   // But it really is a verbose operator.
+						return{ rep, { LITERAL, SET_LIT } };
+					}
+				}
+			}
 		}
 		return{ rep, { LITERAL, ABSTRACT_SET_LIT } };
 

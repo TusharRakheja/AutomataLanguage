@@ -12,6 +12,7 @@ using program_vars::scopewise_identifiers;
 using program_vars::raise_error;
 using program_vars::line_num;
 using program_vars::scope_level;
+using program_vars::identifier;
 
 Token current_token;		// The current token we're looking at. 
 istream * program;		// The stream of text constituting the program.
@@ -35,7 +36,6 @@ void parse_if();		// Parse an if condition.
 void parse_while();		// Parse a while loop.
 void trim(string &);		// Trim a string (*sigh*).
 void remove_comment(string&);   // Removes the comment at the end of the line.
-bool identifier(string &);	// Returns true if a string is an identifier.
 bool all_spaces(string &);	// Returns true if a string is full of spaces.
 void print_info();		// Prints the license and other info.
 
@@ -2182,17 +2182,6 @@ void trim(string &s)
 	while (isspace(s[ end ]))  end-- ;
 	if (start >= end) s == "";
 	s = s.substr(start, end - start + 1);
-}
-
-bool identifier(string &s)
-{
-	if (s[0] == '_' || isalpha(s[0])) {
-		for (int i = 1; i < s.size(); i++)
-			if (!isalnum(s[i]) && s[i] != '_')
-				return false;
-		return true;
-	}
-	else return false;
 }
 
 bool all_spaces(string& s)

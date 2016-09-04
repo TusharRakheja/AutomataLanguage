@@ -10,6 +10,7 @@ using std::endl;
 
 using program_vars::DUMMYv;
 using program_vars::op_signs_set;
+using program_vars::op_signs_set_VERBOSE;
 
 Tuple::Tuple() : Elem(TUPLE)				// Default constructor, empty tuple.
 {
@@ -56,6 +57,7 @@ Tuple::Tuple(string &x) : Elem(TUPLE)				// Construct a set using a string repre
 			if (rep[0] == '{')						// If the element to be parsed is a set ...
 			{	
 				int i = 0;
+				bool set_literal = false;
 				bool pipe_at_zero = program_vars::exists_at_level_0(rep.substr(1), !ANY, '|', DUMMYv);
 				if (!pipe_at_zero) // If a '|' doesn't exist in the candidate_lit ... 
 				{
@@ -69,10 +71,38 @@ Tuple::Tuple(string &x) : Elem(TUPLE)				// Construct a set using a string repre
 					this->elems->push_back(shared_ptr<Elem>{new Set(rep)});
 					continue;
 				}
-				if (program_vars::exists_at_level_0(rep.substr(1), ANY, DUMMYc, op_signs_set))
-					this->elems->push_back(shared_ptr<Elem>{new Set(rep)});
-				else
-					this->elems->push_back(shared_ptr<Elem>{new AbstractSet(rep)});
+				int pipe_pos = program_vars::find_at_level_0(rep.substr(1), !ANY, '|', DUMMYv);
+				string find_in = rep.substr(1, pipe_pos);
+				if (program_vars::exists_at_level_0(find_in, ANY, DUMMYc, op_signs_set))
+				{
+					// We have found operator signatures at level 0. Let's scan them all to make sure they're legit.
+					for (int i : program_vars::findall_at_level_0(find_in, ANY, DUMMYc, op_signs_set))
+					{
+						if (std::find(op_signs_set_VERBOSE.begin(), op_signs_set_VERBOSE.end(), find_in[i]) == op_signs_set_VERBOSE.end())
+						{ // If it's not a verbose or "word-like" operator signature (i.e. NOT 't' for typeof, 'c' for c etc.)
+							this->elems->push_back(shared_ptr<Elem>{new Set(rep)});
+							set_literal = true;
+							break;
+							// No further checks needed. It's a set literal.
+						}
+						else
+						{ // If it IS a verbose operator signature.
+							int start = i, end = i + 1;
+							while (isalnum(find_in[start - 1])) start--;
+							while (isalnum(find_in[end])) end++;
+							string candidate = find_in.substr(start, end - start);
+							if (candidate == "in" || candidate == "typeof" || candidate == "x"
+								|| candidate == "o" || candidate == "U" || candidate == "V" || candidate == "c")
+							{  // If it DOES structurally resemble an identifier (can be a verbose op).
+								// But it really is a verbose operator.
+								this->elems->push_back(shared_ptr<Elem>{new Set(rep)});
+								set_literal = true;
+								break;
+							}
+						}
+					}
+				}
+				if (!set_literal) this->elems->push_back(shared_ptr<Elem>{new AbstractSet(rep)});
 			}
 			else if (rep[0] == '(')
 				this->elems->push_back(shared_ptr<Elem>{new Tuple(rep)});
