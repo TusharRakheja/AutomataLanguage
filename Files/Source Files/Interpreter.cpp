@@ -1165,7 +1165,7 @@ void parse_printr()
 	string token = print.lexeme.substr(start);
 	ExpressionTree expr(token);
 	shared_ptr<Elem> to_be_printed = expr.evaluate();
-	cout << to_be_printed->to_string() << " ";
+	cout << to_be_printed->to_string_raw() << " ";
 	if (program == &cin) cout << endl << endl;
 }
 
