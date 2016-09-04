@@ -858,7 +858,7 @@ More generally, a thing to keep in mind is that though Autolang tries to approxi
 
 Depending on your moral values and whether or not you believe there is any justice in the world, this may or may not have been what you expected. But for now, this is the result. 
 
-We can adjust this particular result using the `unpack` map mentioned in [*`Data as Code`*](https://github.com/TusharRakheja/Autolang#6-data-as-code). Likewise, we may have to come up with such 'hacks' every now and then.
+We can adjust this particular result using the `unpack` map mentioned in [*`Data as Code`*](https://github.com/TusharRakheja/Autolang#7-data-as-code). Likewise, we may have to come up with such 'hacks' every now and then.
 
 Autolang is imperfect. The parser is brittle, there are memory leaks etc. But perfection is the goal. And perfection, is a journey unto itself.
 
