@@ -201,10 +201,10 @@ shared_ptr<Elem> ExpressionTree::evaluate()
 			if (node->token.lexeme == "V")
 			{
 				shared_ptr<Elem> left = node->left->evaluate();
-				shared_ptr<Elem> right = node->right->evaluate();
 				if (left->type == INT)
 				{
 					shared_ptr<Int> l_int = integer(left);
+					shared_ptr<Elem> right = node->right->evaluate();
 					if (right->type == INT)
 					{
 						shared_ptr<Int> r_int = integer(right);
@@ -224,27 +224,36 @@ shared_ptr<Elem> ExpressionTree::evaluate()
 				}
 				else if (left->type == LOGICAL)
 				{
-					shared_ptr<Logical> l_logical = logical(left);
-					if (right->type == INT)
+					shared_ptr<Logical> l_logical = logical(left); 
+					if (l_logical->elem)
 					{
-						shared_ptr<Int>r_int = integer(right);
-						node->value = shared_ptr<Logical>{new Logical(l_logical->elem || r_int->elem)};
+						node->value = shared_ptr<Logical>{new Logical(true)};
 					}
-					else if (right->type == LOGICAL)
+					else
 					{
-						shared_ptr<Logical>r_logical = logical(right);
-						node->value = shared_ptr<Logical>{new Logical(l_logical->elem || r_logical->elem)};
+						shared_ptr<Elem> right = node->right->evaluate();
+						if (right->type == INT)
+						{
+							shared_ptr<Int>r_int = integer(right);
+							node->value = shared_ptr<Logical>{new Logical(l_logical->elem || r_int->elem)};
+						}
+						else if (right->type == LOGICAL)
+						{
+							shared_ptr<Logical>r_logical = logical(right);
+							node->value = shared_ptr<Logical>{new Logical(l_logical->elem || r_logical->elem)};
+						}
+						else if (right->type == CHAR)
+						{
+							shared_ptr<Char>r_char = character(right);
+							node->value = shared_ptr<Logical>{new Logical(l_logical->elem || r_char->elem)};
+						}
+						else raise_error("Expected a logical (or another primitive) expression for the \"V\" operation");
 					}
-					else if (right->type == CHAR)
-					{
-						shared_ptr<Char>r_char = character(right);
-						node->value = shared_ptr<Logical>{new Logical(l_logical->elem || r_char->elem)};
-					}
-					else raise_error("Expected a logical (or another primitive) expression for the \"V\" operation");
 				}
 				else if (left->type == CHAR)
 				{
 					shared_ptr<Char> l_char = character(left);
+					shared_ptr<Elem> right = node->right->evaluate();
 					if (right->type == INT)
 					{
 						shared_ptr<Int>r_int = integer(right);
@@ -267,86 +276,97 @@ shared_ptr<Elem> ExpressionTree::evaluate()
 			else if (node->token.lexeme == "&")
 			{
 				shared_ptr<Elem> left = node->left->evaluate();
-				shared_ptr<Elem> right = node->right->evaluate();
-				if (left->type == ABSTRACT_SET && right->type == ABSTRACT_SET)
-				{
-					shared_ptr<AbstractSet> l_set = aset(left);
-					shared_ptr<AbstractSet> r_set = aset(right);
-					node->value = l_set->intersection(*r_set);
-				}
-				else if (left->type == SET && right->type == SET)
-				{
-					shared_ptr<Set> l_set = set(left);
-					shared_ptr<Set> r_set = set(right);
-					node->value = l_set->intersection(*r_set);
-				}
-				else if (left->type == AUTO && right->type == AUTO)
-				{
-					shared_ptr<Auto> l_auto = automaton(left);
-					shared_ptr<Auto> r_auto = automaton(right);
-					node->value = l_auto->accepts_intersection(r_auto);
-				}
-				else if (left->type == INT)
-				{
-					shared_ptr<Int> l_int = integer(left);
-					if (right->type == INT)
-					{
-						shared_ptr<Int> r_int = integer(right);
-						node->value = shared_ptr<Int>{new Int(l_int->elem && r_int->elem)};
-					}
-					else if (right->type == LOGICAL)
-					{
-						shared_ptr<Logical> r_logical = logical(right);
-						node->value = shared_ptr<Int>{new Int(l_int->elem && r_logical->elem)};
-					}
-					else if (right->type == CHAR)
-					{
-						shared_ptr<Char> r_char = character(right);
-						node->value = shared_ptr<Int>{new Int(l_int->elem && r_char->elem)};
-					}
-					else raise_error("Expected a logical (or another primitive) expression for the \"&\" operation");
-				}
-				else if (left->type == LOGICAL)
+				if (left->type == LOGICAL)
 				{
 					shared_ptr<Logical> l_logical = logical(left);
-					if (right->type == INT)
+					if (!l_logical->elem)
 					{
-						shared_ptr<Int>r_int = integer(right);
-						node->value = shared_ptr<Logical>{new Logical(l_logical->elem && r_int->elem)};
+						node->value = shared_ptr<Logical>{new Logical(false) };
 					}
-					else if (right->type == LOGICAL)
+					else
 					{
-						shared_ptr<Logical>r_logical = logical(right);
-						node->value = shared_ptr<Logical>{new Logical(l_logical->elem && r_logical->elem)};
+						shared_ptr<Elem> right = node->right->evaluate();
+						if (right->type == INT)
+						{
+							shared_ptr<Int>r_int = integer(right);
+							node->value = shared_ptr<Logical>{new Logical(l_logical->elem && r_int->elem)};
+						}
+						else if (right->type == LOGICAL)
+						{
+							shared_ptr<Logical>r_logical = logical(right);
+							node->value = shared_ptr<Logical>{new Logical(l_logical->elem && r_logical->elem)};
+						}
+						else if (right->type == CHAR)
+						{
+							shared_ptr<Char>r_char = character(right);
+							node->value = shared_ptr<Logical>{new Logical(l_logical->elem && r_char->elem)};
+						}
+						else raise_error("Expected a logical (or another primitive) expression for the \"&\" operation");
 					}
-					else if (right->type == CHAR)
-					{
-						shared_ptr<Char>r_char = character(right);
-						node->value = shared_ptr<Logical>{new Logical(l_logical->elem && r_char->elem)};
-					}
-					else raise_error("Expected a logical (or another primitive) expression for the \"&\" operation");
 				}
-				else if (left->type == CHAR)
+				else 
 				{
-					shared_ptr<Char> l_char = character(left);
-					if (right->type == INT)
+					shared_ptr<Elem> right = node->right->evaluate();
+					if (left->type == ABSTRACT_SET && right->type == ABSTRACT_SET)
 					{
-						shared_ptr<Int>r_int = integer(right);
-						node->value = shared_ptr<Char>{new Char(l_char->elem && r_int->elem)};
+						shared_ptr<AbstractSet> l_set = aset(left);
+						shared_ptr<AbstractSet> r_set = aset(right);
+						node->value = l_set->intersection(*r_set);
 					}
-					else if (right->type == LOGICAL)
+					else if (left->type == SET && right->type == SET)
 					{
-						shared_ptr<Logical>r_logical = logical(right);
-						node->value = shared_ptr<Char>{new Char(l_char->elem && r_logical->elem)};
+						shared_ptr<Set> l_set = set(left);
+						shared_ptr<Set> r_set = set(right);
+						node->value = l_set->intersection(*r_set);
 					}
-					else if (right->type == CHAR)
+					else if (left->type == AUTO && right->type == AUTO)
 					{
-						shared_ptr<Char>r_char = character(right);
-						node->value = shared_ptr<Char>{new Char(l_char->elem && r_char->elem)};
+						shared_ptr<Auto> l_auto = automaton(left);
+						shared_ptr<Auto> r_auto = automaton(right);
+						node->value = l_auto->accepts_intersection(r_auto);
 					}
-					else raise_error("Expected a logical (or another primitive) expression for the \"&\" operation");
+					else if (left->type == INT)
+					{
+						shared_ptr<Int> l_int = integer(left);
+						if (right->type == INT)
+						{
+							shared_ptr<Int> r_int = integer(right);
+							node->value = shared_ptr<Int>{new Int(l_int->elem && r_int->elem)};
+						}
+						else if (right->type == LOGICAL)
+						{
+							shared_ptr<Logical> r_logical = logical(right);
+							node->value = shared_ptr<Int>{new Int(l_int->elem && r_logical->elem)};
+						}
+						else if (right->type == CHAR)
+						{
+							shared_ptr<Char> r_char = character(right);
+							node->value = shared_ptr<Int>{new Int(l_int->elem && r_char->elem)};
+						}
+						else raise_error("Expected a logical (or another primitive) expression for the \"&\" operation");
+					}
+					else if (left->type == CHAR)
+					{
+						shared_ptr<Char> l_char = character(left);
+						if (right->type == INT)
+						{
+							shared_ptr<Int>r_int = integer(right);
+							node->value = shared_ptr<Char>{new Char(l_char->elem && r_int->elem)};
+						}
+						else if (right->type == LOGICAL)
+						{
+							shared_ptr<Logical>r_logical = logical(right);
+							node->value = shared_ptr<Char>{new Char(l_char->elem && r_logical->elem)};
+						}
+						else if (right->type == CHAR)
+						{
+							shared_ptr<Char>r_char = character(right);
+							node->value = shared_ptr<Char>{new Char(l_char->elem && r_char->elem)};
+						}
+						else raise_error("Expected a logical (or another primitive) expression for the \"&\" operation");
+					}
+					else raise_error("Expected a set, abtract set, logical, or another primitive expression for the \"&\" operation");
 				}
-				else raise_error("Expected a set, abtract set, logical, or another primitive expression for the \"&\" operation");
 			}
 			else if (node->token.lexeme == "in")
 			{
