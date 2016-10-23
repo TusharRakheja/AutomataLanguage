@@ -53,8 +53,8 @@ void program_vars::raise_error(const char *message)
 int main(int argc, char **argv) 
 {
 	for (auto pair : *program_vars::identify) pair.second->identifier = pair.first;
-	if (argc == 1) { print_info(); program = &cin; }
-	else program = new std::ifstream(argv[1]);
+	/*if (argc == 1) { print_info(); program = &cin; }
+	else*/ program = new std::ifstream(/*argv[1]*/"../Examples/Sort.al");
 	parse_program();
 	if (program != &cin) delete program;
 	delete scopewise_identifiers;
@@ -1144,7 +1144,7 @@ void parse_print()
 	string token = print.lexeme.substr(start);
 	ExpressionTree expr(token);
 	shared_ptr<Elem> to_be_printed = expr.evaluate();
-	cout << to_be_printed->to_string() << " ";
+	cout << to_be_printed->to_string();
 	if (program == &cin) cout << endl << endl;
 }
 
@@ -1165,7 +1165,7 @@ void parse_printr()
 	string token = print.lexeme.substr(start);
 	ExpressionTree expr(token);
 	shared_ptr<Elem> to_be_printed = expr.evaluate();
-	cout << to_be_printed->to_string_raw() << " ";
+	cout << to_be_printed->to_string_raw();
 	if (program == &cin) cout << endl << endl;
 }
 
@@ -2002,8 +2002,9 @@ void parse_while()
 		identify = &(*scopewise_identifiers)[scope_level];
 
 		while (current_token.types[0] != R_BRACE)			// As long as you don't see the end of the while loop ...
+		{	
 			parse_statement();					// ... keep parsing statements.
-		
+		}
 		scopewise_identifiers->erase(scopewise_identifiers->end() - 1);
 		scope_level--;
 		identify = &(*scopewise_identifiers)[scope_level];
@@ -2022,7 +2023,7 @@ void parse_while()
 	
 	bool toss_tokens = true;	// Now we're literally going to keep tossing out tokens until we find "}".
 	int level = 0;
-
+	auto & lbrace = get_next_token();
 	while (toss_tokens)
 	{
 		Token token = get_next_token();
@@ -2085,7 +2086,7 @@ void parse_if()		// Parsing if statements.
 			}
 			else
 			{
-				program->seekg(-(int)else_.lexeme.size()*(int)sizeof(char), ios::cur);
+				program->seekg(-(long)else_.lexeme.size() - 1L, ios::cur);
 			}
 		}
 		else
@@ -2122,6 +2123,8 @@ void parse_if()		// Parsing if statements.
 		bool toss_tokens = true;	// Now we're literally going to keep tossing out tokens until we find "}".
 		int level = 0;
 
+		auto & lbrace = get_next_token();
+
 		while (toss_tokens)
 		{
 			Token token = get_next_token();
@@ -2149,7 +2152,9 @@ void parse_if()		// Parsing if statements.
 			}
 			else
 			{
-				program->seekg(-(int)else_.lexeme.size()*(int)sizeof(char), ios::cur);
+				//cout << "Token: " << else_.lexeme; cin.ignore();
+				program->seekg(-(int)else_.lexeme.size() - 1L, ios::cur);
+				//cout << "Next char: " << program->get() << endl;
 			}
 		}
 		else
