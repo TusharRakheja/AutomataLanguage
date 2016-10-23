@@ -53,8 +53,8 @@ void program_vars::raise_error(const char *message)
 int main(int argc, char **argv) 
 {
 	for (auto pair : *program_vars::identify) pair.second->identifier = pair.first;
-	/*if (argc == 1) { print_info(); program = &cin; }
-	else*/ program = new std::ifstream(/*argv[1]*/"../Examples/Sort.al");
+	if (argc == 1) { print_info(); program = &cin; }
+	else program = new std::ifstream(argv[1]);
 	parse_program();
 	if (program != &cin) delete program;
 	delete scopewise_identifiers;
@@ -2023,7 +2023,7 @@ void parse_while()
 	
 	bool toss_tokens = true;	// Now we're literally going to keep tossing out tokens until we find "}".
 	int level = 0;
-	auto & lbrace = get_next_token();
+	Token lbrace = get_next_token();
 	while (toss_tokens)
 	{
 		Token token = get_next_token();
@@ -2123,7 +2123,7 @@ void parse_if()		// Parsing if statements.
 		bool toss_tokens = true;	// Now we're literally going to keep tossing out tokens until we find "}".
 		int level = 0;
 
-		auto & lbrace = get_next_token();
+		Token lbrace = get_next_token();
 
 		while (toss_tokens)
 		{
@@ -2152,9 +2152,7 @@ void parse_if()		// Parsing if statements.
 			}
 			else
 			{
-				//cout << "Token: " << else_.lexeme; cin.ignore();
 				program->seekg(-(int)else_.lexeme.size() - 1L, ios::cur);
-				//cout << "Next char: " << program->get() << endl;
 			}
 		}
 		else
