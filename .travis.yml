@@ -20,5 +20,5 @@ script:
     - ./auto Examples/Example7.al
     - ./auto Examples/Fibonacci.al
     - ./auto Examples/MapTest.al
-    - ./auto Examples/Russell\ Paradox.al
+    - ./auto "Examples/Russell Paradox.al"
     - ./auto Examples/Sort.al
