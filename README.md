@@ -1,8 +1,8 @@
 # Autolang &nbsp;[![Build Status](https://travis-ci.org/TusharRakheja/Autolang.svg?branch=master)](https://travis-ci.org/TusharRakheja/Autolang)
 <table>
 <tr>
- <td> <img src="http://i.imgur.com/hPJTyrh.gif" width=2500 height=600 /> </td>
- <td> 
+ <tr> <img src="http://i.imgur.com/hPJTyrh.gif" width=2500 height=600 /> </tr>
+ <tr> 
   <p> <b>Autolang</b> is a high-level programming language supporting multiple paradigms, with syntax rooted in mathematical notation. </p> 
   
   <p> It supports
