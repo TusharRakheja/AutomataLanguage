@@ -19,7 +19,7 @@
    <a href="https://github.com/TusharRakheja/Autolang#examples"><b>Try</b></a> &middot; 
    <a href="https://github.com/TusharRakheja/Autolang#license"><b>License</b></a>
   </p>
- </td>
+ </tr>
 </tr>
 </table>
 
